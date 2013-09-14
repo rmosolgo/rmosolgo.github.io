@@ -4,20 +4,22 @@
 
 $noise-bg: "";
 //$main-bg: red;
-$page-bg: #471510;
-$header-bg: #639F23;
+$page-bg: rbga(61,183,183,1);
+$header-bg: rgba(0,0,0,0) ; //#639F23;
 $subtitle-color: lighten($header-bg, 58);
 $link-color: #1A6C75;
 
-$nav-bg: #E0D171;
+$nav-bg: rgba(255,255,255,0.6); // #E0D171;
 $nav-bg-front: ""; //image-url('noise.png');
 $nav-bg-back: "";// linear-gradient(lighten($nav-bg, 8), $nav-bg, darken($nav-bg, 11));
+$nav-color: black;
 //$sidebar-bg: desaturate(#eceff5, 8);
 //$sidebar-link-color: saturate(#526f9a, 10);
 //$sidebar-link-color-hover: darken(#7ab662, 9);
 $footer-bg: $nav-bg;
 $footer-bg-front: $nav-bg-front; //image-url('noise.png');
 $footer-bg-back: $nav-bg-back; //linear-gradient(lighten($footer-bg, 8), $footer-bg, darken($footer-bg, 11));
+$footer-color: black;
 
 
 /* To use the light Solarized highlighting theme uncomment the following line */

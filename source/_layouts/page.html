@@ -31,12 +31,13 @@ layout: default
   </section>
 {% endif %}
 </div>
-{% unless page.sidebar == false %}
-<aside class="sidebar">
-  {% if site.page_asides.size %}
-    {% include_array page_asides %}
-  {% else %}
-    {% include_array default_asides %}
-  {% endif %}
-</aside>
+{% unless page.sidebar == false or site.sidebar == false %}
+  <aside class="sidebar">
+    <p> Site.sidebar: {{ site.sidebar }} </p>
+    {% if site.page_asides.size %}
+      {% include_array page_asides %}
+    {% else %}
+      {% include_array default_asides %}
+    {% endif %}
+  </aside>
 {% endunless %}

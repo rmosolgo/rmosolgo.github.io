@@ -30,11 +30,14 @@ body {
   line-height: $body-font-size * 1.2;
   color: $text-color;
   @extend .sans; //.serif;
+  nav, footer {
+    @extend .serif;
+  }
 }
-h1 {
-  font-size: $h1-font-size;
-  line-height: $h1-font-size;
-}
+// h1 {
+//   font-size: $h1-font-size;
+//   line-height: $h1-font-size;
+// }
 
 @media only screen and (min-width: 992px) {
   body { font-size: $body-font-size; }
@@ -48,19 +51,19 @@ h1 {
   font-weight: bold;
 }
 h2, section h1 {
-  font-size: 1.5em;
+  font-size: $h2-font-size;
 }
-h3, section h2, section section h1 {
-  font-size: 1.3em;
+h3, section h2, section section h1, article article h1 {
+  font-size: $h3-font-size;
 }
 h4, section h3, section section h2, section section section h1 {
-  font-size: 1em;
+  font-size: $h4-font-size;
 }
 h5, section h4, section section h3 {
-  font-size: .9em;
+  font-size: $h5-font-size;
 }
 h6, section h5, section section h4, section section section h3 {
-  font-size: .8em;
+  font-size: $h6-font-size;
 }
 
 p, article blockquote, ul, ol { margin-bottom: 1.5em; }

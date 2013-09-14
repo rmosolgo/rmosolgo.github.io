@@ -1,9 +1,82 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
 
+$rm-logo: image-url("/images/hood-ornament-image2.png");
+
+html {
+  background-image: image-url("/images/background_teal.png")
+}
+h1 {
+  font-size: $h1-font-size !important;
+  line-height: $h1-font-size * 1.2 !important;
+}
 a { 
   text-decoration: none;
   &:hover {
     text-decoration: underline;
+  }
+}
+
+.serif-link {
+  float:none;
+  color: $nav-color;
+  font-family: $serif !important;
+  &:hover {
+    text-decoration:none;
+    text-shadow: white 1px 1px 2px;
+  }
+}
+nav {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+
+  img {
+    max-height: 50px;
+    float: left;
+    margin-right: 10px;
+  }
+  ul.main-navigation{
+    float: none;
+    text-align: center;
+    li {
+      float: none;
+      a {
+        @extend .serif-link;
+      }
+    }
+  }
+}
+
+footer {
+  a {
+    @extend .serif-link;
+  }
+}
+header {
+  padding: 0 !important;
+  hgroup {
+    text-align: center;
+    img {
+      padding: 5px;
+    }
+  }
+}
+
+
+#content {
+  article {
+    header {
+      padding:0;
+      // text-align: center;
+
+      p.meta {
+        position: relative !important;
+        text-transform: none !important;
+        float: right;
+        time {
+          font-size: $body-font-size * .8;
+        }
+      }
+    }
   }
 }

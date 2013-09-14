@@ -74,8 +74,8 @@ html {
   background: $page-bg; //image-url('line-tile.png') top left;
 }
 body {
-  box-shadow: #333 0px 0px 5px;
-  // sborder-radius: 5px;
+  // box-shadow: #333 0px 0px 5px;
+  // border-radius: 5px;
   > div {
     background: $sidebar-bg;
     border-bottom: 1px solid $page-border-bottom;
