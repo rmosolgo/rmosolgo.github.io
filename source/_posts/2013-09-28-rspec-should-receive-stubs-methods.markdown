@@ -10,7 +10,7 @@ categories:
 
 I learned this the hard way, so I thought I'd share.
 
-<!-- more !-->
+<!-- more -->
 
 A great feature of Rspec is its `should_receive` method, which checks if a message was sent to an object
 sometime during that spec. For example, this test would pass:

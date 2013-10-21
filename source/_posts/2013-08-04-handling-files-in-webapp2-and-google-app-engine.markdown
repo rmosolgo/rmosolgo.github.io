@@ -3,7 +3,7 @@ layout: post
 title: "Handling Files in WebApp2 and Google App Engine"
 date: 2013-08-04 19:22
 comments: true
-categories: 
+categories:
   - Google App Engine
   - Python
   - WebApp2
@@ -11,6 +11,8 @@ categories:
 ---
 
 On [Google App Engine](https://cloud.google.com/products/), I had to display the user-submitted image, if there was one, else display a default image. The given object could only have on image, so I was using the [NDB BlobProperty](https://developers.google.com/appengine/docs/python/ndb/properties):
+
+<--! more -->
 
 {% codeblock lang:python %}
 class Sensor(ndb.Model):

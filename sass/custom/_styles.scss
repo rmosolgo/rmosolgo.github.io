@@ -4,13 +4,18 @@
 $rm-logo: image-url("/images/hood-ornament-image2.png");
 
 html {
-  background-image: image-url("/images/background_teal.png")
+  background-image: image-url("/images/background_teal.png");
+
+  body {
+    margin: 20px 40px;
+    padding: 10px;
+  }
 }
 h1 {
   font-size: $h1-font-size !important;
   line-height: $h1-font-size * 1.2 !important;
 }
-a { 
+a {
   text-decoration: none;
   &:hover {
     text-decoration: underline;
