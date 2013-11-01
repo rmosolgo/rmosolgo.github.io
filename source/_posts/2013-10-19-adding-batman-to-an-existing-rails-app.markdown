@@ -21,7 +21,7 @@ I had an existing app, but I wanted to take the front end to the next level. [Ba
 I was already using [ActiveModel::Serializer](https://github.com/rails-api/active_model_serializers) to serve JSON from my app. To get Batman on the scene, I included
 `batman-rails` in my Gemfile and installed it:
 
-```Ruby Gemfile.rb
+```ruby Gemfile.rb
     require 'batman-rails', '~> 0.15'
 ```
 
@@ -39,13 +39,13 @@ I ran it and restarted my Rails server:
 
 I visited my app's `root_url` and found Batman-rails landing page. How'd it get there!? Sure enough, the Batman generator had added a punchy line to the top of my routes file:
 
-```Ruby config/routes.rb
+```ruby config/routes.rb
   get "(*redirect_path)", to: "batman#index", constraints: lambda { |request| request.format == "text/html" }
 ```
 
 It captures all `text/html` requests and passes them to `BatmanController`, which was also created by the generator:
 
-```Ruby app/controllers/batman_controller
+```ruby app/controllers/batman_controller
   class BatmanController < ApplicationController
     def index
       render nothing: true, layout: 'batman'
@@ -64,7 +64,7 @@ I didn't want the Batman landing page at my `root_url`, I wanted a list of sound
 ```
 
 
-```CoffeeScript app/assets/batman/models/sound.js.coffee
+```coffeescript app/assets/batman/models/sound.js.coffee
     class Lang.Sound extends Batman.Model
       @resourceName: 'sounds'
       @storageKey: 'sounds'
@@ -77,14 +77,14 @@ I didn't want the Batman landing page at my `root_url`, I wanted a list of sound
 ```
 
 
-```CoffeeScript app/assets/batman/controllers/sounds_controller.js.coffee
+```coffeescript app/assets/batman/controllers/sounds_controller.js.coffee
     class Lang.SoundsController extends Lang.ApplicationController
       routingKey: 'sounds'
       index: (params) ->
         @set("sounds", Lang.Sound.get('all'))
 ```
 
-```HTML app/assets/batman/html/sounds/index.html
+```haml app/assets/batman/html/sounds/index.html
     <ul>
       <li data-foreach-sound="sounds">
         <span data-bind="sound.letter" />
@@ -94,7 +94,7 @@ I didn't want the Batman landing page at my `root_url`, I wanted a list of sound
 
 
 _your filename will be your app name:_
-```CoffeeScript app/assets/batman/lang.js.coffee
+```coffeescript app/assets/batman/lang.js.coffee
     class Lang extends Batman.App
       @root "sounds#index"
 ```

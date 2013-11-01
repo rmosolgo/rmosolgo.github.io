@@ -83,5 +83,11 @@ header {
         }
       }
     }
+    ul, ol {
+      // list-style: none;
+      li {
+        margin-left: 20px;
+      }
+    }
   }
 }
