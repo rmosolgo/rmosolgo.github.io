@@ -11,7 +11,7 @@ categories:
   - Batman.js
 ---
 
-I had an existing app, but I wanted to take the front end to the next level. [Batman.js](http://batmanjs.org/) is a full-featured, developer=-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful [Rails integration](https://github.com/batmanjs/batman-rails).
+I had an existing app, but I wanted to take the front end to the next level. [Batman.js](http://batmanjs.org/) is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful [Rails integration](https://github.com/batmanjs/batman-rails).
 
 <!-- more -->
 
@@ -25,14 +25,14 @@ I was already using [ActiveModel::Serializer](https://github.com/rails-api/activ
     require 'batman-rails', '~> 0.15'
 ```
 
-```
+```bash
   $ bundle install
 ```
 
 The [batman-rails gem](https://github.com/batmanjs/batman-rails) comes with a generator to get everything in order.
 I ran it and restarted my Rails server:
 
-```
+```bash
   $ rails g batman:app # that's not _your_ app name, it's just "app"
   $ powder restart # restart your Rails server one way or another
 ```
