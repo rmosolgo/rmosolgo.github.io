@@ -3,6 +3,7 @@ layout: post
 title: "Dynamic navigation view with Batman.js"
 date: 2013-11-23 14:50
 comments: true
+categories:
   - JavaScript
   - CoffeeScript
   - Batman.js
@@ -12,7 +13,7 @@ Creating a dynamic, context-based navigation menu is a breeze with [Batman.js](h
 
 <!-- more -->
 
-I have Rails/Batman app generated with [batman-rails](https://github.com/batmanjs/batman-rails) generators. I'm using Slim-assets for my Batman HTML.
+I have Rails/Batman app generated with [batman-rails](https://github.com/batmanjs/batman-rails) generators. I'm using Slim-assets for my Batman HTML. Source of the app is [here](https://github.com/rmosolgo/batman-rails-example-crepes).
 
 # Models
 
