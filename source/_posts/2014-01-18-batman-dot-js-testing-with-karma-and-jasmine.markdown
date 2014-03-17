@@ -72,7 +72,7 @@ $BASE_DIR/node_modules/karma/bin/karma start $BASE_DIR/unit.coffee
 
 - Make `run` executable with `$ chmod +x spec/karma/run`.
 - Add `spec/karma/node_modules` to `.gitignore` so you're not pushing around tons of Node modules with your project.
-- Install Karma locally with `npm install ./`.
+- Install Karma locally with `npm install spec/karma`.
 
 You should be able to start the runner now with `$ spec/karma/run`. It will open a Chrome window if it's working.
 
@@ -119,7 +119,7 @@ describe "Batman.TestCase is loaded", ->
 
 - Did you make `run` executable by with `$ chmod +x spec/karma/run`?
 - This is kind of a hacky setup -- it depends on your development server (either `$ rails server` or [Pow](http://pow.cx/)) running. Is it?
-- In `unit.coffee`, `files` should list your tests, but it should also list compiled JS assets from your test server. Check the paths there in your browser. Do they contain everything you expect them to contain? You might need to add files to that list _or_ add [sprockets](https://github.com/sstephenson/sprockets) directives to those files so that they include other files.
+- In `unit.coffee`, `files` should list your tests, but it should also list compiled JS assets from your development server, including `http://` and so on. Check the paths there in your browser. Do they contain everything you expect them to contain? You might need to add files to that list _or_ add [sprockets](https://github.com/sstephenson/sprockets) directives to those files so that they `require` other files.
 
 
 

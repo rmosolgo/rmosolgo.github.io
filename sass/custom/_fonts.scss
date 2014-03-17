@@ -4,15 +4,15 @@
 
 $sans: "Eurostile", "Century Gothic", sans-serif;
 $serif: "Gentium Book Basic", Georgia, serif;
-//$mono: "Courier", monospace;
+$mono: "Lucida Console", monospace;
 $heading-font-family: $serif; //"Verdana", sans-serif;
 
 //$header-title-font-family: "Futura", sans-serif;
 //$header-subtitle-font-family: "Futura", sans-serif;
 
-$body-font-size: 1.1em;
-$h1-font-size: 1.3em;
-$h2-font-size: $h1-font-size * 0.85;
+$body-font-size: 1em;
+$h1-font-size: 2em;
+$h2-font-size: $h1-font-size * 0.8;
 $h3-font-size: $h2-font-size * 0.9;
 $h4-font-size: $h3-font-size * 0.9;
 $h5-font-size: $h4-font-size * 0.9;

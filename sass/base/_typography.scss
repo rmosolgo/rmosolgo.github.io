@@ -27,7 +27,7 @@ body > header h2 {
 }
 
 body {
-  line-height: $body-font-size * 1.2;
+  line-height: $body-font-size * 1.5;
   color: $text-color;
   @extend .sans; //.serif;
   nav, footer {

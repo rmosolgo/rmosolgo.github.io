@@ -32,6 +32,29 @@ Rails.application.assets.register_engine('.slim', Slim::Template)
 
 Credit: [Dillon Buchanan](http://www.dillonbuchanan.com/programming/rails-slim-templates-in-the-asset-pipeline/)
 
+### Update: Serving compiled Slim (or Haml) assets in production
+
+When you deploy to production, if you have `config.initialize_on_precompile = false`, an initializer isn't going to work. You'll have to register the Sprockets engine another way. Add it to the application config in `config/application.rb`:
+
+```ruby config/application.rb
+module MyApp
+  class Application < Rails::Application
+    # ... config stuff ...
+    config.before_initialize do |app|
+      require 'sprockets'
+      require 'slim'
+      # require 'tilt' # for Haml
+      Sprockets::Engines #force autoloading
+      Sprockets.register_engine '.slim', Slim::Template
+      # Sprockets.register_engine '.haml', Tilt::HamlTemplate # for Haml
+    end
+    # ... more config stuff ...
+  end
+end
+```
+
+Now, you'll have the Slim template engine available even if your app doesn't intialize, which is most notably the case for `bundle exec rake assets:precompile`. Nice!
+
 # 3. Beef up your BatmanController
 
 At time of writing, the `batman-rails`-generated BatmanController won't work right in production. There's an [outstanding PR](https://github.com/batmanjs/batman-rails/pull/46) with a fix. If that's closed, then we're good to go. In the mean time, Make your `app/controllers/batman_controller.rb` look like this:
