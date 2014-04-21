@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Batman.Model lifecycle callbacks"
+title: "Batman.Model Lifecycle Callbacks"
 date: 2014-03-19 10:52
 comments: true
 categories:

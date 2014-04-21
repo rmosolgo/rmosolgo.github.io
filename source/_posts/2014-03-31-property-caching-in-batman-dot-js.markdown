@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Property Caching in batman.js"
+title: "Property Caching in Batman.js"
 date: 2014-03-31 09:09
 comments: true
 categories:
@@ -50,7 +50,7 @@ morganFreeman.property('fullName').value # => null
 It hasn't been requested yet, so it hasn't been calculated. The property also has no sources:
 
 ```coffeescript
-morganFreeman.property('fullname').source # => null
+morganFreeman.property('fullname').sources # => null
 ```
 
 However, if you `get` the property, it will be calculated and its sources will be identified.

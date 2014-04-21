@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Debugging keypaths in batman.js views"
+title: "Debugging Keypaths in Batman.js Views"
 date: 2014-01-30 09:23
 comments: true
 categories:

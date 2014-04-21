@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Adding Batman to an existing Rails app"
+title: "Adding Batman.js to an Existing Rails App"
 date: 2013-10-19 22:08
 comments: true
 categories:

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Dynamically-generated headers for ActiveResource requests"
+title: "Dynamically-Generated Headers for ActiveResource Requests"
 date: 2014-02-05 15:47
 comments: true
 categories:

@@ -108,10 +108,12 @@ gulp.task("finalize", function() {
 });
 ```
 
-and make the whole build process our `default` gulp task:
+And make our `default` gulp task to watch the project and build whenever it changes:
 
 ```javascript Gulpfile.js
-gulp.task("default", ["build", "html", "finalize"])
+gulp.task('default', function(){
+  gulp.watch('./batman/**/*', ["build", "html", "finalize"])
+});
 ```
 
 So now, all we need to do is:

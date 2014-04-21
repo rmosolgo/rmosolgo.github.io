@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Loading child records from embedded IDs in batman.js"
+title: "Loading Child Records from Embedded IDs in Batman.js"
 date: 2014-03-17 11:03
 comments: true
 categories:

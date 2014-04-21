@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Dynamic navigation view with Batman.js"
+title: "Dynamic Navigation View with Batman.js"
 date: 2013-11-23 14:50
 comments: true
 categories:
@@ -9,7 +9,7 @@ categories:
   - Batman.js
 ---
 
-Creating a dynamic, context-based navigation menu is a breeze with [Batman.js](http://batmanjs.org/) and [batman-rails](https://github.com/batmanjs/batman-rails) thanks to Batman's [data-route](http://batmanjs.org/docs/api/batman.view_bindings.html#data-route) view binding and the [object[key]](http://batmanjs.org/docs/api/batman.view_filters.html#value%5Bkey%5D_%3A_value) view filter. Here's how I did it.
+Creating a dynamic, context-based navigation menu is a breeze with [batman.js](http://batmanjs.org/) and [batman-rails](https://github.com/batmanjs/batman-rails) thanks to Batman's [data-route](http://batmanjs.org/docs/api/batman.view_bindings.html#data-route) view binding and the [object[key]](http://batmanjs.org/docs/api/batman.view_filters.html#value%5Bkey%5D_%3A_value) view filter. Here's how I did it.
 
 <!-- more -->
 

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Load Batman Models from specific Urls"
+title: "Load Batman.js Models from Specific Urls"
 date: 2013-10-28 10:19
 comments: true
 categories:

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Christian life as a lazy enumerable"
+title: "Christian Life as a Lazy Enumerable"
 date: 2014-02-28 18:43
 comments: true
 categories:

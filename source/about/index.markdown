@@ -7,14 +7,14 @@ sharing: true
 footer: true
 ---
 
-## About
 
+My name is Robert Mosolgo and I work as a Ruby/Rails and JavaScript developer at [Ministry Centered Technologies](http://get.planningcenteronline.com) in Carlsbad, California. My wife, [Valerie](https://twitter.com/vwmos), and I moved to Carlsbad in 2013, but we both grew up in Charlottesville, Virginia.
 
-My name is Robert Mosolgo and I work as a Ruby/Rails and JavaScript developer at [Ministry Centered Technologies](http://get.planningcenteronline.com).
+I attended the College of William and Mary and studied Chinese Studies, but fell in love with web programming -- especially the Ruby on Rails variety -- while working at [AidData](http://aiddata.org).
 
-This blog is ugly but I might get around to sprucing it up at some point.
+I don't really have much of an eye for style, which is why this blog is so ugly. I'm a fanboy, documenter, and sometimes-contributor to [batman.js](http://batmanjs.org).
 
-My favorite toys are:
+I write about:
 
 - [Ruby](/blog/categories/ruby/)
 - [Rails](/blog/categories/rails/)
