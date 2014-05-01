@@ -20,7 +20,9 @@ I've always wanted to try batman.js + leaflet. I had to:
 - Observe `Batman.Object`s to keep leaflet up-to-date.
 - Listen to leaflet to keep batman.js up to date
 
-Be sure to check out the [source code](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee) and [live example](http://bl.ocks.org/rmosolgo/11443841)!
+I ended up making an abstract `LeafletView`, implemented by `LeafletPointView` and `LeafletCollectionPointView`.
+
+Be sure to check out the [live example](http://bl.ocks.org/rmosolgo/11443841) and source code ([custom views](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee), [index html](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/index.jade#L19), [edit html](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/edit.jade#L19))!
 
 ## `@option` in Custom Views
 
