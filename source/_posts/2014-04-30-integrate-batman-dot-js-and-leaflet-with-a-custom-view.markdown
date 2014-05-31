@@ -76,7 +76,7 @@ So, you have to be prepared for undefined values and for `viewDidAppear` to be f
 
 Integrating batman.js with other JavaScript libraries usually means setting up event handlers so that events pass from an outside proxy of a `Batman.Object` to the object itself.
 
-For example, to update a leaflet maker when a `Batman.Object` is changed, you have to observe the `Batman.Object` so that [whenever `latitude` or `longitude` changes, you update the marker](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L149):
+For example, to update a leaflet marker when a `Batman.Object` is changed, you have to observe the `Batman.Object` so that [whenever `latitude` or `longitude` changes, you update the marker](https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L149):
 
 ```coffeescript
 # From App.LeafletPointView, @get('item') returns the object
