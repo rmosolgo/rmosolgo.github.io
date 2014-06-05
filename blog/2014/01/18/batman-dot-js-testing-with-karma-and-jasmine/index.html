@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Batman.js testing with Karma and Jasmine - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Here&rsquo;s how I set up Karma &amp; Jasmine to test a Batman.js app on Ruby on Rails. (Actually, this is how we use it at work. Credit to Dan, as &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Batman.js Testing With Karma and Jasmine</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-18T14:38:00-08:00" pubdate data-updated="true">Jan 18<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Here&rsquo;s how I set up <a href="http://karma-runner.github.io/">Karma</a> &amp; <a href="http://pivotal.github.io/jasmine/">Jasmine</a> to test a <a href="http://batmanjs.org/">Batman.js</a> app on Ruby on Rails.</p>
+
+<!-- more -->
+
+
+<p>(Actually, this is how we use it at <a href="http://get.planningcenteronline.com/">work</a>. Credit to <a href="http://danott.co/">Dan</a>, as this is modeled after his work and <a href="http://danott.co/posts/rails-javascript-testing-using-karma.html">blog post</a>)</p>
+
+<p><em>Warning:</em> This is a bit hack-ish because it depends on your development server running while you run your tests. :)</p>
+
+<h1>Set Up Karma</h1>
+
+<p>You&rsquo;ll need <a href="http://nodejs.org/"><code>node</code></a> and <a href="https://npmjs.org/"><code>npm</code></a> for this to work! Create the directory <code>/spec/karma</code> and put these files in it:</p>
+
+<ul>
+<li><code>package.json</code>, which will tell <code>npm</code> what to install for you:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>spec/karma/package.json</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;your-app-name&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nt">&quot;engines&quot;</span><span class="p">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nt">&quot;node&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;= 0.10&quot;</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>  <span class="nt">&quot;dependencies&quot;</span><span class="p">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nt">&quot;karma&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;= 0.10&quot;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>unit.coffee</code>, the configs for Karma:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>spec/karma/unit.coffee</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">module.exports = </span><span class="nf">(config) -&gt;</span>
+</span><span class='line'>  <span class="nx">config</span><span class="p">.</span><span class="nx">set</span>
+</span><span class='line'>    <span class="nv">basePath: </span><span class="s">&#39;../../&#39;</span>
+</span><span class='line'>    <span class="nv">frameworks: </span><span class="p">[</span><span class="s">&#39;jasmine&#39;</span><span class="p">]</span> <span class="c1"># that&#39;s my weapon of choice, anyways.</span>
+</span><span class='line'>    <span class="nv">files: </span><span class="p">[</span>
+</span><span class='line'>      <span class="s">&#39;http://your-app.dev/assets/your-app.js&#39;</span> <span class="c1"># point it at the app file on your dev server</span>
+</span><span class='line'>      <span class="c1"># yours might look like &#39;http://localhost:3000/assets/application.js&#39; or something like that.</span>
+</span><span class='line'>      <span class="c1"># Of course, you can list as many files as you want here.</span>
+</span><span class='line'>      <span class="s">&#39;spec/batman/**/*.coffee&#39;</span> <span class="c1"># load your tests</span>
+</span><span class='line'>    <span class="p">]</span>
+</span><span class='line'>    <span class="nv">reporters: </span><span class="p">[</span><span class="s">&#39;dots&#39;</span><span class="p">]</span>
+</span><span class='line'>    <span class="nv">port: </span><span class="mi">9876</span>
+</span><span class='line'>    <span class="nv">colors: </span><span class="kc">true</span>
+</span><span class='line'>    <span class="nv">logLevel: </span><span class="nx">config</span><span class="p">.</span><span class="nx">LOG_INFO</span>
+</span><span class='line'>    <span class="nv">autoWatch: </span><span class="kc">true</span>
+</span><span class='line'>    <span class="nv">browsers: </span><span class="p">[</span><span class="s">&#39;Chrome&#39;</span><span class="p">]</span>
+</span><span class='line'>    <span class="nv">captureTimeout: </span><span class="mi">60000</span>
+</span><span class='line'>    <span class="nv">singleRun: </span><span class="kc">false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>run</code>, a bash script to start the runner easily:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>spec/karma/run</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="c">#!/bin/bash</span>
+</span><span class='line'><span class="nv">BASE_DIR</span><span class="o">=</span><span class="sb">`</span>dirname <span class="nv">$0</span><span class="sb">`</span>
+</span><span class='line'><span class="nv">$BASE_DIR</span>/node_modules/karma/bin/karma start <span class="nv">$BASE_DIR</span>/unit.coffee
+</span><span class='line'><span class="c"># from app root, just run `$ ./karma/run` to start the tests!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>Make <code>run</code> executable with <code>$ chmod +x spec/karma/run</code>.</li>
+<li>Add <code>spec/karma/node_modules</code> to <code>.gitignore</code> so you&rsquo;re not pushing around tons of Node modules with your project.</li>
+<li>Install Karma locally with <code>npm install spec/karma</code>.</li>
+</ul>
+
+
+<p>You should be able to start the runner now with <code>$ spec/karma/run</code>. It will open a Chrome window if it&rsquo;s working.</p>
+
+<h1>Write a Spec</h1>
+
+<p>I put my Batman.js specs in <code>spec/batman</code> with names corresponding to their location in <code>app/assets/batman</code>. You can do it however you want, but make sure you&rsquo;re loading the right files with <code>files</code> in <code>unit.coffee</code> above. Open up your first spec file, maybe <code>spec/batman/test_spec.coffee</code>, and put a jasmine spec in it:</p>
+
+<figure class='code'><figcaption><span>spec/batman/test_spec.coffee</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">describe</span> <span class="s">&#39;My test runner&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nx">it</span> <span class="s">&#39;loaded Batman.js&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="nx">Batman</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">()</span>
+</span><span class='line'>  <span class="nx">it</span> <span class="s">&#39;loaded my App&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="nx">App</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">()</span> <span class="c1"># &lt;-- your app name!</span>
+</span><span class='line'>  <span class="nx">it</span> <span class="s">&#39;loaded my Model&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Model</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">()</span> <span class="c1"># &lt;-- your model name!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If those pass, you&rsquo;re in business!</p>
+
+<h1>Using Batman.TestCase</h1>
+
+<p>Since <code>Batman.TestCase</code> is a Batman extra, you&rsquo;ll need to include it in your project yourself. An easy way to do that is to include the <a href="https://github.com/batmanjs/batman/tree/master/src/extras"><code>src/extras/</code> directory</a> from Github in your Rails app. For example, in <code>/app/assets/batman/extras</code>. Now, in your development server, visit <code>/assets/extras/batman.test_case.js</code>. Do you see the code for <code>Batman.TestCase</code>?</p>
+
+<p>Now, just add that path to <code>files</code> in <code>spec/karma/unit.coffee</code>:</p>
+
+<figure class='code'><figcaption><span>spec/karma/unit.coffee</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># ...</span>
+</span><span class='line'>  <span class="nv">files: </span><span class="p">[</span>
+</span><span class='line'>    <span class="s">&quot;http://my-app.dev/assets/my_app.js&quot;</span>
+</span><span class='line'>    <span class="s">&quot;http://my-app.dev/assets/extras/batman.test_case.js&quot;</span>
+</span><span class='line'>    <span class="s">&quot;spec/batman/**/*.coffee&quot;</span>
+</span><span class='line'>  <span class="p">]</span>
+</span><span class='line'><span class="c1">#...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And if you want, make sure it&rsquo;s loaded with a jasmine spec:</p>
+
+<figure class='code'><figcaption><span>spec/batman/test_case_spec.coffee</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">describe</span> <span class="s">&quot;Batman.TestCase is loaded&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nx">it</span> <span class="s">&quot;is defined&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="nx">Batman</span><span class="p">.</span><span class="nx">TestCase</span><span class="p">).</span><span class="nx">toBeDefined</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Not working?</h1>
+
+<ul>
+<li>Did you make <code>run</code> executable by with <code>$ chmod +x spec/karma/run</code>?</li>
+<li>This is kind of a hacky setup &mdash; it depends on your development server (either <code>$ rails server</code> or <a href="http://pow.cx/">Pow</a>) running. Is it?</li>
+<li>In <code>unit.coffee</code>, <code>files</code> should list your tests, but it should also list compiled JS assets from your development server, including <code>http://</code> and so on. Check the paths there in your browser. Do they contain everything you expect them to contain? You might need to add files to that list <em>or</em> add <a href="https://github.com/sstephenson/sprockets">sprockets</a> directives to those files so that they <code>require</code> other files.</li>
+</ul>
+
+
+<p>Ok, well it ain&rsquo;t perfect but it works. Hope it helps!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-18T14:38:00-08:00" pubdate data-updated="true">Jan 18<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/coffeescript/'>CoffeeScript</a>, <a class='category' href='/blog/categories/javascript/'>JavaScript</a>, <a class='category' href='/blog/categories/rails/'>Rails</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/" title="Previous Post: Slim Templates with Batman.js and the Rails Asset Pipeline">&laquo; Slim Templates with Batman.js and the Rails Asset Pipeline</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/01/30/debugging-keypaths-in-batman-dot-js-views/" title="Next Post: Debugging Keypaths in Batman.js Views">Debugging Keypaths in Batman.js Views &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

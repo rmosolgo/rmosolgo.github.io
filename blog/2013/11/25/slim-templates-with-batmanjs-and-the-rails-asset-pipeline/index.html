@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Slim Templates with Batman.js and the Rails Asset Pipeline - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="You can use Slim (or Haml) to serve your Batman.js templates in the Rails Asset Pipeline. 1. Include Slim in your gemfile Add this line to your &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Slim Templates With Batman.js and the Rails Asset Pipeline</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-25T13:28:00-08:00" pubdate data-updated="true">Nov 25<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>You can use <a href="http://slim-lang.com/">Slim</a> (or Haml) to serve your <a href="http://batmanjs.org">Batman.js</a> templates in the Rails Asset Pipeline.</p>
+
+<!-- more -->
+
+
+<h1>1. Include Slim in your gemfile</h1>
+
+<p>Add this line to your <code>Gemfile</code>:</p>
+
+<figure class='code'><figcaption><span>Gemfile</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">gem</span> <span class="s2">&quot;slim&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>2. Register the Slim engine with Rails</h1>
+
+<p>Make a new initializer (eg, <code>config/initializers/slim_assets.rb</code>) and put this in it:</p>
+
+<figure class='code'><figcaption><span>config/initializers/slim_assets.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="no">Rails</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="n">register_engine</span><span class="p">(</span><span class="s1">&#39;.slim&#39;</span><span class="p">,</span> <span class="ss">Slim</span><span class="p">:</span><span class="ss">:Template</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Credit: <a href="http://www.dillonbuchanan.com/programming/rails-slim-templates-in-the-asset-pipeline/">Dillon Buchanan</a></p>
+
+<h3>Update: Serving compiled Slim (or Haml) assets in production</h3>
+
+<p>When you deploy to production, if you have <code>config.initialize_on_precompile = false</code>, an initializer isn&rsquo;t going to work. You&rsquo;ll have to register the Sprockets engine another way. Add it to the application config in <code>config/application.rb</code>:</p>
+
+<figure class='code'><figcaption><span>config/application.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">MyApp</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Application</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Application</span>
+</span><span class='line'>    <span class="c1"># ... config stuff ...</span>
+</span><span class='line'>    <span class="n">config</span><span class="o">.</span><span class="n">before_initialize</span> <span class="k">do</span> <span class="o">|</span><span class="n">app</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">require</span> <span class="s1">&#39;sprockets&#39;</span>
+</span><span class='line'>      <span class="nb">require</span> <span class="s1">&#39;slim&#39;</span>
+</span><span class='line'>      <span class="c1"># require &#39;tilt&#39; # for Haml</span>
+</span><span class='line'>      <span class="ss">Sprockets</span><span class="p">:</span><span class="ss">:Engines</span> <span class="c1">#force autoloading</span>
+</span><span class='line'>      <span class="no">Sprockets</span><span class="o">.</span><span class="n">register_engine</span> <span class="s1">&#39;.slim&#39;</span><span class="p">,</span> <span class="ss">Slim</span><span class="p">:</span><span class="ss">:Template</span>
+</span><span class='line'>      <span class="c1"># Sprockets.register_engine &#39;.haml&#39;, Tilt::HamlTemplate # for Haml</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="c1"># ... more config stuff ...</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, you&rsquo;ll have the Slim template engine available even if your app doesn&rsquo;t intialize, which is most notably the case for <code>bundle exec rake assets:precompile</code>. Nice!</p>
+
+<h1>3. Beef up your BatmanController</h1>
+
+<p>At time of writing, the <code>batman-rails</code>-generated BatmanController won&rsquo;t work right in production. There&rsquo;s an <a href="https://github.com/batmanjs/batman-rails/pull/46">outstanding PR</a> with a fix. If that&rsquo;s closed, then we&rsquo;re good to go. In the mean time, Make your <code>app/controllers/batman_controller.rb</code> look like this:</p>
+
+<figure class='code'><figcaption><span>app/controllers/batman_controller.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BatmanController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">xhr?</span>
+</span><span class='line'>      <span class="n">prefix_length</span> <span class="o">=</span> <span class="no">Rails</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">assets</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">length</span> <span class="o">+</span> <span class="mi">1</span>
+</span><span class='line'>      <span class="n">path</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="o">[</span><span class="n">prefix_length</span><span class="o">.</span><span class="n">.</span><span class="o">-</span><span class="mi">1</span><span class="o">]</span>
+</span><span class='line'>      <span class="n">render</span> <span class="ss">:text</span> <span class="o">=&gt;</span> <span class="no">Rails</span><span class="o">.</span><span class="n">application</span><span class="o">.</span><span class="n">assets</span><span class="o">[</span><span class="n">path</span><span class="o">]</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="n">render</span> <span class="ss">nothing</span><span class="p">:</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">layout</span><span class="p">:</span> <span class="s1">&#39;batman&#39;</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When this is done, any files ending in <code>.html.slim</code> in <code>assets</code> will be served as rendered HTML in response to XHR (Ajax) requests. Note that <em>all non-XHR</em> requests will still receive the <code>batman</code> layout (but then Batman will respond to the request, so you&rsquo;re all good).</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-25T13:28:00-08:00" pubdate data-updated="true">Nov 25<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/slim/'>Slim</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/11/23/dynamic-navigation-view-with-batman-dot-js/" title="Previous Post: Dynamic Navigation View with Batman.js">&laquo; Dynamic Navigation View with Batman.js</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/" title="Next Post: Batman.js testing with Karma and Jasmine">Batman.js testing with Karma and Jasmine &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

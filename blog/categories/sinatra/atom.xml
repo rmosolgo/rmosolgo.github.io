@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Sinatra | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/sinatra/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Convert country names and codes with Countrysaurus]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus/"/>
+    <updated>2013-10-07T21:56:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus</id>
+    <content type="html"><![CDATA[<p><a href="http://countrysaurus.herokuapp.com/">Countrysaurus</a> is an online tool for merging country codes into a CSV spreadsheet with country names in it. You can also download a CSV of country codes or access it via <a href="http://countrysaurus.herokuapp.com/api_documentation">REST API</a>.</p>
+
+<!-- more -->
+
+
+<p>In my old job, I often had spreadsheets with (sometimes misspelled) country names, but I needed to feed data into something with country codes, be it ISO-2, ISO-3, OECD, AidData, whatever kind of code.</p>
+
+<p>Finally, I hammered out a little web app with Ruby&rsquo;s <a href="http://www.sinatrarb.com/">Sinatra</a> web framework to help with this problem. You can upload a (small- or medium-sized) CSV spreadsheet and it will:</p>
+
+<ul>
+<li>Identify unique country names</li>
+<li>Allow you to pick which kinds of codes you need</li>
+<li>Suggest matches</li>
+<li>Allow you to add new matches (in case it doesn&rsquo;t have your country name already)</li>
+<li>Allow you to download your spreadsheet.</li>
+</ul>
+
+
+<p>It&rsquo;s also <a href="https://github.com/rmosolgo/country-fixer">on Github</a>. <a href="http://countrysaurus.herokuapp.com/">Try it out!</a></p>
+]]></content>
+  </entry>
+  
+</feed>

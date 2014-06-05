@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Property Caching in Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.js objects (Batman.Object instances) have properties defined with @accessor. These properties are cached until one of their sources busts &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Property Caching in Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-31T09:09:00-07:00" pubdate data-updated="true">Mar 31<span>st</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org">Batman.js</a> objects (<a href="batmanjs.org/docs/api/batman.object.html"><code>Batman.Object</code></a> instances) have properties defined with <a href="batmanjs.org/docs/api/batman.object_accessors.html"><code>@accessor</code></a>. These properties are cached until one of their sources busts their cache.</p>
+
+<!-- more -->
+
+
+<h1>Batman.Object Properties</h1>
+
+<p> In batman.js, all properties should be declared with <code>@accessor</code>. When I say <em>property</em>, I mean a property declared with <code>@accessor</code>.</p>
+
+<p>When a property&rsquo;s value is retrieved (with <code>get</code>), it tracks calls that it makes to other properties. These internal calls (to <code>get</code>) define the property&rsquo;s <em>sources</em>. The value will be cached. Since it knows what it depends on, they only recalculate themselves when their caches are busted. (Passing the <code>cache: false</code> option makes a property not cached.) When one of the property&rsquo;s sources are changed, its cache is busted and it will recalculate <em>next time</em> you <code>get</code> its value.</p>
+
+<p>After a property recalculates, it checks if its <em>new</em> result doesn&rsquo;t equal its <em>cached</em> result ( <code>!==</code> , CoffeeScript <code>isnt</code>). If it determines a new value, then the property busts its dependents&#8217; caches, too</p>
+
+<p>To sum up the introduction:</p>
+
+<ul>
+<li>Sources are tracked at calculation-time, not load time. They&rsquo;re tracked when a property calculates itself.</li>
+<li>A property isn&rsquo;t caluclated if it&rsquo;s never retrieved.</li>
+<li>A property is cached and isn&rsquo;t recalculated until one of its sources signals a change.</li>
+<li>When a property&rsquo;s source changes, the cache is busted and it will recalcute next time it is retrieved with <code>get</code></li>
+<li>If the result of recalculation is a different value (<code>!==</code>), the property notifies <em>its</em> subscribers (if present) to recalculate.</li>
+</ul>
+
+
+<h1>A Day in the Life of a Batman.js Property</h1>
+
+<p><code>fullName</code> is the quintessential computed property:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;fullName&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s"> </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s see how it&rsquo;s used with a <code>Person</code>. You can get metadata for a property with the <code>Batman.Object::property(name)</code> function.</p>
+
+<p>When a person is initialized, the <code>fullName</code> has no value:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">morganFreeman = </span><span class="k">new</span> <span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Morgan&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Freeman&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; null</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It hasn&rsquo;t been requested yet, so it hasn&rsquo;t been calculated. The property also has no sources:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullname&#39;</span><span class="p">).</span><span class="nx">sources</span> <span class="c1"># =&gt; null</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>However, if you <code>get</code> the property, it will be calculated and its sources will be identified.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&rsquo;s inspect the underlying <code>Batman.Property</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">fullName = </span><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Its value is cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it knows its sources:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">sources</span><span class="p">.</span><span class="nx">map</span> <span class="nf">(s) -&gt;</span> <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">key</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;firstName&quot;, &quot;lastName&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you change one of <code>fullName</code>&rsquo;s sources, it is no longer cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;firstName&quot;</span><span class="p">,</span> <span class="s">&quot;Lucius&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;lastName&quot;</span><span class="p">,</span> <span class="s">&quot;Fox&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And since we haven&rsquo;t asked for its value again, it hasn&rsquo;t been recalculated:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But <code>get</code>ting its value will cause it to be recalculated &amp; cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Another Look</h1>
+
+<p>Here&rsquo;s the same story, in a chart:</p>
+
+<p><a href="/images/batman-properties-large.png"><img src="/images/batman-properties.png" alt="Batman.js property caching" /></a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-31T09:09:00-07:00" pubdate data-updated="true">Mar 31<span>st</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/coffeescript/'>CoffeeScript</a>, <a class='category' href='/blog/categories/javascript/'>JavaScript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails/" title="Previous Post: Using Gulp.js to build Batman.js apps without Rails">&laquo; Using Gulp.js to build Batman.js apps without Rails</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/07/prevent-and-allowandfire-for-asynchronous-operations-on-a-batman-dot-set/" title="Next Post: Prevent and allowAndFire for asynchronous operations on a Batman.Set">Prevent and allowAndFire for asynchronous operations on a Batman.Set &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

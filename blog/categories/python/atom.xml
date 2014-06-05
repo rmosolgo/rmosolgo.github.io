@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Python | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/python/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Lessons Learned on Google App Engine]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/"/>
+    <updated>2013-11-01T13:00:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine</id>
+    <content type="html"><![CDATA[<p>My involvement with a <a href="https://cloud.google.com/products/app-engine">Google App Engine</a>-based project is winding down, so I&rsquo;ll share what I&rsquo;ve learned.</p>
+
+<!-- more -->
+
+
+<h1>Building for App Engine is tough</h1>
+
+<p>If you&rsquo;re thinking about starting a project on GAE, think about it carefully. I had a hard time with it for several reasons, but my first mistake was thinking, &ldquo;Oh, this will be a way to get an app going quickly and cheaply without all that sysadmin trouble.&rdquo; This is not the case for a few reason:</p>
+
+<ul>
+<li>mission-critical features depend on <em>GAE-specific</em> APIs which are often poorly documented and not very googlable.</li>
+<li>you&rsquo;ll be learning a <a href="https://developers.google.com/appengine/docs/python/ndb/">new database (NDB)</a>, a <a href="https://developers.google.com/appengine/docs/python/memcache/">new memcache server</a> and a <a href="https://developers.google.com/appengine/docs/python/taskqueue/">new task queuer</a>, among others.</li>
+<li>GAE support for Django is so-so. You&rsquo;ll probably have to learn a new framework. Make sure to use <a href="http://webapp-improved.appspot.com/">WebApp2</a> if you&rsquo;re trying to set up a lightweight application.</li>
+</ul>
+
+
+<p>If you want quick, cheap prototyping, consider <a href="http://heroku.com/">Heroku</a> instead. You&rsquo;ll have access to all the standard components of the modern web stack (rather than GAE-specific ones) and Heroku supports <a href="https://devcenter.heroku.com/categories/language-support">many languages</a>.</p>
+
+<h1>Development server != Production server</h1>
+
+<p>The development environment differs from the production environment in several ways. The ones I found are:</p>
+
+<ul>
+<li>No memory limit on the development server</li>
+<li>No timeouts on the development server</li>
+<li>Asynchronous features don&rsquo;t work on the development server (futures don&rsquo;t resolve until they&rsquo;re explicitly waited for)</li>
+</ul>
+
+
+<p>So, something that works in development may not work in production! (And apparently the same is <a href="https://developers.google.com/appengine/docs/python/tools/localunittesting#Python_Introducing_the_Python_testing_utilities">true for the test stubs</a>.)</p>
+
+<h1>You might have to pay for your staging environment</h1>
+
+<p>Unless you look into <a href="http://www.appscale.com/">AppScale</a> (I didn&rsquo;t), you&rsquo;ll need another GAE instance for your staging server. Unless you pay, you won&rsquo;t be able to test rigorous features of the app.</p>
+
+<h1>The Datastore has some drawbacks</h1>
+
+<ol>
+<li><p>You pay to use it. If your application will be database-intensive (reads, writes and/or deletes), it&rsquo;s gonna cost you. It adds up &mdash; make sure to set a nice low cap on your budget.</p></li>
+<li><p>The pricing is non-intuitive at first. You&rsquo;re charged for each value in the stored entity, its key, and each value in any indexes that entity has.</p></li>
+<li><p>Indexes are expensive to maintain (because of the point above). Remove ones you don&rsquo;t desperately need!</p></li>
+<li><p>It&rsquo;s an unfamiliar, low-level API. To me, anyways &mdash; it&rsquo;s no ActiveRecord.</p></li>
+</ol>
+
+
+<h1>Don&rsquo;t cache if you&rsquo;re running big queries</h1>
+
+<p>Make sure to pass the <a href="https://developers.google.com/appengine/docs/python/ndb/functions#context_options"><code>use_cache=false</code> context option</a> or else it will kill your instance for memory overload! For example:</p>
+
+<p><code>python
+  some_big_query = AppModel.query(AppModel.some_property == value)
+  lots_of_items = some_big_query.fetch(use_cache=False) # otherwise it will cache entities in memory
+</code></p>
+
+<p>Also, consider the <a href="https://developers.google.com/appengine/docs/python/ndb/queryclass#kwdargs_options"><code>keys_only</code> option</a> if you&rsquo;re performing actions that could work with just the keys. <a href="https://developers.google.com/appengine/docs/python/ndb/keyclass#Key_delete">Deleting</a>, for example:</p>
+
+<p><code>python
+  unwanted_entity_keys = AppModel.query(AppModel.some_property == value).fetch(keys_only=True)
+  ndb.delete_multi(unwanted_entity_keys)
+</code></p>
+
+<h1>Use pages to run big queries</h1>
+
+<p>Datastore operations are limited to 60 seconds, even on the backend. If you&rsquo;re iterating over lots of entities and/or performing time-consuming tasks on each one, you&rsquo;ll want to use the <a href="https://developers.google.com/appengine/docs/python/ndb/queryclass#Query_fetch_page"><code>Query#fetch_page</code></a> method. For example, creating a CSV based on a query:</p>
+
+<p>```python
+class AppModel(ndb.model):
+  CSV_HEADER = &ldquo;heading,heading,heading\n&rdquo;
+  @class_method
+  def csv_by_dates(cls, start_date, end_date):</p>
+
+<pre><code>PAGE_SIZE = 500 # I'll process 500 at a time
+csv = cls.CSV_HEADER
+
+# here's a big query:
+query = cls.query(cls.date &gt; start_date, cls.date &lt; end_date).order(cls.date)
+# use the fetch_page method:
+results, cursor, more = query.fetch_page(PAGE_SIZE, use_cache=False)
+
+while len(results) &gt; 0:
+  for d in results:
+    csv += d.to_csv() # load up the CSV
+  # pass `cursor` to the next query:
+  results, cursor, more = query.fetch_page(PAGE_SIZE, start_cursor=cursor, use_cache=False)
+
+return csv
+</code></pre>
+
+<p>  # def to_csv(self): &hellip;
+```</p>
+
+<p><em>Ok, that&rsquo;s all for now!</em></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Enable filesystem writes in GAE dev_appserver]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/08/05/enable-filesystem-writes-in-gae-dev-appserver/"/>
+    <updated>2013-08-05T20:43:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/08/05/enable-filesystem-writes-in-gae-dev-appserver</id>
+    <content type="html"><![CDATA[<p><a href="https://cloud.google.com/products/">Google App Engine</a>&rsquo;s <code>dev_appserver</code> prevents filesystem writes because GAE has no filesystem &mdash; but sometimes you want to write anyways!</p>
+
+<!-- more -->
+
+
+<p>I was working over a big set of data from the <a href="https://developers.google.com/appengine/docs/python/storage#App_Engine_Datastore">Google App Engine High-Replication Datastore</a> and I found that, somewhere in my loop, memory was slipping away&hellip;</p>
+
+<p>So I got <a href="http://mg.pov.lt/objgraph/">objgraph</a>, which creates a graphic based on your memory usage. But I had a problem: Google App Engine doesn&rsquo;t have a filesystem, so the development server prevents you from writing to files. <code>objgraph</code> couldn&rsquo;t create my graphic!</p>
+
+<p>Luckily, the fix was simple: I found the line that threw the error and commented it out. <em>(The file is <code>[your_appengine_root]\google\appengine\tools\devappserver2\python\stubs.py</code>)</em></p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>stubs.py  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>  <span class="c"># Starting on line 242:</span>
+</span><span class='line'>  <span class="k">def</span> <span class="err">&lt;</span><span class="nf">strong</span><span class="o">&gt;</span><span class="n">init</span><span class="o">&lt;/</span><span class="n">strong</span><span class="o">&gt;</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">r</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="n">bufsize</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="s">&quot;&quot;&quot;Initializer. See file built-in documentation.&quot;&quot;&quot;</span>
+</span><span class='line'><span class="c"># if mode not in FakeFile.ALLOWED_MODES:</span>
+</span><span class='line'><span class="c">#   raise IOError(errno.EROFS, &#39;Read-only file system&#39;, filename)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="ow">not</span> <span class="n">FakeFile</span><span class="o">.</span><span class="n">is_file_accessible</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+</span><span class='line'>  <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">EACCES</span><span class="p">,</span> <span class="s">&#39;file not accessible&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">super</span><span class="p">(</span><span class="n">FakeFile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>By the way, it didn&rsquo;t turn out to be a memory leak. It was <a href="https://developers.google.com/appengine/docs/python/ndb/cache">GAE&rsquo;s NDB caching</a> in action &mdash; I just disabled it by:
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">for</span> <span class="n">d_key</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">keys_only</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">d</span> <span class="o">=</span> <span class="n">d_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">use_memcache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span><span class='line'>  <span class="c"># &amp;hellip;</span>
+</span><span class='line'>  <span class="n">d</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">use_memcache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Then I was all clear!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Serving static files in WebApp2 reponses]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses/"/>
+    <updated>2013-08-04T19:22:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses</id>
+    <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image.</p>
+
+<!-- more -->
+
+
+<p>The given object could only have one image, so I was using the <a href="https://developers.google.com/appengine/docs/python/ndb/properties">NDB BlobProperty</a>:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Sensor</span><span class="p">(</span><span class="n">ndb</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="n">ndb</span><span class="o">.</span><span class="n">BlobProperty</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>I put the default image in my application root (alongside <code>app.yaml</code>):</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">app_root</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">request_handlers:&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;pre&gt;&lt;code&gt;- __init__.py</span>
+</span><span class='line'><span class="p-Indicator">-</span> <span class="l-Scalar-Plain">handlers.py</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;ul&gt;</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;app.yaml&lt;/li&gt;</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;default_sensor.jpg</span>
+</span><span class='line'><span class="nl">&amp;hellip</span><span class="l-Scalar-Plain">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></li>
+</ul>
+
+
+<p>In my request handler, I checked for the presence of an image, and gave the default image if there wasn&rsquo;t one there:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">responds</span> <span class="n">to</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="p">(</span>\<span class="n">w</span><span class="o">+</span><span class="p">)</span><span class="o">/</span><span class="n">image</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">class</span> <span class="nc">SensorImage</span><span class="p">(</span><span class="n">webapp2</span><span class="o">.</span><span class="n">RequestHandler</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">DEFAULT_IMAGE</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">default_sensor</span><span class="o">.</span><span class="n">jpg</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">hex</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span>
+</span><span class='line'><span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;image/jpg&quot;</span>
+</span><span class='line'><span class="n">this_sensor</span> <span class="o">=</span> <span class="n">Sensor</span><span class="o">.</span><span class="n">find_by_hex</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span><span class="p">):</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">SensorImage</span><span class="o">.</span><span class="n">DEFAULT_IMAGE</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">image</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="p">)</span>
+</span><span class='line'>  <span class="n">image</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">else</span><span class="p">:</span>
+</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span> <span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>That way, I had one URL that didn&rsquo;t change whether a user uploaded an image or not.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Handling Files in WebApp2 and Google App Engine]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine/"/>
+    <updated>2013-08-04T19:22:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine</id>
+    <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image. The given object could only have on image, so I was using the <a href="https://developers.google.com/appengine/docs/python/ndb/properties">NDB BlobProperty</a>:</p>
+
+<!-- more -->
+
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Sensor</span><span class="p">(</span><span class="n">ndb</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="n">ndb</span><span class="o">.</span><span class="n">BlobProperty</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>I put the default image in my application root (alongside <code>app.yaml</code>):</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">app_root</span><span class="p-Indicator">:</span>
+</span><span class='line'>  <span class="l-Scalar-Plain">request_handlers:&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;pre&gt;&lt;code&gt;- __init__.py</span>
+</span><span class='line'><span class="p-Indicator">-</span> <span class="l-Scalar-Plain">handlers.py</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;ul&gt;</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;app.yaml&lt;/li&gt;</span>
+</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;default_sensor.jpg</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></li>
+</ul>
+
+
+<p>In my request handler, I checked for the presence of an image, and gave the default image if there wasn&rsquo;t one there:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">responds</span> <span class="n">to</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="p">(</span>\<span class="n">w</span><span class="o">+</span><span class="p">)</span><span class="o">/</span><span class="n">image</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">class</span> <span class="nc">SensorImage</span><span class="p">(</span><span class="n">webapp2</span><span class="o">.</span><span class="n">RequestHandler</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">DEFAULT_IMAGE</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">default_sensor</span><span class="o">.</span><span class="n">jpg</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">hex</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span>
+</span><span class='line'><span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;image/jpg&quot;</span>
+</span><span class='line'><span class="n">this_sensor</span> <span class="o">=</span> <span class="n">Sensor</span><span class="o">.</span><span class="n">find_by_hex</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span><span class="p">):</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">SensorImage</span><span class="o">.</span><span class="n">DEFAULT_IMAGE</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">image</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="p">)</span>
+</span><span class='line'>  <span class="n">image</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">else</span><span class="p">:</span>
+</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span> <span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>That way, I had one URL that didn&rsquo;t change whether a user uploaded an image or not.</p>
+]]></content>
+  </entry>
+  
+</feed>

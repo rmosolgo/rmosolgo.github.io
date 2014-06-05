@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Adding Batman.js to an Existing Rails App]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/"/>
+    <updated>2013-10-19T22:08:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app</id>
+    <content type="html"><![CDATA[<p>I had an existing app, but I wanted to take the front end to the next level. <a href="http://batmanjs.org/">Batman.js</a> is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful <a href="https://github.com/batmanjs/batman-rails">Rails integration</a>.</p>
+
+<!-- more -->
+
+
+<h3>Installing Batman.js</h3>
+
+<p>I was already using <a href="https://github.com/rails-api/active_model_serializers">ActiveModel::Serializer</a> to serve JSON from my app. To get Batman on the scene, I included
+<code>batman-rails</code> in my Gemfile and installed it:</p>
+
+<p>```ruby Gemfile.rb</p>
+
+<pre><code>require 'batman-rails', '~&gt; 0.15'
+</code></pre>
+
+<p>```</p>
+
+<p><code>bash
+  $ bundle install
+</code></p>
+
+<p>The <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> comes with a generator to get everything in order.
+I ran it and restarted my Rails server:</p>
+
+<p><code>bash
+  $ rails g batman:app # that's not _your_ app name, it's just "app"
+  $ powder restart # restart your Rails server one way or another
+</code></p>
+
+<p>I visited my app&rsquo;s <code>root_url</code> and found Batman-rails landing page. How&rsquo;d it get there!? Sure enough, the Batman generator had added a punchy line to the top of my routes file:</p>
+
+<p><code>ruby config/routes.rb
+  get "(*redirect_path)", to: "batman#index", constraints: lambda { |request| request.format == "text/html" }
+</code></p>
+
+<p>It captures all <code>text/html</code> requests and passes them to <code>BatmanController</code>, which was also created by the generator:</p>
+
+<p>```ruby app/controllers/batman_controller
+  class BatmanController &lt; ApplicationController</p>
+
+<pre><code>def index
+  render nothing: true, layout: 'batman'
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<p>Along with that, there was a new file in my <code>app/views/layouts</code> folder, and then of course, <code>app/assets/batman</code>.</p>
+
+<h3>My first view</h3>
+
+<p>I didn&rsquo;t want the Batman landing page at my <code>root_url</code>, I wanted a list of sounds! So, I ran a Batman generator, beefed up the model and controller, created the index html, and redefined the route:</p>
+
+<p><code>
+  $ rails g batman:scaffold Sounds
+</code></p>
+
+<p>```coffeescript app/assets/batman/models/sound.js.coffee</p>
+
+<pre><code>class Lang.Sound extends Batman.Model
+  @resourceName: 'sounds'
+  @storageKey: 'sounds'
+
+  @persist Batman.RailsStorage
+
+  # Use @encode to tell batman.js which properties Rails will send back with its JSON.
+  @encode 'letter'
+  @encodeTimestamps()
+</code></pre>
+
+<p>```</p>
+
+<p>```coffeescript app/assets/batman/controllers/sounds_controller.js.coffee</p>
+
+<pre><code>class Lang.SoundsController extends Lang.ApplicationController
+  routingKey: 'sounds'
+  index: (params) -&gt;
+    @set("sounds", Lang.Sound.get('all'))
+</code></pre>
+
+<p>```</p>
+
+<p>```haml app/assets/batman/html/sounds/index.html</p>
+
+<pre><code>&lt;ul&gt;
+  &lt;li data-foreach-sound="sounds"&gt;
+    &lt;span data-bind="sound.letter" /&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>```</p>
+
+<p><em>your filename will be your app name:</em>
+```coffeescript app/assets/batman/lang.js.coffee</p>
+
+<pre><code>class Lang extends Batman.App
+  @root "sounds#index"
+</code></pre>
+
+<p>```</p>
+
+<p>And now I had my own landing page!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Convert country names and codes with Countrysaurus]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus/"/>
+    <updated>2013-10-07T21:56:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus</id>
+    <content type="html"><![CDATA[<p><a href="http://countrysaurus.herokuapp.com/">Countrysaurus</a> is an online tool for merging country codes into a CSV spreadsheet with country names in it. You can also download a CSV of country codes or access it via <a href="http://countrysaurus.herokuapp.com/api_documentation">REST API</a>.</p>
+
+<!-- more -->
+
+
+<p>In my old job, I often had spreadsheets with (sometimes misspelled) country names, but I needed to feed data into something with country codes, be it ISO-2, ISO-3, OECD, AidData, whatever kind of code.</p>
+
+<p>Finally, I hammered out a little web app with Ruby&rsquo;s <a href="http://www.sinatrarb.com/">Sinatra</a> web framework to help with this problem. You can upload a (small- or medium-sized) CSV spreadsheet and it will:</p>
+
+<ul>
+<li>Identify unique country names</li>
+<li>Allow you to pick which kinds of codes you need</li>
+<li>Suggest matches</li>
+<li>Allow you to add new matches (in case it doesn&rsquo;t have your country name already)</li>
+<li>Allow you to download your spreadsheet.</li>
+</ul>
+
+
+<p>It&rsquo;s also <a href="https://github.com/rmosolgo/country-fixer">on Github</a>. <a href="http://countrysaurus.herokuapp.com/">Try it out!</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Rspec should_receive stubs methods]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/09/28/rspec-should-receive-stubs-methods/"/>
+    <updated>2013-09-28T20:59:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/09/28/rspec-should-receive-stubs-methods</id>
+    <content type="html"><![CDATA[<p>I learned this the hard way, so I thought I&rsquo;d share.</p>
+
+<!-- more -->
+
+
+<p>A great feature of Rspec is its <code>should_receive</code> method, which checks if a message was sent to an object
+sometime during that spec. For example, this test would pass:</p>
+
+<p>```ruby
+  class Fish</p>
+
+<pre><code>def initialize
+  @swishes = 0
+end
+
+attr_reader :swishes
+
+def swim!
+  swish_tail!
+end
+
+private
+  def swish_tail!
+    @swishes += 1
+  end
+</code></pre>
+
+<p>  end
+<code>
+</code>ruby
+  describe Fish do</p>
+
+<pre><code>it "swims by swishing its tail" do
+  swimming_fish = Fish.new
+  swimming_fish.should_receive :swish_tail!
+  swimming_fish.swim!
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<p>However, <code>should_receive</code> also stubs the method, so if it is sent, its body isn&rsquo;t executed. This spec
+won&rsquo;t pass:</p>
+
+<p>```ruby
+  describe Fish do</p>
+
+<pre><code>it "swims by swishing its tail" do
+  swimming_fish = Fish.new
+  swimming_fish.should_receive :swish_tail!
+  swimming_fish.swim!
+  swimming_fish.swishes.should == 1 # OOPS, FAILS! it's still 0.
+end
+</code></pre>
+
+<p>  end
+```</p>
+]]></content>
+  </entry>
+  
+</feed>

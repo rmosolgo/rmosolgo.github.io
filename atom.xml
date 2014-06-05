@@ -1,0 +1,2259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
+    <updated>2014-06-05T07:26:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
+
+<!-- more -->
+
+
+<p><strong>The goal</strong> is to have a user add an image to a file input and <em>immediately</em> preview that image. To accomplish this, we&rsquo;ll turn the uploaded file into a data URI, then set that to the <code>src</code> of our <code>&lt;img/&gt;</code>.</p>
+
+<p>First, set up the observer in the model:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">ModelWithImage</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;imageDataURI&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="k">super</span>
+</span><span class='line'>    <span class="nx">@observe</span> <span class="s">&#39;imageFile&#39;</span><span class="p">,</span> <span class="nf">(newVal, oldVal) -&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nx">newVal</span><span class="o">?</span>
+</span><span class='line'>        <span class="nx">@_setImageDataURIFromFile</span><span class="p">()</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="nx">@set</span> <span class="s">&#39;imageDataURI&#39;</span><span class="p">,</span> <span class="s">&quot;&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This says: &ldquo;whenever <code>imageFile</code> changes, if there is a new value, use it to set the data URI, otherwise, set the data URI to <code>""</code>.&rdquo;</p>
+
+<p>Now, implement <code>_setImageDataURIFromFile</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">_setImageDataURIFromFile: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nv">file = </span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;imageFile&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">reader = </span><span class="k">new</span> <span class="nx">FileReader</span>
+</span><span class='line'>    <span class="nv">reader.onload = </span><span class="nf">(e) =&gt;</span>
+</span><span class='line'>      <span class="nv">dataURI = </span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">result</span>
+</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;imageDataURI&#39;</span><span class="p">,</span> <span class="nx">dataURI</span>
+</span><span class='line'>    <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsDataURL</span><span class="p">(</span><span class="nx">file</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can use it in a template like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;img</span> <span class="na">data-bind-src=</span><span class="s">&#39;component.imageDataURI&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;file&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;component.imageFile&#39;</span> <span class="nt">/&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When a user uploads a file, the <code>&lt;img&gt;</code> will be automatically updated!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Has Many Through in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js/"/>
+    <updated>2014-05-30T15:27:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> doesn&rsquo;t support <code>hasManyThrough</code> out of the box, but it can be implemented fairly easily with <code>Set::mappedTo</code>.</p>
+
+<!-- more -->
+
+
+<p><em>This feature was just merged into the master branch &mdash; download the latest batman.js <a href="http://batmanjs.org/download.html">here</a>.</em></p>
+
+<h1>What&rsquo;s a &ldquo;Has-Many-Through&rdquo; Association?</h1>
+
+<p>It&rsquo;s best shown by example. To join <code>Household</code> to <code>Person</code>, you might have a &ldquo;join model&rdquo;, <code>HouseholdMembership</code>. The associations look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Household</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;householdMemberships&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nx">HouseholdMembership</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;household&#39;</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;person&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;householdMemberships&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Household <code>hasMany</code> memberships, each membership <code>belongsTo</code> a person.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>           <span class="nx">__</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span><span class='line'>         <span class="err">╱</span>
+</span><span class='line'><span class="nx">Household</span> <span class="err">───</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span><span class='line'>         <span class="err">╲</span>
+</span><span class='line'>           <span class="err">╲</span><span class="nx">_</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Household has many people <em>through</em> household memberships.</p>
+
+<h1>Has-Many-Through in Batman.js</h1>
+
+<p>Although <code>hasManyThrough</code> isn&rsquo;t part of batman.js, you can implement a <strong>read-only</strong> has-many-through using <a href="http://batmanjs.org/docs/api/batman.set.html#prototype_function_mappedto"><code>Set::mappedTo</code></a>. Given classes as defined above, you could add an accessor for <code>Household::people</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># class Household</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;people&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;householdMemberships&#39;</span><span class="p">).</span><span class="nx">mappedTo</span><span class="p">(</span><span class="s">&#39;person&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This returns a <code>Batman.Set</code> (actually a <code>Batman.SetMapping</code>) containing unique <code>Person</code>s belonging to those <code>householdMemberships</code>. As batman.js does, items added and removed are <a href="rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a>, so this is safe to use everywhere.</p>
+
+<p>As for <strong>adding items</strong>, you could do it this way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># class Household</span>
+</span><span class='line'>  <span class="nv">addPerson: </span><span class="nf">(person) -&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;householdMemberships&#39;</span><span class="p">).</span><span class="nx">build</span><span class="p">({</span><span class="nx">person</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Again, the <code>Batman.SetMapping</code> will take care of keeping everything in sync!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Jasmine-Friendly Batman.js Accessor Stubs]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs/"/>
+    <updated>2014-05-16T12:53:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><code>Batman.Object</code> accessors</a> are the bread and butter of <a href="http://batmanjs.org">batman.js</a>. Stubbing them can make testing much easier.</p>
+
+<!-- more -->
+
+
+<p>I haven&rsquo;t figured out <a href="http://batmanjs.org/docs/testing.html"><code>Batman.TestCase</code></a> yet, so I&rsquo;m still using <a href="http://jasmine.github.io/">jasmine</a>. <code>Batman.TestCase</code> <a href="https://github.com/batmanjs/batman/blob/master/src/extras/testing/test_case.coffee#L90">includes <code>stubAccessor</code> out of the box</a>, and I ported it to jasmine:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nb">window</span><span class="p">.</span><span class="nv">stubAccessor = </span><span class="nf">(object, keypath) -&gt;</span>
+</span><span class='line'>  <span class="k">if</span> <span class="nx">object</span><span class="p">.</span><span class="nx">prototype</span><span class="o">?</span>
+</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">warn</span> <span class="s">&quot;You&#39;re stubbing an accessor on </span><span class="si">#{</span><span class="nx">object</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">,</span>
+</span><span class='line'><span class="s">        which won&#39;t be un-stubbed when the example group finishes!</span>
+</span><span class='line'><span class="s">        Stub accessors on instances, not classes, if possible!&quot;</span>
+</span><span class='line'>  <span class="nv">stub = </span><span class="nx">spyOn</span><span class="p">(</span><span class="nx">object</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="nx">keypath</span><span class="p">),</span> <span class="s">&#39;getValue&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">object</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="nx">keypath</span><span class="p">).</span><span class="nx">refresh</span><span class="p">()</span>
+</span><span class='line'>  <span class="nx">stub</span><span class="p">.</span><span class="nx">calls</span><span class="p">.</span><span class="nx">pop</span><span class="p">()</span> <span class="c1"># ^^ remove call from refresh</span>
+</span><span class='line'>  <span class="nx">stub</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This way, the <code>stub</code> works just like normal jasmine spies:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">record = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">MyModel</span>
+</span><span class='line'><span class="nv">stub = </span><span class="nx">stubAccessor</span><span class="p">(</span><span class="nx">record</span><span class="p">,</span> <span class="s">&#39;myProperty&#39;</span><span class="p">).</span><span class="nx">andReturn</span><span class="p">(</span><span class="s">&#39;stubbed!&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">record</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;myProperty&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;stubbed!&quot;</span>
+</span><span class='line'><span class="nx">record</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;myProperty&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">stub</span><span class="p">.</span><span class="nx">calls</span><span class="p">.</span><span class="nx">length</span> <span class="c1"># =&gt; 2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">record = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">MyModel</span>
+</span><span class='line'><span class="nv">stub = </span><span class="nx">stubAccessor</span><span class="p">(</span><span class="nx">record</span><span class="p">,</span> <span class="s">&#39;myProperty&#39;</span><span class="p">).</span><span class="nx">andCallThrough</span><span class="p">()</span>
+</span><span class='line'><span class="nx">record</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;myProperty&#39;</span><span class="p">,</span> <span class="s">&quot;value!&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">record</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;myProperty&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;value!&quot;</span>
+</span><span class='line'><span class="nx">stub</span><span class="p">.</span><span class="nx">calls</span><span class="p">.</span><span class="nx">length</span> <span class="c1"># =&gt; 1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>However, this <code>stubAccessor</code> <em>doesn&rsquo;t</em> stub <code>set</code>! Maybe that&rsquo;s a to-do, I haven&rsquo;t needed it yet.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Integrate Batman.js and Leaflet with a Custom View]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/"/>
+    <updated>2014-04-30T23:33:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">batman.js</a> views are one of the best ways to integrate other JS libraries with batman.js data structures like <code>Batman.Object</code> and <code>Batman.Set</code>. For example, you can use a custom view to display <code>Batman.Model</code>s with <a href="http://leafletjs.com">leaflet.js</a></p>
+
+<!-- more -->
+
+
+<p>I&rsquo;ve always wanted to try batman.js + leaflet. I had to:</p>
+
+<ul>
+<li>Use <code>@option</code> to define view APIs</li>
+<li>Initialize the custom view, controlling for async loading of data &amp; map</li>
+<li>Observe <code>Batman.Object</code>s to keep leaflet up-to-date.</li>
+<li>Listen to leaflet to keep batman.js up to date</li>
+</ul>
+
+
+<p>I ended up making an abstract <code>LeafletView</code>, implemented by <code>LeafletPointView</code> and <code>LeafletCollectionPointView</code>.</p>
+
+<p>Be sure to check out the <a href="http://bl.ocks.org/rmosolgo/11443841">live example</a> and source code (<a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee">custom views</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/index.jade#L19">index html</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/edit.jade#L19">edit html</a>)!</p>
+
+<h2><code>@option</code> in Custom Views</h2>
+
+<p><code>@option</code> allows you to pass values explicitly into your custom view. That way, you can eliminate the guesswork of climbing the view tree or looking up to the controller for some value.</p>
+
+<p>It provides a view binding <em>and</em> an accessor for your custom view. In my case, I used:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">LeafletView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
+</span><span class='line'>  <span class="nx">@option</span> <span class="s">&#39;draggable&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To provide in my HTML:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">data-view=</span><span class="s">&#39;App.LeafletView&#39;</span> <span class="na">data-view-draggable=</span><span class="s">&#39;true&#39;</span><span class="nt">&gt;&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And in my view code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;draggable&#39;</span><span class="p">)</span> <span class="c1"># =&gt; returns the value passed to the binding</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This also works for objects, as in <code>@option 'item'</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">data-view=</span><span class="s">&#39;App.LeafletPointView&#39;</span> <span class="na">data-view-item=</span><span class="s">&#39;monument&#39;</span><span class="nt">&gt;&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then I have easy access to my record:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;item&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Initializing Custom Views</h2>
+
+<p>Initializing custom batman.js views is tough because:</p>
+
+<ul>
+<li>Views are constructed before they&rsquo;re added to the DOM</li>
+<li>Bindings are initialized without values (and their objects may not be loaded from the server yet)</li>
+<li>Lifecycle events may fire more than once</li>
+</ul>
+
+
+<p>So, you have to be prepared for undefined values and for <code>viewDidAppear</code> to be fired more than once.</p>
+
+<ul>
+<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L38"><strong>Use <code>observeOnce</code></strong></a> to fire on change from <code>undefined</code> to some value. My case was different because I had to wait for the binding <em>and</em> for the map to load, hence the <code>leafletReady</code> event.</li>
+<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L52"><strong>Check for initialization</strong> in <code>viewDidAppear</code> handlers</a></li>
+</ul>
+
+
+<h2>Keeping Other Libraries up to Date</h2>
+
+<p>Integrating batman.js with other JavaScript libraries usually means setting up event handlers so that events pass from an outside proxy of a <code>Batman.Object</code> to the object itself.</p>
+
+<p>For example, to update a leaflet marker when a <code>Batman.Object</code> is changed, you have to observe the <code>Batman.Object</code> so that <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L149">whenever <code>latitude</code> or <code>longitude</code> changes, you update the marker</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># From App.LeafletPointView, @get(&#39;item&#39;) returns the object</span>
+</span><span class='line'><span class="nx">@observe</span> <span class="s">&#39;item.latitude&#39;</span><span class="p">,</span> <span class="nf">(nv, ov) -&gt;</span>
+</span><span class='line'>  <span class="nx">@updateMarker</span><span class="p">(</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;item&#39;</span><span class="p">),</span> <span class="nv">centerOnItem: </span><span class="kc">true</span><span class="p">)</span> <span class="k">if</span> <span class="nx">nv</span><span class="o">?</span>
+</span><span class='line'><span class="nx">@observe</span> <span class="s">&#39;item.longitude&#39;</span><span class="p">,</span> <span class="nf">(nv, ov) -&gt;</span>
+</span><span class='line'>  <span class="nx">@updateMarker</span><span class="p">(</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;item&#39;</span><span class="p">),</span> <span class="nv">centerOnItem: </span><span class="kc">true</span><span class="p">)</span> <span class="k">if</span> <span class="nx">nv</span><span class="o">?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You have to link the other way too. To update a record when its marker is updated (by dragging), <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L85">create a handler</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># from App.LeafletView</span>
+</span><span class='line'><span class="nx">marker</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;dragend&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="c1"># get values from leaflet and update batman.js</span>
+</span><span class='line'>  <span class="nv">latLng = </span><span class="nx">marker</span><span class="p">.</span><span class="nx">getLatLng</span><span class="p">()</span>
+</span><span class='line'>  <span class="nx">item</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;latitude&#39;</span><span class="p">,</span> <span class="nx">latLng</span><span class="p">.</span><span class="nx">lat</span>
+</span><span class='line'>  <span class="nx">item</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;longitude&#39;</span><span class="p">,</span> <span class="nx">latLng</span><span class="p">.</span><span class="nx">lng</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>App.LeafletCollectionPointView</code> uses <a href="http://batmanjs.org/docs/api/batman.setobserver.html"><code>Batman.SetObserver</code></a> to <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L174">track adding, removing and modifying items</a> (just like <code>Batman.SetSort</code>).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Getting to Know Batman.Set]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/"/>
+    <updated>2014-04-30T07:54:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/docs/api/batman.set.html"><code>Batman.Set</code></a> is the array-like enumerable of <a href="http://batmanjs.org">batman.js</a>. It offers observable properties (which are automatically tracked by <code>@accessor</code>) and useful change events.</p>
+
+<!-- more -->
+
+
+<p>In batman.js, you need observable data structures everywhere. <code>Batman.Set</code> is the observable, array-like enumerable that the framework uses internally, and you can use it too! Besides <code>Batman.Set</code>, batman.js provides some other classes to help you get things done:</p>
+
+<ul>
+<li><code>Batman.SetIndex</code> (created with <code>indexedBy</code>) groups a Set&rsquo;s items by a property value</li>
+<li><code>Batman.UniqueSetIndex</code> (created with <code>indexedByUnique</code>) looks up items by unique value</li>
+<li><code>Batman.SetSort</code> (created with <code>sortedBy</code>) returns a sorted proxy of the Set</li>
+<li>Binary set operations create unions, intersections and complements of sets.</li>
+</ul>
+
+
+<h2>Batman.Set</h2>
+
+<p><code>Batman.Set</code> implements the <a href="http://en.wikipedia.org/wiki/Mathematical_set">set</a> pattern. It is a <em>collection of distinct objects</em>, meaning that there can be no duplicates (unlike an array). Features of <code>Batman.Set</code> include:</p>
+
+<ul>
+<li>Enumeration (<code>Batman.Set</code> mixes in <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumerable</code></a>)</li>
+<li>Guaranteed unique contents (a <code>Batman.Set</code> won&rsquo;t allow duplicates, even if you call <code>add</code> twice.)</li>
+<li>Observable</li>
+<li>Sorting and searching, with internal caching</li>
+<li>Extensible with CoffeeScript <code>extend</code> for making custom sets</li>
+</ul>
+
+
+<p>You can <strong>create</strong> a <code>Batman.Set</code> by passing <em>n</em> items to the constructor:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">set = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can <strong>add</strong> and <strong>remove</strong> with the <code>add</code> and <code>remove</code> functions, which also take any number of items:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you try to add the same (<code>===</code>) item twice, it won&rsquo;t be added:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span><span class='line'><span class="nx">addedItems</span>        <span class="c1"># =&gt; []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you try to remove an item that isn&rsquo;t in the set, nothing will happen:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span><span class='line'><span class="nx">removedItems</span>      <span class="c1"># =&gt; []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Observing Batman.Set</h3>
+
+<p>Calling these functions inside an accessor function will cause the accessor to track the <code>Batman.Set</code>:</p>
+
+<ul>
+<li><code>at</code></li>
+<li><code>find</code></li>
+<li><code>merge</code></li>
+<li><code>forEach</code> (and any other <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumable</code> function</a>, since they call <code>forEach</code> under the hood)</li>
+<li><code>toArray</code></li>
+<li><code>isEmpty</code></li>
+<li><code>has</code></li>
+</ul>
+
+
+<p>So will <code>get</code>ting these accessors:</p>
+
+<ul>
+<li><code>first</code></li>
+<li><code>last</code></li>
+<li><code>isEmpty</code></li>
+<li><code>toArray</code></li>
+<li><code>length</code></li>
+</ul>
+
+
+<p>For example, all these accessors will be recalculated when <code>students</code> changes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Classroom</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;students&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.length&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.isEmpty&#39;</span><span class="p">)</span> <span class="c1"># or @get(&#39;students&#39;).isEmpty()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;numberOfPassingStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="c1"># ::count calls forEach in Batman.Enumerable:</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students&#39;</span><span class="p">).</span><span class="nx">count</span> <span class="nf">(s) -&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;grade&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>size</code>, <code>hasStudents</code>, and <code>numberOfPassingStudents</code> all register <code>students</code> as a source. (See <a href="http://rmosolgo.github.io/docs/api/batman.object_accessors.html#accessors_as_computed_properties">the docs</a> or <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">this blog post</a> for more information about batman.js automatic source tracking.)</p>
+
+<p>Besides automatic source tracking in accessors, you can observe these properties with <code>observe</code>.</p>
+
+<h2><code>itemsWereAdded</code>/<code>itemsWereRemoved</code></h2>
+
+<p>A set notifies its subscribers by firing:</p>
+
+<ul>
+<li><code>itemsWereAdded</code> when items are added to the set</li>
+<li><code>itemsWereRemoved</code> when items are removed from the set</li>
+</ul>
+
+
+<p>Each event is fired with the <em>items</em> that were added and removed.</p>
+
+<p>You can handle these events with <code>on</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereAdded&#39;</span><span class="p">,</span> <span class="nf">(addedItems) -&gt;</span>
+</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;There were </span><span class="si">#{</span><span class="nx">addedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> new items!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereRemoved&#39;</span><span class="p">,</span> <span class="nf">(removedItems) -&gt;</span>
+</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;Say goodbye to </span><span class="si">#{</span><span class="nx">removedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> items!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>The event </em>may be<em> fired with the internally-determined indexes of the items. This is used internally by batman.js but isn&rsquo;t implemented in all cases.</em></p>
+
+<p>These functions cause items to be added or removed:</p>
+
+<ul>
+<li><code>add</code></li>
+<li><code>remove</code></li>
+<li><code>replace</code></li>
+<li><code>clear</code></li>
+<li><code>insert</code></li>
+</ul>
+
+
+<p>Under the hood, batman.js depends on these events to keep <code>data-foreach</code> bindings up to date.</p>
+
+<h2>Set Indexes</h2>
+
+<p>Set indexes are batman.js&rsquo;s way of searching sets. Batman.js caches these indexes and updates them whenever items are added or removed from the base <code>Batman.Set</code>. This way, you can be sure than any indexes you use will be automatically updated when the set is changed.</p>
+
+<p>Consider the <code>vegetables</code> set:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Batman.SetIndex</h3>
+
+<p>A <code>Batman.SetIndex</code> groups the base <code>Batman.Set</code> by a property of its members. For example, we can group <code>vegetables</code> by <code>color</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetablesByColor = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedBy</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, to get vegetables of a certain color, you <code>get</code> the color from the set index:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">redVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;red&#39;</span><span class="p">)</span> <span class="c1"># returns a Batman.Set</span>
+</span><span class='line'><span class="nx">redVegtables</span><span class="p">.</span><span class="nx">toArray</span><span class="p">()</span>
+</span><span class='line'><span class="c1"># =&gt; [{name: &quot;Tomato&quot;, color: &quot;red&quot;}, {name: &quot;Radish&quot;, color: &quot;red&quot;}]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>(<code>Batman.SetIndex::get</code> is an example of the &ldquo;default accessor as <code>method_missing</code>&rdquo; pattern.)</em></p>
+
+<p>The resulting set is just like any other <code>Batman.Set</code>, so you can observe it, pass it to view bindings, etc.</p>
+
+<p>If you <code>get</code> a value that doesn&rsquo;t exist, you get an empty <code>Batman.Set</code>. However, if a matching item is added to the <em>base</em> set, the index will be updated and the derived set will have the matching item added to it. For example, the <code>yellow</code> vegetables set is empty at first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">yellowVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;yellow&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But if you add a vegetable with <code>color: "yellow"</code>,</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Butternut Squash&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>it will be immediately added to the derived set:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">)</span> <span class="c1"># =&gt; {name: &quot;Butternut Squash&quot;, color: &quot;yellow&quot;}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Batman.UniqueSetIndex</h3>
+
+<p>A <code>Batman.UniqueSetIndex</code> doesn&rsquo;t return a <em>set</em> of matching items, it returns the <em>first</em> matching item. This is useful when you know that the values of a property will be unique (For example, batman.js uses <code>MyModel.get('loaded.indexedBy.id')</code> to update records from JSON by ID).</p>
+
+<p>For example, our <code>vegetables</code> all have unique names:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">tomato = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedByUnique</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using <code>indexedByUnique</code> in an accessor makes the <code>Batman.UniqueSetIndex</code> a source for that accessor. So when the unique set index&rsquo;s value changes, the accessor will be recalculated.</p>
+
+<p>This can be demonstrated by extending our <code>vegetables</code> example a little bit. Imagine a garden which should know what vegetables are growing in it. Since it&rsquo;s essentially a group of vegetables, let&rsquo;s extend <code>Batman.Set</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In our app, we want to display red/green for which vegetables are in a garden. For example, <code>hasTomato</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasTomato&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@indexedByUnique</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span><span class="o">?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, a Garden will return <code>true</code> for <code>hasTomato</code> as soon as a tomato is added:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">myGarden = </span><span class="k">new</span> <span class="nx">Garden</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Spinach&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Corn&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; false</span>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">})</span>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>SetSort</h2>
+
+<p>A <code>Batman.SetSort</code> behaves just like a <code>Batman.Set</code>, except that its members are ordered by a given property. If an item is added to the base set, it is also added to the set sort (in its proper place, of course).</p>
+
+<p>Given these vegetables:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can easily sort them by name:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># =&gt; Batman.SetSort</span>
+</span><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Cucumber&quot;, &quot;Eggplant&quot;, &quot;Tomato&quot;, &quot;Radish&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>They can also be sorted in reverse order:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="s">&quot;desc&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Or, to sort descending by an accessor:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;sortedByDescending.name&#39;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Set Caching</h2>
+
+<p>You don&rsquo;t have to worry about calling <code>indexedBy</code> or <code>sortedBy</code> repeatedly. Under the hood, batman.js caches them on their base sets, so it doesn&rsquo;t recalculate the indexes and sorts every time.</p>
+
+<h2>Union, Intersection, Complement</h2>
+
+<p><code>Batman.BinarySetOperation</code>s are objects that track <em>two</em> sets and contain the resulting elements from their operations. There are three implemented subclasses of <code>Batman.BinarySetOperation</code>:</p>
+
+<ul>
+<li><a href="http://batmanjs.org/docs/api/batman.setunion.html"><code>Batman.SetUnion</code></a> contains all members from both sets, without duplicates.</li>
+<li><a href="http://batmanjs.org/docs/api/batman.setintersection.html"><code>Batman.SetIntersection</code></a> contains members which are present in the first set <em>and</em> present in the second set.</li>
+<li><a href="http://batmanjs.org/docs/api/batman.setcomplement.html"><code>Batman.SetComplement</code></a> contains members which are in the first set <em>but not</em> present in the second set.</li>
+</ul>
+
+
+<p>Take note: constructors for binary set operations will fail if either argument is <code>null</code>, so be sure to check for that when you&rsquo;re building them!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Sending JSON Instead of Form Data with Batman.RestStorage]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage/"/>
+    <updated>2014-04-25T13:02:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage</id>
+    <content type="html"><![CDATA[<p>By default, <code>Batman.Request</code> sends data as HTTP form data. However, you can override this with <code>Batman.RestStorage</code>.</p>
+
+<!-- more -->
+
+
+<p>Simply pass <code>serializeAsForm: false</code> to <code>@persist</code> in your model definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">Model</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">RestStorage</span><span class="p">,</span> <span class="nv">serializeAsForm: </span><span class="kc">false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, it will work with any JSON endpoint!</p>
+
+<p>In my case, I was trying out batman.js and Martini, and I was surprised to find that RestStorage sends form data. I guess you never notice with Rails, since it puts everything into the <code>params</code> hash.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.js Controller Testing with Jasmine]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/22/batman-dot-js-controller-testing-with-jasmine/"/>
+    <updated>2014-04-22T08:30:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/22/batman-dot-js-controller-testing-with-jasmine</id>
+    <content type="html"><![CDATA[<p>You can use <a href="http://jasmine.github.io/">jasmine</a> to test <a href="http://batmanjs.org">batman.js</a> controllers by looking them up from the controller directory, then executing actions with <code>executeAction</code>.</p>
+
+<!-- more -->
+
+
+<h2>Setup</h2>
+
+<p>To set up,</p>
+
+<ul>
+<li>make sure the app is <a href="http://batmanjs.org/docs/api/batman.app.html#class_function_run">running</a> (so that the <a href="http://batmanjs.org/docs/api/batman.app.html#class_property_layout">layout</a> view will be present)</li>
+<li>get the controller you want from <a href="http://batmanjs.org/docs/api/batman.app.html#class_accessor_controllers"><code>App.controllers</code></a> (a <a href="http://batmanjs.org/docs/api/controllerdirectory.html">ControllerDirectory</a> )</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">describe</span> <span class="s">&#39;PeopleController&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nx">@beforeEach</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">run</span><span class="p">()</span>
+</span><span class='line'>    <span class="vi">@peopleController = </span><span class="nx">App</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;controllers.people&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">it</span> <span class="s">&#39;is present&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">expect</span><span class="p">(</span><span class="nx">@peopleController</span><span class="p">.</span><span class="nx">constructor</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">PeopleController</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In our tests, we&rsquo;ll use <a href="http://batmanjs.org/docs/api/batman.controller.html#prototype_function_executeaction"><code>Batman.Controller::executeAction</code></a> to fire controller actions. This way, before-actions and after-actions will be run, too.</p>
+
+<h2>Functions Are Called on Records</h2>
+
+<p>Use Jasmine <code>spyOn(...).andCallThrough()</code> to make sure functions have been called</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">describe</span> <span class="s">&#39;edit&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="c1"># This action is invoked from a view binding, not a route</span>
+</span><span class='line'>    <span class="c1"># so it takes `person`, not `params`....</span>
+</span><span class='line'>    <span class="nx">it</span> <span class="s">&#39;calls transaction on the person&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nv">person = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">id: </span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">spyOn</span><span class="p">(</span><span class="nx">person</span><span class="p">,</span> <span class="s">&#39;transaction&#39;</span><span class="p">).</span><span class="nx">andCallThrough</span><span class="p">()</span>
+</span><span class='line'>      <span class="nx">@peopleController</span><span class="p">.</span><span class="nx">executeAction</span><span class="p">(</span><span class="s">&#39;edit&#39;</span><span class="p">,</span> <span class="nx">person</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">person</span><span class="p">.</span><span class="nx">transaction</span><span class="p">).</span><span class="nx">toHaveBeenCalled</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Options Passed to Render</h2>
+
+<p>Get the most recent render arguments from jasmine&rsquo;s <code>mostRecentCall</code>. It will be the options passed to <code>@render</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">it</span> <span class="s">&#39;renders into the dialog&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nv">person = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">id: </span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">spyOn</span><span class="p">(</span><span class="nx">@peopleController</span><span class="p">,</span> <span class="s">&#39;render&#39;</span><span class="p">).</span><span class="nx">andCallThrough</span><span class="p">()</span>
+</span><span class='line'>  <span class="nx">@peopleController</span><span class="p">.</span><span class="nx">executeAction</span><span class="p">(</span><span class="s">&#39;edit&#39;</span><span class="p">,</span> <span class="nx">person</span><span class="p">)</span>
+</span><span class='line'>  <span class="nv">lastRenderArgs = </span><span class="nx">@peopleController</span><span class="p">.</span><span class="nx">render</span><span class="p">.</span><span class="nx">mostRecentCall</span><span class="p">.</span><span class="nx">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>  <span class="nv">lastYield = </span><span class="nx">lastRenderArgs</span><span class="p">[</span><span class="s">&quot;into&quot;</span><span class="p">]</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">lastYield</span><span class="p">).</span><span class="nx">toEqual</span><span class="p">(</span><span class="s">&quot;modal&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Functions Called on Model Classes</h2>
+
+<p>Checking class to <code>get</code> is tough becuase there are a lot of them! I just iterate through and make sure nothing jumps out as wrong:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">describe</span> <span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">it</span> <span class="s">&#39;gets loaded people, not all people&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">spyOn</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">,</span> <span class="s">&#39;get&#39;</span><span class="p">).</span><span class="nx">andCallThrough</span><span class="p">()</span>
+</span><span class='line'>      <span class="nx">@peopleController</span><span class="p">.</span><span class="nx">executeAction</span><span class="p">(</span><span class="s">&#39;index&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="c1"># there are a lot of calls to App.Person.get, just make sure</span>
+</span><span class='line'>      <span class="c1"># that &quot;all&quot; wasn&#39;t requested!</span>
+</span><span class='line'>      <span class="nv">loadedCalls = </span><span class="mi">0</span>
+</span><span class='line'>      <span class="k">for</span> <span class="nx">call</span> <span class="k">in</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">calls</span>
+</span><span class='line'>        <span class="nv">getArg = </span><span class="nx">call</span><span class="p">.</span><span class="nx">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span class='line'>        <span class="nx">expect</span><span class="p">(</span><span class="nx">getArg</span><span class="p">).</span><span class="o">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/all/</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">if</span> <span class="nx">getArg</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/loaded/</span><span class="p">)</span>
+</span><span class='line'>          <span class="nx">loadedCalls</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class='line'>      <span class="nx">expect</span><span class="p">(</span><span class="nx">loadedCalls</span><span class="p">).</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Renders a Specific View</h2>
+
+<p>Rendering into the default yield is easy enough &mdash; just check <code>layout.subviews</code> for an instance of the desired view.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">it</span> <span class="s">&#39;renders the PeopleIndexView&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nx">@peopleController</span><span class="p">.</span><span class="nx">executeAction</span><span class="p">(</span><span class="s">&#39;index&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="nv">hasPeopleIndexView = </span><span class="nx">App</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;layout.subviews&#39;</span><span class="p">).</span><span class="nx">some</span> <span class="nf">(view) -&gt;</span> <span class="nx">view</span> <span class="k">instanceof</span> <span class="nx">App</span><span class="p">.</span><span class="nx">PeopleIndexView</span>
+</span><span class='line'>  <span class="nx">expect</span><span class="p">(</span><span class="nx">hasPeopleIndexView</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Automatic Source Tracking in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/"/>
+    <updated>2014-04-20T21:18:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>In <a href="http://batmanjs.org">batman.js</a>, properties automatically track their sources. This is done by tracking all calls to <code>get</code> when an accessor function is executed.</p>
+
+<!-- more -->
+
+
+<p>I hope to cover automatic dependency tracking in batman.js by describing:</p>
+
+<ul>
+<li>The &ldquo;source&rdquo; relationship between properties</li>
+<li>The structure of the tracker stack</li>
+<li>How the tracker stack is used internally by batman.js</li>
+</ul>
+
+
+<p>Then I will cover several examples of source tracking:</p>
+
+<ul>
+<li>No depencies</li>
+<li>One dependency</li>
+<li>Nested dependencies</li>
+<li>Parallel dependencies</li>
+<li>Outside dependencies</li>
+<li>Conditionals</li>
+<li>Iteration</li>
+</ul>
+
+
+<h2>Sources/Dependencies</h2>
+
+<p>Consider <code>Tree</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;species&#39;</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;isOak&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span> <span class="o">is</span> <span class="s">&#39;oak&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <code>Tree</code>&rsquo;s <code>isOak</code> changes when <code>species</code> changes. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">shadeTree = </span><span class="k">new</span> <span class="nx">Tree</span><span class="p">(</span><span class="nv">species: </span><span class="s">&#39;maple&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isOak&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; false</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">,</span> <span class="s">&#39;oak&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isOak&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can describe the relationship between <code>isOak</code> and <code>species</code> in two ways:</p>
+
+<ul>
+<li><code>isOak</code> <em>depends on</em> <code>species</code></li>
+<li><code>species</code> is <code>isOak</code>&rsquo;s  <em>source</em></li>
+</ul>
+
+
+<h2>The Source Tracker Stack</h2>
+
+<p>The <strong>global source tracker stack</strong> is an array of arrays:</p>
+
+<ul>
+<li>Each sub-array is a <em>list of sources</em> for a property whose value is being calculated.</li>
+<li>Each member of a sub-array is a <em>source</em> for that property.</li>
+</ul>
+
+
+<p>Here&rsquo;s an example tracker stack:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="p">[</span>
+</span><span class='line'>    <span class="p">[</span>
+</span><span class='line'>      <span class="o">&lt;</span><span class="nx">Batman</span><span class="p">.</span><span class="nx">Property</span> <span class="s">&quot;species&quot;</span><span class="o">&gt;</span><span class="p">,</span>
+</span><span class='line'>      <span class="o">&lt;</span><span class="nx">Batman</span><span class="p">.</span><span class="nx">Property</span> <span class="s">&quot;age&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="p">],</span>
+</span><span class='line'>    <span class="p">[</span>
+</span><span class='line'>      <span class="c1"># no sources</span>
+</span><span class='line'>    <span class="p">]</span>
+</span><span class='line'>  <span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>The global tracker is an array</li>
+<li>Its members are arrays</li>
+<li>Inside those arrays are sources</li>
+<li>Some properties have no other sources</li>
+</ul>
+
+
+<p><em>I&rsquo;ll be using strings to represent sources, but batman.js actually uses <a href="http://batmanjs.org/docs/api/batman.property.html"><code>Batman.Property</code> instances</a>. A <code>Batman.Property</code> has a <code>base</code> (usually a <code>Batman.Object</code>) and a <code>key</code>, which is the string identifier for the property.</em></p>
+
+<h2>How Batman.js Uses Source Tracker Stack</h2>
+
+<p>Internally, batman.js uses the source tracker stack whenever properties are evaluated with <code>get</code> (if they weren&rsquo;t already <a href="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/">cached</a>). <code>get</code> functions are wrapped with batman.js&rsquo;s source tracking:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>┌────────────────────────────────────────────────────
+</span><span class='line'>│ -&gt; Property is pushed to open tracker,
+</span><span class='line'>│    if there is one
+</span><span class='line'>│ -&gt; Batman.js opens the stack for sources
+</span><span class='line'>│  ┌─────────────────────────────────────────────────
+</span><span class='line'>│  │  -&gt; Accessor function is executed
+</span><span class='line'>│  │     and returns a value
+</span><span class='line'>│  └─────────────────────────────────────────────────
+</span><span class='line'>│ -&gt; Batman.js registers sources
+</span><span class='line'>└────────────────────────────────────────────────────
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At the beginning each call to <code>get("property")</code>, batman.js:</p>
+
+<ol>
+<li><strong>Adds <code>property</code> to the current open tracker, if there is one.</strong>  To determine whether the current <code>get</code> is called in the context of evaluating another property, batman.js checks for an open tracker (ie, an array inside the global source tracker). If there is one, it pushes the current property as source of whatever property was being evaluated.</li>
+<li><strong>Pushes a new entry in the tracker.</strong> Batman.js prepares the source tracker for any dependencies by pushing a child array. If any other properties are accessed, they will be pushed to that child array (via step 1 above!).</li>
+</ol>
+
+
+<p>When <code>get</code> functions finish, batman.js cleans up the source tracker stack by:</p>
+
+<ol>
+<li><strong>Getting the list of sources</strong> by popping off of the global source tracker.</li>
+<li><strong>Creating observers</strong> for all sources.</li>
+</ol>
+
+
+<h2>No Dependencies</h2>
+
+<p>In a property lookup, there are no other calls to <code>get</code>, so the source tracker doesn&rsquo;t do very much. Here&rsquo;s what it would look like if you watched the global source tracker:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># Call stack              # Source tracker stack</span>
+</span><span class='line'>                          <span class="c1"># []</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span>  <span class="c1"># []</span>
+</span><span class='line'>  <span class="c1"># there is no entry in the stack to add `species` to.</span>
+</span><span class='line'>  <span class="c1"># batman.js pushes an entry for `species`&#39;s sources</span>
+</span><span class='line'>                          <span class="c1"># [ [] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="k">return</span> <span class="s">&#39;oak&#39;</span>         <span class="c1"># [ [] ]</span>
+</span><span class='line'>  <span class="c1"># batman.js registers sources (none!) and clears the tracker</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Batman.js prepared to track the sources for <code>species</code>, but didn&rsquo;t find any.</p>
+
+<h2>One Dependency</h2>
+
+<p>The example above, calling <code>get('isOak')</code> <a href="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/">causes batman.js to calculate</a> the tree&rsquo;s <code>isOak</code> value.</p>
+
+<p>Here&rsquo;s what the tracker stack would look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># Call stack              # Source tracker stack</span>
+</span><span class='line'>                          <span class="c1"># []</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isOak&#39;</span><span class="p">)</span>    <span class="c1"># []</span>
+</span><span class='line'>  <span class="c1"># there is no entry in the stack to add `isOak` to.</span>
+</span><span class='line'>  <span class="c1"># batman.js pushes an entry in the source tracker for `isOak`&#39;s sources</span>
+</span><span class='line'>                          <span class="c1"># [ [] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># batman.js adds `species` to `isOak`&#39;s sources</span>
+</span><span class='line'>                          <span class="c1"># [ [species] ]</span>
+</span><span class='line'>  <span class="c1"># batman.js pushes an entry in the source tracker for `species`</span>
+</span><span class='line'>                          <span class="c1"># [ [species], [] ]</span>
+</span><span class='line'>    <span class="nf">-&gt;</span> <span class="k">return</span>             <span class="c1"># [ [species], [] ]</span>
+</span><span class='line'>    <span class="c1"># batman.js pops `species`&#39;s sources -- but there weren&#39;t any</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="o">is</span> <span class="s">&#39;oak&#39;</span>             <span class="c1"># [ [species] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="c1"># batman.js pops `isOak`&#39;s dependencies and registers them internally</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="k">return</span>               <span class="c1"># []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Deeply-Nested Dependencies</h2>
+
+<p>Batman.js handles nested calls to <code>get</code> by pushing entries to the source tracker. When the nested class resolve, entries are popped back off the source tracker.</p>
+
+<p>For example, let&rsquo;s add another property that depends on <code>isOak</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasAcorns&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;isOak&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>hasAcorns</code>&rsquo;s only source is <code>isOak</code>. The dependency chain looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">species</span> <span class="nf">-&gt;</span> <span class="nx">isOak</span> <span class="nf">-&gt;</span> <span class="nx">hasAcorns</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, here&rsquo;s what the source tracker stack looks like for calculating <code>hasAcorns</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># Call stack                # Source tracker stack</span>
+</span><span class='line'>                            <span class="c1"># []</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasAcorns&#39;</span><span class="p">)</span>
+</span><span class='line'>                            <span class="c1"># [ [] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;isOak&#39;</span><span class="p">)</span>
+</span><span class='line'>                            <span class="c1"># [ [isOak], [] ]</span>
+</span><span class='line'>    <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span>      <span class="c1"># [ [isOak], [species], [] ]</span>
+</span><span class='line'>      <span class="nf">-&gt;</span> <span class="k">return</span>
+</span><span class='line'>      <span class="c1"># batman.js doesn&#39;t register any sources for `species`</span>
+</span><span class='line'>                            <span class="c1"># [ [isOak], [species] ]</span>
+</span><span class='line'>    <span class="nf">-&gt;</span> <span class="k">return</span>
+</span><span class='line'>    <span class="c1"># batman.js registers `isOak`&#39;s source, `species`</span>
+</span><span class='line'>                            <span class="c1"># [ [isOak] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="k">return</span>
+</span><span class='line'>  <span class="c1"># batman.js registers `hasAcorn`&#39;s source, `isOak`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>Note:</em> Batman.js only evaluates properties that aren&rsquo;t <a href="blog/2014/03/31/property-caching-in-batman-dot-js/">cached</a>, so you don&rsquo;t have to worry about &ldquo;abusing&rdquo; deeply nested properties.</p>
+
+<h2>Parallel Dependencies</h2>
+
+<p>Properties may also have multiple, non-nested sources. These are parallel sources:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;description&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;age&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">-year-old </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>description</code> depends on <code>age</code> <em>and</em> <code>species</code>. If either one changes, the property will be reevaluated.</p>
+
+<p>When <code>description</code> is calculated, it will register <code>age</code> and <code>species</code> as sources. Here&rsquo;s what it would look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># Call stack                # Source tracker stack</span>
+</span><span class='line'>                            <span class="c1"># []</span>
+</span><span class='line'><span class="nx">shadeTree</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;description&#39;</span><span class="p">)</span>
+</span><span class='line'>                            <span class="c1"># [ [] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;age&#39;</span><span class="p">)</span>
+</span><span class='line'>                            <span class="c1"># [ [age] ]</span>
+</span><span class='line'>                            <span class="c1"># [ [age], [] ]</span>
+</span><span class='line'>    <span class="nf">-&gt;</span> <span class="k">return</span>
+</span><span class='line'>                            <span class="c1"># [ [age] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;species&#39;</span><span class="p">)</span>
+</span><span class='line'>                            <span class="c1"># [ [age, species] ]</span>
+</span><span class='line'>                            <span class="c1"># [ [age, species], [] ]</span>
+</span><span class='line'>    <span class="nf">-&gt;</span> <span class="k">return</span>
+</span><span class='line'>                            <span class="c1"># [ [age, species] ]</span>
+</span><span class='line'>  <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="c1"># batman.js registers both sources</span>
+</span><span class='line'>                            <span class="c1"># []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Dependencies on Other Objects</h2>
+
+<p>So far, all examples have used <code>@get</code> inside accessors. However, it&rsquo;s safe to access properties of any <code>Batman.Object</code> with <code>get</code> inside an accessor function. This is because the <code>Batman.Property</code> is aware of its <em>base</em> and <em>key</em>. <em>Base</em> is the object that the property belongs to and <em>key</em> is the string name of the property. When you use <code>get</code> on another object, the correct object and property are tracked as sources.</p>
+
+<p>For example, <code>Tree::ownerName</code> depends on an outside object (a <code>Person</code> object):</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;ownerName&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nv">ownerId = </span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;ownerId&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># find owner by id:</span>
+</span><span class='line'>    <span class="nv">owner = </span><span class="nx">Person</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;all&#39;</span><span class="p">).</span><span class="nx">indexedByUnique</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="nx">ownerId</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">owner</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case <code>owner.get('name')</code> registers a <code>Batman.Property</code> whose base is a <code>Person</code>. If that person&rsquo;s name changes, <code>ownerName</code> will be reevaluated.</p>
+
+<h2>Conditionals</h2>
+
+<p>Let&rsquo;s add a property to <code>Tree</code> that has some conditional logic. <code>Tree::bestAvailableFood</code> contains conditional branching:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;bestAvailableFood&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;hasFruit&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="s">&quot;fruit&quot;</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;hasAcorns&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="s">&quot;acorns&quot;</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="kc">null</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Batman.js will only track calls to <code>get</code> that are <em>actually executed</em>, so if <code>hasFruit</code> returns true, then <code>hasAcorns</code> won&rsquo;t be registered as a source.</p>
+
+<p>What if <code>hasAcorns</code> changes? It doesn&rsquo;t matter &mdash; the property would still evaluate to <code>"fruit"</code> (from the <code>hasFruit</code> branch), so batman.js saved itself some trouble!</p>
+
+<p>If <code>hasFruit</code> and <code>hasAcorns</code> both returned false, they would both be registered as sources (as in the &ldquo;parallel sources&rdquo; example). The property would be reevaluated if either one changed.</p>
+
+<h2>Iteration</h2>
+
+<p>Iteration is safe inside accessor bodies as long as you play by batman.js&rsquo;s rules:</p>
+
+<ul>
+<li><strong>Enumerables must extend <code>Batman.Object</code></strong> so that they&rsquo;re observable. Plain JavaScript Arrays and Objects can&rsquo;t be registered as sources.</li>
+<li><strong>Enumerables must be retrieved with <code>get</code></strong> so that a wholesale replacement of the enumerable is observed, too.</li>
+</ul>
+
+
+<p>Let&rsquo;s look at two accessors that have iteration in their <code>get</code> functions: one has an early return, the always visits each member of the set.</p>
+
+<p><em>These accessors could be simplifed by using <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumerable</code></a> functions, but they&rsquo;re spelled out for clarity&rsquo;s sake!</em></p>
+
+<h3>Early Return</h3>
+
+<p><code>Tree::hasFruit</code> returns as soon as it finds a limb with fruit:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Tree</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;limbs&#39;</span> <span class="c1"># has a Batman.Set</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasFruit&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;limbs&#39;</span><span class="p">).</span><span class="nx">forEach</span> <span class="nf">(limb) -&gt;</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">true</span> <span class="k">if</span> <span class="nx">limb</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasFruit&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="kc">false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>During evaluation, <code>limbs</code> and each <code>limb.hasFruit</code> will be added as sources, until a <code>limb.hasFruit</code> returns true.</p>
+
+<p>Some limbs won&rsquo;t be observed as sources, but that&rsquo;s OK: the property will be true <em>as long as</em> the first true <code>limb.hasFruit</code> still evaluates to true. If that first <code>limb.hasFruit</code> becomes <code>false</code>, the property will be reevaluated.</p>
+
+<p>Similarly, if one of the earlier limbs becomes <code>true</code>, the property will be reevaluated. (And in that case, it will register fewer sources, since it made fewer iterations before finding a <code>true</code> value.)</p>
+
+<h3>Depends on Every Member</h3>
+
+<p><code>Tree::totalFruits</code> is the sum of fruits on all limbs, so it must observe <em>every</em> limb:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;totalFruits&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nv">totalCount = </span><span class="mi">0</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;limbs&#39;</span><span class="p">).</span><span class="nx">forEach</span> <span class="nf">(limb) -&gt;</span>
+</span><span class='line'>      <span class="nx">totalCount</span> <span class="o">+=</span> <span class="nx">limb</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fruits.length&#39;</span><span class="p">)</span> <span class="o">||</span> <span class="mi">0</span>
+</span><span class='line'>    <span class="nx">totalcount</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since every limb will be visited during evaluation, every limb will be added as a source. Whenever one of the <code>limb.fruits.length</code> changes, the property will be reevaluated.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing the Batman.js MVC Cookbook]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/19/introducing-the-batman-dot-js-mvc-cookbook/"/>
+    <updated>2014-04-19T13:47:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/19/introducing-the-batman-dot-js-mvc-cookbook</id>
+    <content type="html"><![CDATA[<p>The <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">&ldquo;Batman.js MVC Cookbook&rdquo;</a> is a collection of annotated code snippets for getting things done with <a href="http://batmanjs.org">batman.js</a>.</p>
+
+<!-- more -->
+
+
+<p>When I heard that Michael Hartl (of <a href="http://railstutorial.com">Rails Tutorial</a> fame) was releasing a web publishing platform, I was itching to try it out. I thought a glorified FAQ would be a great way to get the feel for it, and the result is now online as the <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">&ldquo;Batman.js MVC Cookbook&rdquo;</a>.</p>
+
+<p>The &ldquo;book&rdquo; is really just a collection of common patterns and best practices in batman.js applications, taken from my own experience. I hope that others will contribute by adding &ldquo;recipes&rdquo; or requesting new ones, so I put the book&rsquo;s <a href="https://github.com/rmosolgo/batmanjs-mvc-cookbook">source code on Github</a>.</p>
+
+<p>It&rsquo;s not quite a batman.js tutorial, although I&rsquo;m really enjoying Softcover, so maybe I&rsquo;ll get one up there soon. It would be a good opportunity to take the <a href="https://github.com/rmosolgo/batfire">batman.js Firebase bindings</a> for a spin, too!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Is Batman.js Just for Ruby on Rails?]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/15/is-batman-dot-js-just-for-ruby-on-rails/"/>
+    <updated>2014-04-15T22:39:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/15/is-batman-dot-js-just-for-ruby-on-rails</id>
+    <content type="html"><![CDATA[<p>You can use <a href="http://batmanjs.org">batman.js</a> with any backend!</p>
+
+<!-- more -->
+
+
+<p>Batman.js is <em>not</em> just for Ruby on Rails! Here are batman.js&rsquo;s dependencies:</p>
+
+<ul>
+<li>A RESTful JSON API</li>
+<li>A way to compile the CoffeeScript app (may I recommend <a href="http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails/">gulp.js</a>?)</li>
+<li>A way to provide HTML templates (again, gulp.js worked nicely for me!)</li>
+</ul>
+
+
+<p>As long as you can meet those requirements, you can use batman.js with any backend: Node, Ruby, Python, Java, Go, Rust, Erlang, PHP &hellip; you get the drift.</p>
+
+<h2>Why Is Batman.js Associated with Rails?</h2>
+
+<p>A few reasons:</p>
+
+<ul>
+<li>A lot of batman.js&rsquo;s syntax and features are designed with Rails in mind</li>
+<li>Batman.js was extracted from Shopify, which is a Ruby on Rails application</li>
+<li>Rails meets all of the above requirements out of the box</li>
+</ul>
+
+
+<p>Also, there are a few batman.js goodies for Rails devs: the <code>batman.rails</code> CoffeeScript extra and the <code>batman-rails</code> Ruby gem.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Prevent and allowAndFire for asynchronous operations on a Batman.Set]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/07/prevent-and-allowandfire-for-asynchronous-operations-on-a-batman-dot-set/"/>
+    <updated>2014-04-07T18:12:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/07/prevent-and-allowandfire-for-asynchronous-operations-on-a-batman-dot-set</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a>&rsquo;s <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_prevent"><code>prevent</code></a> and <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_allowandfire"><code>allowAndFire</code></a> make it easy to fire a callback when you&rsquo;re finished working on the members of a <a href="http://batmanjs.org/docs/api/batman.set.html">Batman.Set</a>.</p>
+
+<!-- more -->
+
+
+<h1>The Problem</h1>
+
+<p>Let&rsquo;s say you have <code>Batman.Set</code> (or <code>Batman.AssociationSet</code>, or even a plain JS array) whose members are <code>Batman.Model</code> instances. You have a <code>saveAll</code> function that saves all the members:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">ThingsController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
+</span><span class='line'>  <span class="nv">saveAll: </span><span class="nf">(setOfRecords) -&gt;</span>
+</span><span class='line'>    <span class="nx">setOfRecords</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(record) -&gt;</span> <span class="nx">record</span><span class="p">.</span><span class="nx">save</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But what if you wanted to call a <code>callback</code> when the whole operation was finished?</p>
+
+<h1>The Solution</h1>
+
+<ul>
+<li>Set up a listener on the <code>"finished"</code> event. Use <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_once"><code>once</code></a> to avoid observer bloat.</li>
+<li>Before each save operation, <code>prevent "finished"</code></li>
+<li>When each one finishes, <code>allowAndFire "finished"</code>.</li>
+</ul>
+
+
+<p>That way, it will get prevented <em>n</em> times &mdash; once for each item in the set &mdash; and it will finally be fired when the last operation is finished.</p>
+
+<p>Here it is, all together:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">ThingsController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
+</span><span class='line'>  <span class="nv">saveAll: </span><span class="nf">(setOfRecords, callback) -&gt;</span>
+</span><span class='line'>    <span class="c1"># observer:</span>
+</span><span class='line'>    <span class="nx">@once</span> <span class="s">&#39;finished&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>      <span class="nx">callback</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">setOfRecords</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(record) =&gt;</span> <span class="c1"># mind the fat arrows!</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">@prevent</span><span class="p">(</span><span class="s">&#39;finished&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">record</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>        <span class="nx">@allowAndFire</span><span class="p">(</span><span class="s">&#39;finished&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Note</strong>: <code>@prevent</code> and <code>@allowAndFire</code> are provided by <a href="http://batmanjs.org/docs/api/batman.eventemitter.html"><code>Batman.EventEmitter</code></a>, so it will only work with objects which have that mixin. Don&rsquo;t worry &mdash; every object in batman.js is an event emitter! But plain JS objects are not.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Property Caching in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/"/>
+    <updated>2014-03-31T09:09:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> objects (<a href="batmanjs.org/docs/api/batman.object.html"><code>Batman.Object</code></a> instances) have properties defined with <a href="batmanjs.org/docs/api/batman.object_accessors.html"><code>@accessor</code></a>. These properties are cached until one of their sources busts their cache.</p>
+
+<!-- more -->
+
+
+<h1>Batman.Object Properties</h1>
+
+<p> In batman.js, all properties should be declared with <code>@accessor</code>. When I say <em>property</em>, I mean a property declared with <code>@accessor</code>.</p>
+
+<p>When a property&rsquo;s value is retrieved (with <code>get</code>), it tracks calls that it makes to other properties. These internal calls (to <code>get</code>) define the property&rsquo;s <em>sources</em>. The value will be cached. Since it knows what it depends on, they only recalculate themselves when their caches are busted. (Passing the <code>cache: false</code> option makes a property not cached.) When one of the property&rsquo;s sources are changed, its cache is busted and it will recalculate <em>next time</em> you <code>get</code> its value.</p>
+
+<p>After a property recalculates, it checks if its <em>new</em> result doesn&rsquo;t equal its <em>cached</em> result ( <code>!==</code> , CoffeeScript <code>isnt</code>). If it determines a new value, then the property busts its dependents&#8217; caches, too</p>
+
+<p>To sum up the introduction:</p>
+
+<ul>
+<li>Sources are tracked at calculation-time, not load time. They&rsquo;re tracked when a property calculates itself.</li>
+<li>A property isn&rsquo;t caluclated if it&rsquo;s never retrieved.</li>
+<li>A property is cached and isn&rsquo;t recalculated until one of its sources signals a change.</li>
+<li>When a property&rsquo;s source changes, the cache is busted and it will recalcute next time it is retrieved with <code>get</code></li>
+<li>If the result of recalculation is a different value (<code>!==</code>), the property notifies <em>its</em> subscribers (if present) to recalculate.</li>
+</ul>
+
+
+<h1>A Day in the Life of a Batman.js Property</h1>
+
+<p><code>fullName</code> is the quintessential computed property:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;fullName&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s"> </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s see how it&rsquo;s used with a <code>Person</code>. You can get metadata for a property with the <code>Batman.Object::property(name)</code> function.</p>
+
+<p>When a person is initialized, the <code>fullName</code> has no value:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">morganFreeman = </span><span class="k">new</span> <span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Morgan&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Freeman&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; null</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It hasn&rsquo;t been requested yet, so it hasn&rsquo;t been calculated. The property also has no sources:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullname&#39;</span><span class="p">).</span><span class="nx">sources</span> <span class="c1"># =&gt; null</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>However, if you <code>get</code> the property, it will be calculated and its sources will be identified.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now let&rsquo;s inspect the underlying <code>Batman.Property</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">fullName = </span><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Its value is cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And it knows its sources:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">sources</span><span class="p">.</span><span class="nx">map</span> <span class="nf">(s) -&gt;</span> <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">key</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;firstName&quot;, &quot;lastName&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you change one of <code>fullName</code>&rsquo;s sources, it is no longer cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;firstName&quot;</span><span class="p">,</span> <span class="s">&quot;Lucius&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;lastName&quot;</span><span class="p">,</span> <span class="s">&quot;Fox&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; false</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And since we haven&rsquo;t asked for its value again, it hasn&rsquo;t been recalculated:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But <code>get</code>ting its value will cause it to be recalculated &amp; cached:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
+</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Another Look</h1>
+
+<p>Here&rsquo;s the same story, in a chart:</p>
+
+<p><a href="http://rmosolgo.github.io/images/batman-properties-large.png"><img src="http://rmosolgo.github.io/images/batman-properties.png" alt="Batman.js property caching" /></a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using Gulp.js to build Batman.js apps without Rails]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails/"/>
+    <updated>2014-03-22T10:39:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails</id>
+    <content type="html"><![CDATA[<p>If the <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> isn&rsquo;t an option, <a href="http://gulpjs.com">gulp.js</a> is a good candidate for compiling batman.js apps for production.</p>
+
+<!-- more -->
+
+
+<p>To prepare your app for production, you need to:</p>
+
+<ul>
+<li>compile your CoffeeScript files into a JavaScript file</li>
+<li>preload your HTML into <code>Batman.View.store</code>.</li>
+</ul>
+
+
+<p>These can both be accomplished with gulp.js tasks.</p>
+
+<h2>Setup</h2>
+
+<p>Let&rsquo;s assume your batman.js project has the folder structure:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>my_app/
+</span><span class='line'>├── batman/
+</span><span class='line'>|   ├── my_app.coffee
+</span><span class='line'>|   ├── models/
+</span><span class='line'>|   |   └── my_model.coffee
+</span><span class='line'>|   ├── controllers/
+</span><span class='line'>|   |   └── my_models_controller.cofee
+</span><span class='line'>|   ├── views/
+</span><span class='line'>|   |   └── my_models/
+</span><span class='line'>|   |       └── my_models_show_view.coffee
+</span><span class='line'>|   └── html/
+</span><span class='line'>|       └── my_models/
+</span><span class='line'>|           ├── show.jade
+</span><span class='line'>|           └── index.jade
+</span><span class='line'>├── javascripts/
+</span><span class='line'>|   └── batman.js
+</span><span class='line'>└── Gulpfile.js</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Notice that the <code>html</code> folder actually contains <code>.jade</code> files. We&rsquo;ll use gulp.js to compile those, but you can skip that step if you&rsquo;re using plain HTML.</p>
+
+<p><strong>Install gulp</strong> with <code>npm install -g gulp</code>. All gulp plugins required below must also be installed &ldquo;by hand&rdquo; with <code>npm install &lt;gulp-plugin&gt;</code></p>
+
+<h2>Compiling your application code</h2>
+
+<p>Here&rsquo;s a gulp.js task that takes the <code>batman/</code> directory above and compiles it to one Javascript file, <code>javascripts/application.js</code>:</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">gulp</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">coffee</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp-coffee&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">concat</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp-concat&#39;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// include top-level .coffee files (`my_app.coffee`) first:</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">appSources</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;./batman/*.coffee&quot;</span><span class="p">,</span> <span class="s2">&quot;./batman/*/*.coffee&quot;</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">gulp</span><span class="p">.</span><span class="nx">task</span><span class="p">(</span><span class="s2">&quot;build&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">gulp</span><span class="p">.</span><span class="nx">src</span><span class="p">(</span><span class="nx">appSources</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">concat</span><span class="p">(</span><span class="s2">&quot;application.coffee&quot;</span><span class="p">))</span> <span class="c1">// so CoffeeScript will compile all together</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">coffee</span><span class="p">())</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">concat</span><span class="p">(</span><span class="s2">&quot;application.js&quot;</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">gulp</span><span class="p">.</span><span class="nx">dest</span><span class="p">(</span><span class="s2">&quot;./javascripts/&quot;</span><span class="p">))</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, you can run:</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">gulp</span> <span class="nx">build</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Preloading your templates</h2>
+
+<p>Batman.js&rsquo;s fetch-html-as-needed approach is great for develoment, but not for production. Here&rsquo;s a task that will load files from the <code>html/</code> directory, convert them from jade to HTML, then inline them as JavaScript code that preloads the app with the HTML it needs.</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">gulp</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">concat</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp-concat&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">jade</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;gulp-jade&#39;</span><span class="p">);</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">batmanTemplates</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">&quot;gulp-batman-templates&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">gulp</span><span class="p">.</span><span class="nx">task</span><span class="p">(</span><span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">gulp</span><span class="p">.</span><span class="nx">src</span><span class="p">([</span><span class="s2">&quot;./batman/html/**/*.jade&quot;</span><span class="p">])</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">jade</span><span class="p">())</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">batmanTemplates</span><span class="p">())</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">concat</span><span class="p">(</span><span class="s1">&#39;templates.js&#39;</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">gulp</span><span class="p">.</span><span class="nx">dest</span><span class="p">(</span><span class="s2">&quot;./javascripts/&quot;</span><span class="p">))</span>
+</span><span class='line'><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Finishing Up</h2>
+
+<p>Let&rsquo;s join the to javascript files together:</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">gulp</span><span class="p">.</span><span class="nx">task</span><span class="p">(</span><span class="s2">&quot;finalize&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">gulp</span><span class="p">.</span><span class="nx">src</span><span class="p">([</span><span class="s2">&quot;./javascripts/application.js&quot;</span><span class="p">,</span> <span class="s2">&quot;./javascripts/templates.js&quot;</span><span class="p">])</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">concat</span><span class="p">(</span><span class="s2">&quot;application.js&quot;</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">.</span><span class="nx">pipe</span><span class="p">(</span><span class="nx">gulp</span><span class="p">.</span><span class="nx">dest</span><span class="p">(</span><span class="s2">&quot;./javascripts/&quot;</span><span class="p">))</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And make our <code>default</code> gulp task to watch the project and build whenever it changes:</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">gulp</span><span class="p">.</span><span class="nx">task</span><span class="p">(</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>  <span class="nx">gulp</span><span class="p">.</span><span class="nx">watch</span><span class="p">(</span><span class="s1">&#39;./batman/**/*&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;build&quot;</span><span class="p">,</span> <span class="s2">&quot;html&quot;</span><span class="p">,</span> <span class="s2">&quot;finalize&quot;</span><span class="p">])</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So now, all we need to do is:</p>
+
+<figure class='code'><figcaption><span>Gulpfile.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">gulp</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And in the layout:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&#39;/javascripts/batman.js&#39;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&#39;/javascripts/application.js&#39;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Voila! Your app is compiled and HTML will be preloaded!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.Model Lifecycle Callbacks]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/19/batman-dot-model-lifecycle-callbacks/"/>
+    <updated>2014-03-19T10:52:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/19/batman-dot-model-lifecycle-callbacks</id>
+    <content type="html"><![CDATA[<p>A <code>Batman.Model</code> has a <code>lifecycle</code> object that fires events on the record when it&rsquo;s being dirtied, cleaned, loaded, saved or destroyed.</p>
+
+<!-- more -->
+
+
+<h2>Hooking up callbacks</h2>
+
+<p>Love &lsquo;em or hate &#8216;em, Active Record callbacks can be just the thing for certain problems. <code>Batman.Model</code> provides similar functionality for records.</p>
+
+<p>You can hook into lifecycle events by creating listeners on the prototype:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&#39;before save&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="c1"># remove contacts with no email:</span>
+</span><span class='line'>    <span class="nv">contacts = </span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;contacts&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">contacts</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(contact) -&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">!</span><span class="nx">@contact</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;email&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">contacts</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">contact</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>One caveat:</strong> Unlike ActiveRecord&rsquo;s <code>before_validation</code>, you can&rsquo;t abort a storage operation from a batman.js lifecycle callback. You can <code>throw</code>/<code>catch</code>, though:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&#39;before save&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="k">throw</span> <span class="s">&quot;Stop saving!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">addressBook = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span>
+</span><span class='line'><span class="k">try</span>
+</span><span class='line'>  <span class="nx">addressBook</span><span class="p">.</span><span class="nx">save</span><span class="p">()</span>
+</span><span class='line'><span class="k">catch</span> <span class="nx">err</span>
+</span><span class='line'>  <span class="c1"># =&gt; err is &quot;Stop saving!&quot;</span>
+</span><span class='line'>  <span class="nx">addressBook</span><span class="p">.</span><span class="nx">isNew</span><span class="p">()</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Available callbacks</h2>
+
+<p>These keys can be observed like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">someEventName</span><span class="si">}</span><span class="s">&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">someCallback</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Saving Records</h3>
+
+<p>For records where <code>isNew</code> is <code>true</code>, <code>create</code> callbacks are fired. Otherwise, <code>save</code> callbacks are fired.</p>
+
+<ol>
+<li><code>enter dirty</code></li>
+<li><code>set</code></li>
+<li><code>enter creating</code> OR <code>enter saving</code></li>
+<li><code>create</code> OR <code>save</code></li>
+<li><code>exit creating</code> OR <code>exit saving</code></li>
+<li><code>enter clean</code></li>
+<li><code>created</code> OR <code>saved</code></li>
+<li>Callback passed to <code>Model::save</code></li>
+<li><code>enter destroying</code></li>
+<li><code>destroy</code></li>
+<li><code>exit destroying</code></li>
+<li><code>enter destroyed</code></li>
+<li><code>destroyed</code></li>
+<li>Callback passed to <code>Model::destroy</code></li>
+</ol>
+
+
+<h3>Loading a Record From Memory</h3>
+
+<ol>
+<li><code>enter loading</code></li>
+<li><code>load</code></li>
+<li><code>exit loading</code></li>
+<li><code>enter clean</code></li>
+<li><code>loaded</code></li>
+<li>Callback passed to <code>Model.load</code></li>
+</ol>
+
+
+<h3>Others</h3>
+
+<p>There are others&hellip; Check out <code>Batman.StateMachine</code> to see specific transition events and see <code>InstanceLifecycleStateMachine</code> for other events and transitions not listed here. There are tons of combinations, but I tried to hit the main ones!</p>
+
+<h2>How it works</h2>
+
+<p>Every <code>Batman.Model</code> instance has a <code>InstanceLifecycleStateMachine</code> at <code>lifecycle</code>. That state machine extends <code>Batman.DelegatingStateMachine</code>, which means it fires all of its own events on its base &mdash; in this case, a <code>Batman.Model</code> instance. The batman.js source for <code>Model</code> shows the different state and transition names, and <code>Batman.StateMachine</code> shows how these names translate to events.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Loading Child Records from Embedded IDs in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/17/loading-child-records-from-embedded-ids-in-batman-dot-js/"/>
+    <updated>2014-03-17T11:03:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/17/loading-child-records-from-embedded-ids-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/">Batman.js</a> provides a powerful <a href="http://batmanjs.org/docs/api/batman.model_associations.html">model associations</a> inspired by Ruby on Rails. But, if you&rsquo;re loading child items from ids, it&rsquo;s not going to work out of the box.</p>
+
+<!-- more -->
+
+
+<h2>The problem</h2>
+
+<p>Batman.js <code>@hasMany</code> (in v0.15.0, anyways) doesn&rsquo;t support loading items from JSON like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'>  <span class="p">{</span>
+</span><span class='line'>    <span class="s2">&quot;parent&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+</span><span class='line'>      <span class="s2">&quot;children&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="cm">/* &lt;- here&#39;s tough part */</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>The solution</h2>
+
+<p>Instead of <code>Model.hasMany</code>, use a custom encoder to load the records:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;children&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nv">encode: </span><span class="nf">(value, key, builtJSON, record) -&gt;</span>
+</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span><span class="p">.</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">builtJSON.key = </span><span class="nx">ids</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nv">decode: </span><span class="nf">(value, key, incomingJSON, outgoingObject, record) -&gt;</span>
+</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span>
+</span><span class='line'>      <span class="nv">childRecords = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>      <span class="nx">ids</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(id) -&gt;</span>
+</span><span class='line'>        <span class="nv">child = </span><span class="k">new</span> <span class="nx">Child</span> <span class="c1"># &lt;-- your Child class here</span>
+</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">load</span><span class="p">()</span>
+</span><span class='line'>        <span class="nx">childRecords</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">child</span><span class="p">)</span> <span class="c1"># one caveat -- the childRecords&#39; attributes will be empty until their requests come back.</span>
+</span><span class='line'>      <span class="nx">childRecords</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;loaded&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">outgoingObject.key = </span><span class="nx">childRecords</span>
+</span><span class='line'>      <span class="nx">record</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">childRecords</span><span class="p">)</span> <span class="c1"># this will fire updates in case bindings are waiting for this data</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Make sure to add your own <code>Child</code> class! Also, note that their attributes will be empty until their AJAX requests resolve!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Tips for Batman.RestStorage and Batman.RailsStorage]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/05/tips-for-batman-dot-reststorage-and-batman-dot-railsstorage/"/>
+    <updated>2014-03-05T13:52:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/05/tips-for-batman-dot-reststorage-and-batman-dot-railsstorage</id>
+    <content type="html"><![CDATA[<p>Just a few things I&rsquo;ve picked up about <code>Batman.RestStorage</code> and <code>Batman.RailsStorage</code>.</p>
+
+<!-- more -->
+
+
+<h2>Use <code>Model.url</code> for hooking up to your API</h2>
+
+<p>You can set the URL for a model:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">SomeModel</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">RestStorage</span>  <span class="c1"># or Batman.RailsStorage</span>
+</span><span class='line'>  <span class="vi">@resourceName: </span><span class="s">&quot;some_model&quot;</span>
+</span><span class='line'>  <span class="vi">@url: </span><span class="s">&quot;/api/v1/some_models&quot;</span>  <span class="c1"># will be used for REST actions (instead of plain `/some_models`)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>or for an instance:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">parent.url = </span><span class="s">&quot;/api/v1/some_models/somewhere_special&quot;</span>
+</span><span class='line'><span class="nx">parent</span><span class="p">.</span><span class="nx">url</span><span class="p">.</span><span class="nx">load</span> <span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s">&quot;I loaded from a special place!&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Use <code>autoload</code> carefully</h2>
+
+<p>Say you have an association:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;children&#39;</span><span class="p">,</span> <span class="nv">autoload: </span><span class="nx">trueOrFalse</span><span class="p">,</span> <span class="nv">saveInline: </span><span class="nx">trueOrFalse</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If <code>autoload</code> is true, <code>parent.get('children')</code> will send a request to get children items. By default this is <code>/children.json?parent_id=#{parentId}</code>.</p>
+
+<p>You can do a nested url with:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Child</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">RestStorage</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;parent&#39;</span>
+</span><span class='line'>  <span class="nx">@urlNestsUnder</span> <span class="s">&#39;parent&#39;</span> <span class="c1"># will request /parents/:parent_id/children/:id/</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2><code>saveInline</code> and <code>accepts_nested_nested_attributes_for</code></h2>
+
+<p><code>saveInline</code> goes nicely with Rails <a href="http://api.rubyonrails.org/v4.0.1/classes/ActiveRecord/NestedAttributes/ClassMethods.html"><code>accepts_nested_attributes_for</code></a>, except that Rails expects a parameter called <code>children_attributes</code>, but batman.js sends <code>children</code>.  You can work around it in a couple ways:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;children&#39;</span><span class="p">,</span> <span class="nv">saveInline: </span><span class="kc">true</span><span class="p">,</span> <span class="nv">encoderKey: </span><span class="s">&#39;children_attributes&#39;</span> <span class="c1"># this expects children_attributes in JSON from the server, too</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And I confess I have done this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;children&#39;</span><span class="p">,</span> <span class="nv">saveInline: </span><span class="kc">true</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">toJSON: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nv">builtJSON = </span><span class="k">super</span>
+</span><span class='line'>    <span class="nv">builtJSON.children_attributes = </span><span class="nx">builtJSON</span><span class="p">.</span><span class="nx">children</span>
+</span><span class='line'>    <span class="k">delete</span> <span class="nx">builtJSON</span><span class="p">.</span><span class="nx">children</span>
+</span><span class='line'>    <span class="nx">builtJSON</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Take advantage of Rails Validation Errors</h2>
+
+<p>When Rails responds with <code>422</code> and a JSON object with <code>{ "errors" : { ... } }</code>, they&rsquo;ll be added to your model&rsquo;s errors. <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-formfor"><code>data-formfor</code></a> has a built-in thing for that, so make sure you have an errors div in your form:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;form</span> <span class="na">data-formfor-somemodel=</span><span class="s">&#39;currentSomeModel&#39;</span> <span class="na">data-event-submit=</span><span class="s">&#39;saveSomeModel&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;errors&#39;</span><span class="nt">&gt;</span><span class="c">&lt;!-- will be automatically populated --&gt;</span><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/form&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Christian Life as a Lazy Enumerable]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable/"/>
+    <updated>2014-02-28T18:43:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable</id>
+    <content type="html"><![CDATA[<p>Living a day at a time sounds a bit like <a href="http://ruby-doc.org/core-2.0/Enumerable.html#method-i-lazy">lazy enumeration</a>.</p>
+
+<!-- more -->
+
+
+<p>Jesus said <a href="http://www.esvbible.org/Matthew%2B6%253A25-34/">not to worry about your life</a>:</p>
+
+<blockquote><p>&ldquo;Do not be anxious about tomorrow, for tomorrow will be anxious for itself.&rdquo;</p></blockquote>
+
+<p>It&rsquo;s a bit like the lazy enumeration pattern. Don&rsquo;t load all the items into memory, just load the one you need right now. Loading all the days of your life right away <a href="http://www.esvbible.org/Luke%2B12%253A13-21/">might not be worth it</a>:</p>
+
+<blockquote><p>&ldquo;The land of a rich man produced plentifully, and he thought to himself, &hellip;  &lsquo;Soul, you have ample goods laid up for many years; relax, eat, drink, be merry.&rsquo; But God said to him, &lsquo;Fool! This night your soul is required of you, and the things you have prepared, whose will they be?&rsquo;&rdquo;</p></blockquote>
+
+<p>To be sure, Jesus must have had <em>some</em> considerations for the future, if only to <a href="http://www.esvbible.org/Matthew%2B6%253A19-21/">&ldquo;store up treasures in heaven&rdquo;</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Reload HTML for Batman.Views]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/02/21/reload-html-for-batman-dot-views/"/>
+    <updated>2014-02-21T08:40:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/02/21/reload-html-for-batman-dot-views</id>
+    <content type="html"><![CDATA[<p>When working on HTML for <a href="http://batmanjs.org/docs/api/batman.view.html"><code>Batman.View</code></a>s, it can be annoying to refresh and navigate back to wherever you were. Hacking into <code>Batman.HTMLStore</code> enables you to reload HTML without refreshing</p>
+
+<!-- more -->
+
+
+<h1>The Code</h1>
+
+<p><em>You&rsquo;ll want to include all this code </em>after<em> batman.js and </em>before<em> your app.</em></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># alter `Batman.HTMLStore`&#39;s default accessor so that it isn&#39;t `final` and has an `unset` action:</span>
+</span><span class='line'><span class="nv">storeAccessor = </span><span class="nx">Batman</span><span class="p">.</span><span class="nx">HTMLStore</span><span class="o">::</span><span class="nx">_batman</span><span class="p">.</span><span class="nx">getFirst</span><span class="p">(</span><span class="s">&#39;defaultAccessor&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nv">storeAccessor.final = </span><span class="kc">false</span>
+</span><span class='line'><span class="nv">storeAccessor.unset = </span><span class="nf">(path) -&gt;</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">!</span><span class="nx">path</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">is</span> <span class="s">&quot;/&quot;</span>
+</span><span class='line'>    <span class="nv">path = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
+</span><span class='line'>  <span class="nx">@_requestedPaths</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">@_htmlContents</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">undefined</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># returns the next superview with a defined source</span>
+</span><span class='line'><span class="nv">Batman.View::superviewWithSource = </span><span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">)</span><span class="o">?</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">@</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">@superview</span><span class="p">.</span><span class="nx">superviewWithSource</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Unset the view&#39;s HTML, then reload it and re-initialize the view when it loads</span>
+</span><span class='line'><span class="nv">Batman.View::refreshHTML = </span><span class="nf">-&gt;</span>
+</span><span class='line'>  <span class="c1"># climb the view tree to find a view with a defined `source`</span>
+</span><span class='line'>  <span class="nx">@sourceView</span> <span class="o">?=</span> <span class="nx">@superviewWithSource</span><span class="p">()</span>
+</span><span class='line'>  <span class="nv">sourceView = </span><span class="nx">@sourceView</span>
+</span><span class='line'>  <span class="nv">sourceView.html = </span><span class="kc">undefined</span>
+</span><span class='line'>  <span class="nv">path = </span><span class="nx">sourceView</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">if</span> <span class="nx">path</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">isnt</span> <span class="s">&quot;/&quot;</span>
+</span><span class='line'>    <span class="nv">path = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
+</span><span class='line'>  <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">sourceView</span><span class="p">.</span><span class="nx">_HTMLObserver</span> <span class="o">?=</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">observe</span> <span class="nx">path</span><span class="p">,</span> <span class="nf">(nv, ov) =&gt;</span>
+</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;html&#39;</span><span class="p">,</span> <span class="nx">nv</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">loadView</span><span class="p">()</span>
+</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">initializeBindings</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, you can call <code>refreshHTML()</code> on a <code>Batman.View</code> to reload its HTML from the server.</p>
+
+<h1>Do It</h1>
+
+<p>In Chrome:</p>
+
+<ul>
+<li><strong>right-click, &ldquo;Inspect Element&rdquo;</strong> on a HTML element. The element is now available at <code>$0</code> in your console</li>
+<li><strong><code>$context($0).refreshHTML()</code></strong> to get the view for the node and call <code>refreshHTML</code> on it.</li>
+</ul>
+
+
+<p>Cha-ching!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Dynamically-Generated Headers for ActiveResource Requests]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests/"/>
+    <updated>2014-02-05T15:47:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests</id>
+    <content type="html"><![CDATA[<p>Need to add a header to an ActiveResource request? If you need to do it at dynamically at request-time, redefine <code>.headers</code>.</p>
+
+<!-- more -->
+
+
+<p>I needed to include header in my requests, but I didn&rsquo;t just want to set it in the class definition.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MyResource</span> <span class="o">&lt;</span> <span class="ss">ActiveResource</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">headers</span><span class="o">[</span><span class="s2">&quot;My-Header&quot;</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;Something-Useful&quot;</span> <span class="c1"># boo hiss, I want it dynamically!</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, I overwrote <code>.headers</code> to be a method rather than just a pointer to a hash:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MyResource</span> <span class="o">&lt;</span> <span class="ss">ActiveResource</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">cattr_accessor</span> <span class="ss">:static_headers</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">static_headers</span> <span class="o">=</span> <span class="n">headers</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">headers</span>
+</span><span class='line'>    <span class="n">new_headers</span> <span class="o">=</span> <span class="n">static_headers</span><span class="o">.</span><span class="n">clone</span>
+</span><span class='line'>    <span class="n">new_headers</span><span class="o">[</span><span class="s2">&quot;My-header&quot;</span><span class="o">]</span> <span class="o">=</span> <span class="no">MyClass</span><span class="o">.</span><span class="n">some_method</span> <span class="c1"># voila, evaluated at request-time</span>
+</span><span class='line'>    <span class="n">new_headers</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, I can add whatever value to the headers I want, whenever I want!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging Keypaths in Batman.js Views]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/01/30/debugging-keypaths-in-batman-dot-js-views/"/>
+    <updated>2014-01-30T09:23:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/01/30/debugging-keypaths-in-batman-dot-js-views</id>
+    <content type="html"><![CDATA[<p>Debugging can be tedious, especially when <code>cntl-R</code> is your only resort for trying new options. Instead, use batman.js&rsquo;s <code>$context</code> function to access the context of a specific node.</p>
+
+<!-- more -->
+
+
+<p>As I&rsquo;m working with batman.js views, I use this technique for debugging in the browser: In Chrome, you can right-click, &ldquo;Inspect element&rdquo;, which makes the highlighted node available as <code>$0</code> in the console. Then, pass <code>$0</code> to <code>$context</code> (which is a secret function created by batman.js) and it will return the batman.js view context for that node.</p>
+
+<p>For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c1">// right-click an element, select &quot;Inspect Element&quot;</span>
+</span><span class='line'><span class="nx">ctx</span> <span class="o">=</span> <span class="nx">$context</span><span class="p">(</span><span class="nx">$0</span><span class="p">)</span>           <span class="c1">// =&gt; the view where $0 was rendered</span>
+</span><span class='line'><span class="nx">ctx</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;node&#39;</span><span class="p">)</span>              <span class="c1">// =&gt; DOM node for the view</span>
+</span><span class='line'><span class="nx">ctx</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;superview&#39;</span><span class="p">)</span>         <span class="c1">// =&gt; superview for this view (helpful for iteration/iterator views)</span>
+</span><span class='line'><span class="nx">ctx</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;controller&#39;</span><span class="p">)</span>        <span class="c1">// =&gt; controller that rendered the view</span>
+</span><span class='line'><span class="nx">ctx</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;controller.posts&#39;</span><span class="p">)</span>  <span class="c1">// =&gt; values set on the controller</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, isn&rsquo;t that better!</p>
+]]></content>
+  </entry>
+  
+</feed>

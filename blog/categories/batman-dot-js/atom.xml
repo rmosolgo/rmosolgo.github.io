@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
+    <updated>2014-06-05T07:26:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
+
+<!-- more -->
+
+
+<p><strong>The goal</strong> is to have a user add an image to a file input and <em>immediately</em> preview that image. To accomplish this, we&rsquo;ll turn the uploaded file into a data URI, then set that to the <code>src</code> of our <code>&lt;img/&gt;</code>.</p>
+
+<p>First, set up the observer in the model:</p>
+
+<p>```coffeescript
+class App.ModelWithImage extends Batman.Model
+  @encode &lsquo;imageDataURI&rsquo;</p>
+
+<p>  constructor: &ndash;></p>
+
+<pre><code>super
+@observe 'imageFile', (newVal, oldVal) -&gt;
+  if newVal?
+    @_setImageDataURIFromFile()
+  else
+    @set 'imageDataURI', ""
+</code></pre>
+
+<p>```</p>
+
+<p>This says: &ldquo;whenever <code>imageFile</code> changes, if there is a new value, use it to set the data URI, otherwise, set the data URI to <code>""</code>.&rdquo;</p>
+
+<p>Now, implement <code>_setImageDataURIFromFile</code>:</p>
+
+<p>```coffeescript
+  _setImageDataURIFromFile: &ndash;></p>
+
+<pre><code>file = @get('imageFile')
+reader = new FileReader
+reader.onload = (e) =&gt;
+  dataURI = e.target.result
+  @set 'imageDataURI', dataURI
+reader.readAsDataURL(file)
+</code></pre>
+
+<p>```</p>
+
+<p>You can use it in a template like this:</p>
+
+<p><code>html
+  &lt;img data-bind-src='component.imageDataURI' /&gt;
+  &lt;input type='file' data-bind='component.imageFile' /&gt;
+</code></p>
+
+<p>When a user uploads a file, the <code>&lt;img&gt;</code> will be automatically updated!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Has Many Through in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js/"/>
+    <updated>2014-05-30T15:27:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> doesn&rsquo;t support <code>hasManyThrough</code> out of the box, but it can be implemented fairly easily with <code>Set::mappedTo</code>.</p>
+
+<!-- more -->
+
+
+<p><em>This feature was just merged into the master branch &mdash; download the latest batman.js <a href="http://batmanjs.org/download.html">here</a>.</em></p>
+
+<h1>What&rsquo;s a &ldquo;Has-Many-Through&rdquo; Association?</h1>
+
+<p>It&rsquo;s best shown by example. To join <code>Household</code> to <code>Person</code>, you might have a &ldquo;join model&rdquo;, <code>HouseholdMembership</code>. The associations look like this:</p>
+
+<p>```coffeescript
+class Household extends Batman.Model
+  @hasMany &lsquo;householdMemberships&rsquo;</p>
+
+<p>class HouseholdMembership extends Batman.Model
+  @belongsTo &lsquo;household&rsquo;
+  @belongsTo &lsquo;person&rsquo;</p>
+
+<p>class Person extends Batman.Model
+  @hasMany &lsquo;householdMemberships&rsquo;
+```</p>
+
+<p>Household <code>hasMany</code> memberships, each membership <code>belongsTo</code> a person.</p>
+
+<p>```</p>
+
+<pre><code>           __ HouseholdMembership ─── Person
+         ╱
+</code></pre>
+
+<p>Household ─── HouseholdMembership ─── Person</p>
+
+<pre><code>         ╲
+           ╲_ HouseholdMembership ─── Person
+</code></pre>
+
+<p>```</p>
+
+<p>Household has many people <em>through</em> household memberships.</p>
+
+<h1>Has-Many-Through in Batman.js</h1>
+
+<p>Although <code>hasManyThrough</code> isn&rsquo;t part of batman.js, you can implement a <strong>read-only</strong> has-many-through using <a href="http://batmanjs.org/docs/api/batman.set.html#prototype_function_mappedto"><code>Set::mappedTo</code></a>. Given classes as defined above, you could add an accessor for <code>Household::people</code>:</p>
+
+<p>```coffeescript</p>
+
+<h1>class Household</h1>
+
+<p>  @accessor &lsquo;people&rsquo;, &ndash;> @get(&lsquo;householdMemberships&rsquo;).mappedTo(&lsquo;person&rsquo;)
+```</p>
+
+<p>This returns a <code>Batman.Set</code> (actually a <code>Batman.SetMapping</code>) containing unique <code>Person</code>s belonging to those <code>householdMemberships</code>. As batman.js does, items added and removed are <a href="rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a>, so this is safe to use everywhere.</p>
+
+<p>As for <strong>adding items</strong>, you could do it this way:</p>
+
+<p>```coffeescript</p>
+
+<h1>class Household</h1>
+
+<p>  addPerson: (person) &ndash;></p>
+
+<pre><code>@get('householdMemberships').build({person})
+</code></pre>
+
+<p>```</p>
+
+<p>Again, the <code>Batman.SetMapping</code> will take care of keeping everything in sync!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Jasmine-Friendly Batman.js Accessor Stubs]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs/"/>
+    <updated>2014-05-16T12:53:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><code>Batman.Object</code> accessors</a> are the bread and butter of <a href="http://batmanjs.org">batman.js</a>. Stubbing them can make testing much easier.</p>
+
+<!-- more -->
+
+
+<p>I haven&rsquo;t figured out <a href="http://batmanjs.org/docs/testing.html"><code>Batman.TestCase</code></a> yet, so I&rsquo;m still using <a href="http://jasmine.github.io/">jasmine</a>. <code>Batman.TestCase</code> <a href="https://github.com/batmanjs/batman/blob/master/src/extras/testing/test_case.coffee#L90">includes <code>stubAccessor</code> out of the box</a>, and I ported it to jasmine:</p>
+
+<p>```coffeescript
+window.stubAccessor = (object, keypath) &ndash;>
+  if object.prototype?</p>
+
+<pre><code>console.warn "You're stubbing an accessor on #{object.name},
+    which won't be un-stubbed when the example group finishes!
+    Stub accessors on instances, not classes, if possible!"
+</code></pre>
+
+<p>  stub = spyOn(object.property(keypath), &lsquo;getValue&rsquo;)
+  object.property(keypath).refresh()
+  stub.calls.pop() # ^^ remove call from refresh
+  stub
+```</p>
+
+<p>This way, the <code>stub</code> works just like normal jasmine spies:</p>
+
+<p><code>coffeescript
+record = new App.MyModel
+stub = stubAccessor(record, 'myProperty').andReturn('stubbed!')
+record.get('myProperty') # =&gt; "stubbed!"
+record.get('myProperty')
+stub.calls.length # =&gt; 2
+</code></p>
+
+<p><code>
+record = new App.MyModel
+stub = stubAccessor(record, 'myProperty').andCallThrough()
+record.set('myProperty', "value!")
+record.get('myProperty') # =&gt; "value!"
+stub.calls.length # =&gt; 1
+</code></p>
+
+<p>However, this <code>stubAccessor</code> <em>doesn&rsquo;t</em> stub <code>set</code>! Maybe that&rsquo;s a to-do, I haven&rsquo;t needed it yet.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Integrate Batman.js and Leaflet with a Custom View]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/"/>
+    <updated>2014-04-30T23:33:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">batman.js</a> views are one of the best ways to integrate other JS libraries with batman.js data structures like <code>Batman.Object</code> and <code>Batman.Set</code>. For example, you can use a custom view to display <code>Batman.Model</code>s with <a href="http://leafletjs.com">leaflet.js</a></p>
+
+<!-- more -->
+
+
+<p>I&rsquo;ve always wanted to try batman.js + leaflet. I had to:</p>
+
+<ul>
+<li>Use <code>@option</code> to define view APIs</li>
+<li>Initialize the custom view, controlling for async loading of data &amp; map</li>
+<li>Observe <code>Batman.Object</code>s to keep leaflet up-to-date.</li>
+<li>Listen to leaflet to keep batman.js up to date</li>
+</ul>
+
+
+<p>I ended up making an abstract <code>LeafletView</code>, implemented by <code>LeafletPointView</code> and <code>LeafletCollectionPointView</code>.</p>
+
+<p>Be sure to check out the <a href="http://bl.ocks.org/rmosolgo/11443841">live example</a> and source code (<a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee">custom views</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/index.jade#L19">index html</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/edit.jade#L19">edit html</a>)!</p>
+
+<h2><code>@option</code> in Custom Views</h2>
+
+<p><code>@option</code> allows you to pass values explicitly into your custom view. That way, you can eliminate the guesswork of climbing the view tree or looking up to the controller for some value.</p>
+
+<p>It provides a view binding <em>and</em> an accessor for your custom view. In my case, I used:</p>
+
+<p><code>coffeescript
+class App.LeafletView extends Batman.View
+  @option 'draggable'
+</code></p>
+
+<p>To provide in my HTML:</p>
+
+<p>```html</p>
+
+<div data-view='App.LeafletView' data-view-draggable='true'></div>
+
+
+<p>```</p>
+
+<p>And in my view code:</p>
+
+<p><code>coffeescript
+@get('draggable') # =&gt; returns the value passed to the binding
+</code></p>
+
+<p>This also works for objects, as in <code>@option 'item'</code>:</p>
+
+<p>```html</p>
+
+<div data-view='App.LeafletPointView' data-view-item='monument'></div>
+
+
+<p>```</p>
+
+<p>Then I have easy access to my record:</p>
+
+<p><code>coffeescript
+@get('item')
+</code></p>
+
+<h2>Initializing Custom Views</h2>
+
+<p>Initializing custom batman.js views is tough because:</p>
+
+<ul>
+<li>Views are constructed before they&rsquo;re added to the DOM</li>
+<li>Bindings are initialized without values (and their objects may not be loaded from the server yet)</li>
+<li>Lifecycle events may fire more than once</li>
+</ul>
+
+
+<p>So, you have to be prepared for undefined values and for <code>viewDidAppear</code> to be fired more than once.</p>
+
+<ul>
+<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L38"><strong>Use <code>observeOnce</code></strong></a> to fire on change from <code>undefined</code> to some value. My case was different because I had to wait for the binding <em>and</em> for the map to load, hence the <code>leafletReady</code> event.</li>
+<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L52"><strong>Check for initialization</strong> in <code>viewDidAppear</code> handlers</a></li>
+</ul>
+
+
+<h2>Keeping Other Libraries up to Date</h2>
+
+<p>Integrating batman.js with other JavaScript libraries usually means setting up event handlers so that events pass from an outside proxy of a <code>Batman.Object</code> to the object itself.</p>
+
+<p>For example, to update a leaflet marker when a <code>Batman.Object</code> is changed, you have to observe the <code>Batman.Object</code> so that <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L149">whenever <code>latitude</code> or <code>longitude</code> changes, you update the marker</a>:</p>
+
+<p>```coffeescript</p>
+
+<h1>From App.LeafletPointView, @get(&lsquo;item&rsquo;) returns the object</h1>
+
+<p>@observe &lsquo;item.latitude&rsquo;, (nv, ov) &ndash;>
+  @updateMarker(@get(&lsquo;item&rsquo;), centerOnItem: true) if nv?
+@observe &lsquo;item.longitude&rsquo;, (nv, ov) &ndash;>
+  @updateMarker(@get(&lsquo;item&rsquo;), centerOnItem: true) if nv?
+```</p>
+
+<p>You have to link the other way too. To update a record when its marker is updated (by dragging), <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L85">create a handler</a>:</p>
+
+<p>```coffeescript</p>
+
+<h1>from App.LeafletView</h1>
+
+<p>marker.on &lsquo;dragend&rsquo;, =>
+  # &hellip;
+  # get values from leaflet and update batman.js
+  latLng = marker.getLatLng()
+  item.set &lsquo;latitude&rsquo;, latLng.lat
+  item.set &lsquo;longitude&rsquo;, latLng.lng
+  # &hellip;
+```</p>
+
+<p><code>App.LeafletCollectionPointView</code> uses <a href="http://batmanjs.org/docs/api/batman.setobserver.html"><code>Batman.SetObserver</code></a> to <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L174">track adding, removing and modifying items</a> (just like <code>Batman.SetSort</code>).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Sending JSON Instead of Form Data with Batman.RestStorage]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage/"/>
+    <updated>2014-04-25T13:02:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage</id>
+    <content type="html"><![CDATA[<p>By default, <code>Batman.Request</code> sends data as HTTP form data. However, you can override this with <code>Batman.RestStorage</code>.</p>
+
+<!-- more -->
+
+
+<p>Simply pass <code>serializeAsForm: false</code> to <code>@persist</code> in your model definition:</p>
+
+<p><code>coffeescript
+class MyApp.Model extends Batman.Model
+  @persist Batman.RestStorage, serializeAsForm: false
+</code></p>
+
+<p>Now, it will work with any JSON endpoint!</p>
+
+<p>In my case, I was trying out batman.js and Martini, and I was surprised to find that RestStorage sends form data. I guess you never notice with Rails, since it puts everything into the <code>params</code> hash.</p>
+]]></content>
+  </entry>
+  
+</feed>

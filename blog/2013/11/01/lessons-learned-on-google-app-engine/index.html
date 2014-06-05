@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Lessons Learned on Google App Engine - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="My involvement with a Google App Engine-based project is winding down, so I&rsquo;ll share what I&rsquo;ve learned. Building for App Engine is tough &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Lessons Learned on Google App Engine</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-01T13:00:00-07:00" pubdate data-updated="true">Nov 1<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>My involvement with a <a href="https://cloud.google.com/products/app-engine">Google App Engine</a>-based project is winding down, so I&rsquo;ll share what I&rsquo;ve learned.</p>
+
+<!-- more -->
+
+
+<h1>Building for App Engine is tough</h1>
+
+<p>If you&rsquo;re thinking about starting a project on GAE, think about it carefully. I had a hard time with it for several reasons, but my first mistake was thinking, &ldquo;Oh, this will be a way to get an app going quickly and cheaply without all that sysadmin trouble.&rdquo; This is not the case for a few reason:</p>
+
+<ul>
+<li>mission-critical features depend on <em>GAE-specific</em> APIs which are often poorly documented and not very googlable.</li>
+<li>you&rsquo;ll be learning a <a href="https://developers.google.com/appengine/docs/python/ndb/">new database (NDB)</a>, a <a href="https://developers.google.com/appengine/docs/python/memcache/">new memcache server</a> and a <a href="https://developers.google.com/appengine/docs/python/taskqueue/">new task queuer</a>, among others.</li>
+<li>GAE support for Django is so-so. You&rsquo;ll probably have to learn a new framework. Make sure to use <a href="http://webapp-improved.appspot.com/">WebApp2</a> if you&rsquo;re trying to set up a lightweight application.</li>
+</ul>
+
+
+<p>If you want quick, cheap prototyping, consider <a href="http://heroku.com/">Heroku</a> instead. You&rsquo;ll have access to all the standard components of the modern web stack (rather than GAE-specific ones) and Heroku supports <a href="https://devcenter.heroku.com/categories/language-support">many languages</a>.</p>
+
+<h1>Development server != Production server</h1>
+
+<p>The development environment differs from the production environment in several ways. The ones I found are:</p>
+
+<ul>
+<li>No memory limit on the development server</li>
+<li>No timeouts on the development server</li>
+<li>Asynchronous features don&rsquo;t work on the development server (futures don&rsquo;t resolve until they&rsquo;re explicitly waited for)</li>
+</ul>
+
+
+<p>So, something that works in development may not work in production! (And apparently the same is <a href="https://developers.google.com/appengine/docs/python/tools/localunittesting#Python_Introducing_the_Python_testing_utilities">true for the test stubs</a>.)</p>
+
+<h1>You might have to pay for your staging environment</h1>
+
+<p>Unless you look into <a href="http://www.appscale.com/">AppScale</a> (I didn&rsquo;t), you&rsquo;ll need another GAE instance for your staging server. Unless you pay, you won&rsquo;t be able to test rigorous features of the app.</p>
+
+<h1>The Datastore has some drawbacks</h1>
+
+<ol>
+<li><p>You pay to use it. If your application will be database-intensive (reads, writes and/or deletes), it&rsquo;s gonna cost you. It adds up &mdash; make sure to set a nice low cap on your budget.</p></li>
+<li><p>The pricing is non-intuitive at first. You&rsquo;re charged for each value in the stored entity, its key, and each value in any indexes that entity has.</p></li>
+<li><p>Indexes are expensive to maintain (because of the point above). Remove ones you don&rsquo;t desperately need!</p></li>
+<li><p>It&rsquo;s an unfamiliar, low-level API. To me, anyways &mdash; it&rsquo;s no ActiveRecord.</p></li>
+</ol>
+
+
+<h1>Don&rsquo;t cache if you&rsquo;re running big queries</h1>
+
+<p>Make sure to pass the <a href="https://developers.google.com/appengine/docs/python/ndb/functions#context_options"><code>use_cache=false</code> context option</a> or else it will kill your instance for memory overload! For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>  <span class="n">some_big_query</span> <span class="o">=</span> <span class="n">AppModel</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">AppModel</span><span class="o">.</span><span class="n">some_property</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">lots_of_items</span> <span class="o">=</span> <span class="n">some_big_query</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="c"># otherwise it will cache entities in memory</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Also, consider the <a href="https://developers.google.com/appengine/docs/python/ndb/queryclass#kwdargs_options"><code>keys_only</code> option</a> if you&rsquo;re performing actions that could work with just the keys. <a href="https://developers.google.com/appengine/docs/python/ndb/keyclass#Key_delete">Deleting</a>, for example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>  <span class="n">unwanted_entity_keys</span> <span class="o">=</span> <span class="n">AppModel</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">AppModel</span><span class="o">.</span><span class="n">some_property</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">keys_only</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">ndb</span><span class="o">.</span><span class="n">delete_multi</span><span class="p">(</span><span class="n">unwanted_entity_keys</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Use pages to run big queries</h1>
+
+<p>Datastore operations are limited to 60 seconds, even on the backend. If you&rsquo;re iterating over lots of entities and/or performing time-consuming tasks on each one, you&rsquo;ll want to use the <a href="https://developers.google.com/appengine/docs/python/ndb/queryclass#Query_fetch_page"><code>Query#fetch_page</code></a> method. For example, creating a CSV based on a query:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">AppModel</span><span class="p">(</span><span class="n">ndb</span><span class="o">.</span><span class="n">model</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">CSV_HEADER</span> <span class="o">=</span> <span class="s">&quot;heading,heading,heading</span><span class="se">\n</span><span class="s">&quot;</span>
+</span><span class='line'>  <span class="nd">@class_method</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">csv_by_dates</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">PAGE_SIZE</span> <span class="o">=</span> <span class="mi">500</span> <span class="c"># I&#39;ll process 500 at a time</span>
+</span><span class='line'>    <span class="n">csv</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">CSV_HEADER</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c"># here&#39;s a big query:</span>
+</span><span class='line'>    <span class="n">query</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">date</span> <span class="o">&gt;</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">date</span> <span class="o">&lt;</span> <span class="n">end_date</span><span class="p">)</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+</span><span class='line'>    <span class="c"># use the fetch_page method:</span>
+</span><span class='line'>    <span class="n">results</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">more</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">fetch_page</span><span class="p">(</span><span class="n">PAGE_SIZE</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class='line'>      <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">csv</span> <span class="o">+=</span> <span class="n">d</span><span class="o">.</span><span class="n">to_csv</span><span class="p">()</span> <span class="c"># load up the CSV</span>
+</span><span class='line'>      <span class="c"># pass `cursor` to the next query:</span>
+</span><span class='line'>      <span class="n">results</span><span class="p">,</span> <span class="n">cursor</span><span class="p">,</span> <span class="n">more</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">fetch_page</span><span class="p">(</span><span class="n">PAGE_SIZE</span><span class="p">,</span> <span class="n">start_cursor</span><span class="o">=</span><span class="n">cursor</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">csv</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c"># def to_csv(self): ...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>Ok, that&rsquo;s all for now!</em></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-11-01T13:00:00-07:00" pubdate data-updated="true">Nov 1<span>st</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/google-app-engine/'>Google App Engine</a>, <a class='category' href='/blog/categories/python/'>Python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/" title="Previous Post: Load Batman.js Models from Specific Urls">&laquo; Load Batman.js Models from Specific Urls</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/11/23/dynamic-navigation-view-with-batman-dot-js/" title="Next Post: Dynamic Navigation View with Batman.js">Dynamic Navigation View with Batman.js &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

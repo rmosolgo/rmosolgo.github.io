@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Getting to Know Batman.Set - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.Set is the array-like enumerable of batman.js. It offers observable properties (which are automatically tracked by @accessor) and useful &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Getting to Know Batman.Set</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-30T07:54:00-07:00" pubdate data-updated="true">Apr 30<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org/docs/api/batman.set.html"><code>Batman.Set</code></a> is the array-like enumerable of <a href="http://batmanjs.org">batman.js</a>. It offers observable properties (which are automatically tracked by <code>@accessor</code>) and useful change events.</p>
+
+<!-- more -->
+
+
+<p>In batman.js, you need observable data structures everywhere. <code>Batman.Set</code> is the observable, array-like enumerable that the framework uses internally, and you can use it too! Besides <code>Batman.Set</code>, batman.js provides some other classes to help you get things done:</p>
+
+<ul>
+<li><code>Batman.SetIndex</code> (created with <code>indexedBy</code>) groups a Set&rsquo;s items by a property value</li>
+<li><code>Batman.UniqueSetIndex</code> (created with <code>indexedByUnique</code>) looks up items by unique value</li>
+<li><code>Batman.SetSort</code> (created with <code>sortedBy</code>) returns a sorted proxy of the Set</li>
+<li>Binary set operations create unions, intersections and complements of sets.</li>
+</ul>
+
+
+<h2>Batman.Set</h2>
+
+<p><code>Batman.Set</code> implements the <a href="http://en.wikipedia.org/wiki/Mathematical_set">set</a> pattern. It is a <em>collection of distinct objects</em>, meaning that there can be no duplicates (unlike an array). Features of <code>Batman.Set</code> include:</p>
+
+<ul>
+<li>Enumeration (<code>Batman.Set</code> mixes in <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumerable</code></a>)</li>
+<li>Guaranteed unique contents (a <code>Batman.Set</code> won&rsquo;t allow duplicates, even if you call <code>add</code> twice.)</li>
+<li>Observable</li>
+<li>Sorting and searching, with internal caching</li>
+<li>Extensible with CoffeeScript <code>extend</code> for making custom sets</li>
+</ul>
+
+
+<p>You can <strong>create</strong> a <code>Batman.Set</code> by passing <em>n</em> items to the constructor:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">set = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can <strong>add</strong> and <strong>remove</strong> with the <code>add</code> and <code>remove</code> functions, which also take any number of items:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you try to add the same (<code>===</code>) item twice, it won&rsquo;t be added:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span><span class='line'><span class="nx">addedItems</span>        <span class="c1"># =&gt; []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you try to remove an item that isn&rsquo;t in the set, nothing will happen:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
+</span><span class='line'><span class="nx">removedItems</span>      <span class="c1"># =&gt; []</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Observing Batman.Set</h3>
+
+<p>Calling these functions inside an accessor function will cause the accessor to track the <code>Batman.Set</code>:</p>
+
+<ul>
+<li><code>at</code></li>
+<li><code>find</code></li>
+<li><code>merge</code></li>
+<li><code>forEach</code> (and any other <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumable</code> function</a>, since they call <code>forEach</code> under the hood)</li>
+<li><code>toArray</code></li>
+<li><code>isEmpty</code></li>
+<li><code>has</code></li>
+</ul>
+
+
+<p>So will <code>get</code>ting these accessors:</p>
+
+<ul>
+<li><code>first</code></li>
+<li><code>last</code></li>
+<li><code>isEmpty</code></li>
+<li><code>toArray</code></li>
+<li><code>length</code></li>
+</ul>
+
+
+<p>For example, all these accessors will be recalculated when <code>students</code> changes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Classroom</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;students&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.length&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.isEmpty&#39;</span><span class="p">)</span> <span class="c1"># or @get(&#39;students&#39;).isEmpty()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;numberOfPassingStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="c1"># ::count calls forEach in Batman.Enumerable:</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students&#39;</span><span class="p">).</span><span class="nx">count</span> <span class="nf">(s) -&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;grade&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>size</code>, <code>hasStudents</code>, and <code>numberOfPassingStudents</code> all register <code>students</code> as a source. (See <a href="/docs/api/batman.object_accessors.html#accessors_as_computed_properties">the docs</a> or <a href="/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">this blog post</a> for more information about batman.js automatic source tracking.)</p>
+
+<p>Besides automatic source tracking in accessors, you can observe these properties with <code>observe</code>.</p>
+
+<h2><code>itemsWereAdded</code>/<code>itemsWereRemoved</code></h2>
+
+<p>A set notifies its subscribers by firing:</p>
+
+<ul>
+<li><code>itemsWereAdded</code> when items are added to the set</li>
+<li><code>itemsWereRemoved</code> when items are removed from the set</li>
+</ul>
+
+
+<p>Each event is fired with the <em>items</em> that were added and removed.</p>
+
+<p>You can handle these events with <code>on</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereAdded&#39;</span><span class="p">,</span> <span class="nf">(addedItems) -&gt;</span>
+</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;There were </span><span class="si">#{</span><span class="nx">addedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> new items!&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereRemoved&#39;</span><span class="p">,</span> <span class="nf">(removedItems) -&gt;</span>
+</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;Say goodbye to </span><span class="si">#{</span><span class="nx">removedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> items!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>The event </em>may be<em> fired with the internally-determined indexes of the items. This is used internally by batman.js but isn&rsquo;t implemented in all cases.</em></p>
+
+<p>These functions cause items to be added or removed:</p>
+
+<ul>
+<li><code>add</code></li>
+<li><code>remove</code></li>
+<li><code>replace</code></li>
+<li><code>clear</code></li>
+<li><code>insert</code></li>
+</ul>
+
+
+<p>Under the hood, batman.js depends on these events to keep <code>data-foreach</code> bindings up to date.</p>
+
+<h2>Set Indexes</h2>
+
+<p>Set indexes are batman.js&rsquo;s way of searching sets. Batman.js caches these indexes and updates them whenever items are added or removed from the base <code>Batman.Set</code>. This way, you can be sure than any indexes you use will be automatically updated when the set is changed.</p>
+
+<p>Consider the <code>vegetables</code> set:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Batman.SetIndex</h3>
+
+<p>A <code>Batman.SetIndex</code> groups the base <code>Batman.Set</code> by a property of its members. For example, we can group <code>vegetables</code> by <code>color</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetablesByColor = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedBy</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, to get vegetables of a certain color, you <code>get</code> the color from the set index:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">redVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;red&#39;</span><span class="p">)</span> <span class="c1"># returns a Batman.Set</span>
+</span><span class='line'><span class="nx">redVegtables</span><span class="p">.</span><span class="nx">toArray</span><span class="p">()</span>
+</span><span class='line'><span class="c1"># =&gt; [{name: &quot;Tomato&quot;, color: &quot;red&quot;}, {name: &quot;Radish&quot;, color: &quot;red&quot;}]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>(<code>Batman.SetIndex::get</code> is an example of the &ldquo;default accessor as <code>method_missing</code>&rdquo; pattern.)</em></p>
+
+<p>The resulting set is just like any other <code>Batman.Set</code>, so you can observe it, pass it to view bindings, etc.</p>
+
+<p>If you <code>get</code> a value that doesn&rsquo;t exist, you get an empty <code>Batman.Set</code>. However, if a matching item is added to the <em>base</em> set, the index will be updated and the derived set will have the matching item added to it. For example, the <code>yellow</code> vegetables set is empty at first:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">yellowVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;yellow&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But if you add a vegetable with <code>color: "yellow"</code>,</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Butternut Squash&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>it will be immediately added to the derived set:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">)</span> <span class="c1"># =&gt; {name: &quot;Butternut Squash&quot;, color: &quot;yellow&quot;}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Batman.UniqueSetIndex</h3>
+
+<p>A <code>Batman.UniqueSetIndex</code> doesn&rsquo;t return a <em>set</em> of matching items, it returns the <em>first</em> matching item. This is useful when you know that the values of a property will be unique (For example, batman.js uses <code>MyModel.get('loaded.indexedBy.id')</code> to update records from JSON by ID).</p>
+
+<p>For example, our <code>vegetables</code> all have unique names:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">tomato = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedByUnique</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using <code>indexedByUnique</code> in an accessor makes the <code>Batman.UniqueSetIndex</code> a source for that accessor. So when the unique set index&rsquo;s value changes, the accessor will be recalculated.</p>
+
+<p>This can be demonstrated by extending our <code>vegetables</code> example a little bit. Imagine a garden which should know what vegetables are growing in it. Since it&rsquo;s essentially a group of vegetables, let&rsquo;s extend <code>Batman.Set</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In our app, we want to display red/green for which vegetables are in a garden. For example, <code>hasTomato</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasTomato&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@indexedByUnique</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span><span class="o">?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, a Garden will return <code>true</code> for <code>hasTomato</code> as soon as a tomato is added:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">myGarden = </span><span class="k">new</span> <span class="nx">Garden</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Spinach&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Corn&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; false</span>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">})</span>
+</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>SetSort</h2>
+
+<p>A <code>Batman.SetSort</code> behaves just like a <code>Batman.Set</code>, except that its members are ordered by a given property. If an item is added to the base set, it is also added to the set sort (in its proper place, of course).</p>
+
+<p>Given these vegetables:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
+</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can easily sort them by name:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># =&gt; Batman.SetSort</span>
+</span><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Cucumber&quot;, &quot;Eggplant&quot;, &quot;Tomato&quot;, &quot;Radish&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>They can also be sorted in reverse order:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="s">&quot;desc&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Or, to sort descending by an accessor:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;sortedByDescending.name&#39;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Set Caching</h2>
+
+<p>You don&rsquo;t have to worry about calling <code>indexedBy</code> or <code>sortedBy</code> repeatedly. Under the hood, batman.js caches them on their base sets, so it doesn&rsquo;t recalculate the indexes and sorts every time.</p>
+
+<h2>Union, Intersection, Complement</h2>
+
+<p><code>Batman.BinarySetOperation</code>s are objects that track <em>two</em> sets and contain the resulting elements from their operations. There are three implemented subclasses of <code>Batman.BinarySetOperation</code>:</p>
+
+<ul>
+<li><a href="http://batmanjs.org/docs/api/batman.setunion.html"><code>Batman.SetUnion</code></a> contains all members from both sets, without duplicates.</li>
+<li><a href="http://batmanjs.org/docs/api/batman.setintersection.html"><code>Batman.SetIntersection</code></a> contains members which are present in the first set <em>and</em> present in the second set.</li>
+<li><a href="http://batmanjs.org/docs/api/batman.setcomplement.html"><code>Batman.SetComplement</code></a> contains members which are in the first set <em>but not</em> present in the second set.</li>
+</ul>
+
+
+<p>Take note: constructors for binary set operations will fail if either argument is <code>null</code>, so be sure to check for that when you&rsquo;re building them!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-04-30T07:54:00-07:00" pubdate data-updated="true">Apr 30<span>th</span>, 2014</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage/" title="Previous Post: Sending JSON Instead of Form Data with Batman.RestStorage">&laquo; Sending JSON Instead of Form Data with Batman.RestStorage</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/" title="Next Post: Integrate Batman.js and Leaflet with a Custom View">Integrate Batman.js and Leaflet with a Custom View &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Load Batman.js Models from Specific Urls - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.js&rsquo;s REST Storage Adapter provides a clean interface for operating on records with vanilla REST urls &mdash; but what about when you &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Load Batman.js Models From Specific Urls</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-28T10:19:00-07:00" pubdate data-updated="true">Oct 28<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org/">Batman.js</a>&rsquo;s  <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee">REST Storage Adapter</a> provides a clean interface for operating on records with vanilla REST urls &mdash; but what about when you need a lil&#8217; something more?</p>
+
+<!-- more -->
+
+
+<p>First of all, the magic happens in <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L90">Batman.RestStorage#UrlForRecord</a>. For an already-persisted record, you have a few options:</p>
+
+<h2>pass <code>recordUrl</code> to loadWithOptions/findWithOptions</h2>
+
+<p><strong>findWithOptions</strong> or <strong>loadWithOptions</strong>&rsquo;s <code>options</code> can take a <code>recordUrl</code> param, which is used to retrieve the record. Use <code>findWithOptions</code> to load a new record:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">model_id = </span><span class="mi">1</span> <span class="c1"># you might get this from the request path or from another model&#39;s attributes</span>
+</span><span class='line'>  <span class="nv">model_url = </span><span class="s">&quot;/some_models/</span><span class="si">#{</span><span class="nx">model_id</span><span class="si">}</span><span class="s">?language=fr&quot;</span>
+</span><span class='line'>  <span class="nx">MyApp</span><span class="p">.</span><span class="nx">SomeModel</span><span class="p">.</span><span class="nx">findWithOptions</span> <span class="nx">model_id</span><span class="p">,</span> <span class="p">{</span><span class="nv">recordUrl: </span><span class="nx">model_url</span><span class="p">},</span> <span class="nf">(err, model) -&gt;</span>
+</span><span class='line'>    <span class="c1"># your model was loaded with the param language=fr!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>or use <code>loadWithOptions</code> to reload an existing record:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="c1"># using model from above...</span>
+</span><span class='line'>  <span class="nv">model_url = </span><span class="s">&quot;/some_models/</span><span class="si">#{</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">?language=es&quot;</span>
+</span><span class='line'>  <span class="nx">model</span><span class="p">.</span><span class="nx">loadWithOptions</span> <span class="p">{</span><span class="nv">recordUrl: </span><span class="nx">model_url</span><span class="p">},</span> <span class="nf">(err, model) -&gt;</span>
+</span><span class='line'>    <span class="c1"># your model was loaded with the param language=es!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Set <code>record.url</code></h2>
+
+<p>If you&rsquo;re reloading an already-loaded model, you can set its (POJO) <code>url</code> attribute to the URL you want to use:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">model.url = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">model</span><span class="p">.</span><span class="nx">constructor</span><span class="p">.</span><span class="nx">storageKey</span><span class="si">}</span><span class="s">/</span><span class="si">#{</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">?language=zh&quot;</span>
+</span><span class='line'>  <span class="nx">model</span><span class="p">.</span><span class="nx">load</span> <span class="nf">(err, model) -&gt;</span>
+</span><span class='line'>    <span class="c1"># your model was loaded with the param language=zh!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>For a New Records or Collections?</h2>
+
+<p>I&rsquo;m not sure yet. Check out <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L109">Batman.RestStorage#UrlForCollection</a>!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-28T10:19:00-07:00" pubdate data-updated="true">Oct 28<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/coffeescript/'>CoffeeScript</a>, <a class='category' href='/blog/categories/javascript/'>JavaScript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/" title="Previous Post: Adding Batman.js to an Existing Rails App">&laquo; Adding Batman.js to an Existing Rails App</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/11/01/lessons-learned-on-google-app-engine/" title="Next Post: Lessons Learned on Google App Engine">Lessons Learned on Google App Engine &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

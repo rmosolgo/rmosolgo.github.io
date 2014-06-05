@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-06-05T11:20:13-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Dynamically-Generated Headers for ActiveResource Requests]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests/"/>
+    <updated>2014-02-05T15:47:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests</id>
+    <content type="html"><![CDATA[<p>Need to add a header to an ActiveResource request? If you need to do it at dynamically at request-time, redefine <code>.headers</code>.</p>
+
+<!-- more -->
+
+
+<p>I needed to include header in my requests, but I didn&rsquo;t just want to set it in the class definition.</p>
+
+<p><code>ruby
+class MyResource &lt; ActiveResource::Base
+  headers["My-Header"] = "Something-Useful" # boo hiss, I want it dynamically!
+end
+</code></p>
+
+<p>So, I overwrote <code>.headers</code> to be a method rather than just a pointer to a hash:</p>
+
+<p>```ruby
+class MyResource &lt; ActiveResource::Base
+  cattr_accessor :static_headers
+  self.static_headers = headers</p>
+
+<p>  def self.headers</p>
+
+<pre><code>new_headers = static_headers.clone
+new_headers["My-header"] = MyClass.some_method # voila, evaluated at request-time
+new_headers
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Now, I can add whatever value to the headers I want, whenever I want!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.js testing with Karma and Jasmine]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/"/>
+    <updated>2014-01-18T14:38:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine</id>
+    <content type="html"><![CDATA[<p>Here&rsquo;s how I set up <a href="http://karma-runner.github.io/">Karma</a> &amp; <a href="http://pivotal.github.io/jasmine/">Jasmine</a> to test a <a href="http://batmanjs.org/">Batman.js</a> app on Ruby on Rails.</p>
+
+<!-- more -->
+
+
+<p>(Actually, this is how we use it at <a href="http://get.planningcenteronline.com/">work</a>. Credit to <a href="http://danott.co/">Dan</a>, as this is modeled after his work and <a href="http://danott.co/posts/rails-javascript-testing-using-karma.html">blog post</a>)</p>
+
+<p><em>Warning:</em> This is a bit hack-ish because it depends on your development server running while you run your tests. :)</p>
+
+<h1>Set Up Karma</h1>
+
+<p>You&rsquo;ll need <a href="http://nodejs.org/"><code>node</code></a> and <a href="https://npmjs.org/"><code>npm</code></a> for this to work! Create the directory <code>/spec/karma</code> and put these files in it:</p>
+
+<ul>
+<li><code>package.json</code>, which will tell <code>npm</code> what to install for you:</li>
+</ul>
+
+
+<p>```json spec/karma/package.json
+{
+  &ldquo;name&rdquo;: &ldquo;your-app-name&rdquo;,
+  &ldquo;version&rdquo;: &ldquo;0.0.1&rdquo;,
+  &ldquo;engines&rdquo;: {</p>
+
+<pre><code>"node": "&gt;= 0.10"
+</code></pre>
+
+<p>  },
+  &ldquo;dependencies&rdquo;: {</p>
+
+<pre><code>"karma": "&gt;= 0.10"
+</code></pre>
+
+<p>  }
+}
+```</p>
+
+<ul>
+<li><code>unit.coffee</code>, the configs for Karma:</li>
+</ul>
+
+
+<p>```coffeescript spec/karma/unit.coffee
+module.exports = (config) &ndash;>
+  config.set</p>
+
+<pre><code>basePath: '../../'
+frameworks: ['jasmine'] # that's my weapon of choice, anyways.
+files: [
+  'http://your-app.dev/assets/your-app.js' # point it at the app file on your dev server
+  # yours might look like 'http://localhost:3000/assets/application.js' or something like that.
+  # Of course, you can list as many files as you want here.
+  'spec/batman/**/*.coffee' # load your tests
+]
+reporters: ['dots']
+port: 9876
+colors: true
+logLevel: config.LOG_INFO
+autoWatch: true
+browsers: ['Chrome']
+captureTimeout: 60000
+singleRun: false
+</code></pre>
+
+<p>```</p>
+
+<ul>
+<li><code>run</code>, a bash script to start the runner easily:</li>
+</ul>
+
+
+<p>```bash spec/karma/run</p>
+
+<h1>!/bin/bash</h1>
+
+<p>BASE_DIR=<code>dirname $0</code>
+$BASE_DIR/node_modules/karma/bin/karma start $BASE_DIR/unit.coffee</p>
+
+<h1>from app root, just run <code>$ ./karma/run</code> to start the tests!</h1>
+
+<p>```</p>
+
+<ul>
+<li>Make <code>run</code> executable with <code>$ chmod +x spec/karma/run</code>.</li>
+<li>Add <code>spec/karma/node_modules</code> to <code>.gitignore</code> so you&rsquo;re not pushing around tons of Node modules with your project.</li>
+<li>Install Karma locally with <code>npm install spec/karma</code>.</li>
+</ul>
+
+
+<p>You should be able to start the runner now with <code>$ spec/karma/run</code>. It will open a Chrome window if it&rsquo;s working.</p>
+
+<h1>Write a Spec</h1>
+
+<p>I put my Batman.js specs in <code>spec/batman</code> with names corresponding to their location in <code>app/assets/batman</code>. You can do it however you want, but make sure you&rsquo;re loading the right files with <code>files</code> in <code>unit.coffee</code> above. Open up your first spec file, maybe <code>spec/batman/test_spec.coffee</code>, and put a jasmine spec in it:</p>
+
+<p>```coffeescript spec/batman/test_spec.coffee
+describe &lsquo;My test runner&rsquo;, &ndash;>
+  it &lsquo;loaded Batman.js&rsquo;, &ndash;></p>
+
+<pre><code>expect(Batman).toBeDefined()
+</code></pre>
+
+<p>  it &lsquo;loaded my App&rsquo;, &ndash;></p>
+
+<pre><code>expect(App).toBeDefined() # &lt;-- your app name!
+</code></pre>
+
+<p>  it &lsquo;loaded my Model&rsquo;, &ndash;></p>
+
+<pre><code>expect(App.Model).toBeDefined() # &lt;-- your model name!
+</code></pre>
+
+<p>```
+If those pass, you&rsquo;re in business!</p>
+
+<h1>Using Batman.TestCase</h1>
+
+<p>Since <code>Batman.TestCase</code> is a Batman extra, you&rsquo;ll need to include it in your project yourself. An easy way to do that is to include the <a href="https://github.com/batmanjs/batman/tree/master/src/extras"><code>src/extras/</code> directory</a> from Github in your Rails app. For example, in <code>/app/assets/batman/extras</code>. Now, in your development server, visit <code>/assets/extras/batman.test_case.js</code>. Do you see the code for <code>Batman.TestCase</code>?</p>
+
+<p>Now, just add that path to <code>files</code> in <code>spec/karma/unit.coffee</code>:</p>
+
+<p>```coffeescript spec/karma/unit.coffee</p>
+
+<h1>&hellip;</h1>
+
+<p>  files: [</p>
+
+<pre><code>"http://my-app.dev/assets/my_app.js"
+"http://my-app.dev/assets/extras/batman.test_case.js"
+"spec/batman/**/*.coffee"
+</code></pre>
+
+<p>  ]</p>
+
+<h1>&hellip;</h1>
+
+<p>```</p>
+
+<p>And if you want, make sure it&rsquo;s loaded with a jasmine spec:</p>
+
+<p>```coffeescript spec/batman/test_case_spec.coffee
+describe &ldquo;Batman.TestCase is loaded&rdquo;, &ndash;>
+  it &ldquo;is defined&rdquo;, &ndash;></p>
+
+<pre><code>expect(Batman.TestCase).toBeDefined()
+</code></pre>
+
+<p>```</p>
+
+<h1>Not working?</h1>
+
+<ul>
+<li>Did you make <code>run</code> executable by with <code>$ chmod +x spec/karma/run</code>?</li>
+<li>This is kind of a hacky setup &mdash; it depends on your development server (either <code>$ rails server</code> or <a href="http://pow.cx/">Pow</a>) running. Is it?</li>
+<li>In <code>unit.coffee</code>, <code>files</code> should list your tests, but it should also list compiled JS assets from your development server, including <code>http://</code> and so on. Check the paths there in your browser. Do they contain everything you expect them to contain? You might need to add files to that list <em>or</em> add <a href="https://github.com/sstephenson/sprockets">sprockets</a> directives to those files so that they <code>require</code> other files.</li>
+</ul>
+
+
+<p>Ok, well it ain&rsquo;t perfect but it works. Hope it helps!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Slim Templates with Batman.js and the Rails Asset Pipeline]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/"/>
+    <updated>2013-11-25T13:28:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline</id>
+    <content type="html"><![CDATA[<p>You can use <a href="http://slim-lang.com/">Slim</a> (or Haml) to serve your <a href="http://batmanjs.org">Batman.js</a> templates in the Rails Asset Pipeline.</p>
+
+<!-- more -->
+
+
+<h1>1. Include Slim in your gemfile</h1>
+
+<p>Add this line to your <code>Gemfile</code>:</p>
+
+<p><code>ruby Gemfile
+gem "slim"
+</code></p>
+
+<h1>2. Register the Slim engine with Rails</h1>
+
+<p>Make a new initializer (eg, <code>config/initializers/slim_assets.rb</code>) and put this in it:</p>
+
+<p><code>ruby config/initializers/slim_assets.rb
+Rails.application.assets.register_engine('.slim', Slim::Template)
+</code></p>
+
+<p>Credit: <a href="http://www.dillonbuchanan.com/programming/rails-slim-templates-in-the-asset-pipeline/">Dillon Buchanan</a></p>
+
+<h3>Update: Serving compiled Slim (or Haml) assets in production</h3>
+
+<p>When you deploy to production, if you have <code>config.initialize_on_precompile = false</code>, an initializer isn&rsquo;t going to work. You&rsquo;ll have to register the Sprockets engine another way. Add it to the application config in <code>config/application.rb</code>:</p>
+
+<p>```ruby config/application.rb
+module MyApp
+  class Application &lt; Rails::Application</p>
+
+<pre><code># ... config stuff ...
+config.before_initialize do |app|
+  require 'sprockets'
+  require 'slim'
+  # require 'tilt' # for Haml
+  Sprockets::Engines #force autoloading
+  Sprockets.register_engine '.slim', Slim::Template
+  # Sprockets.register_engine '.haml', Tilt::HamlTemplate # for Haml
+end
+# ... more config stuff ...
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Now, you&rsquo;ll have the Slim template engine available even if your app doesn&rsquo;t intialize, which is most notably the case for <code>bundle exec rake assets:precompile</code>. Nice!</p>
+
+<h1>3. Beef up your BatmanController</h1>
+
+<p>At time of writing, the <code>batman-rails</code>-generated BatmanController won&rsquo;t work right in production. There&rsquo;s an <a href="https://github.com/batmanjs/batman-rails/pull/46">outstanding PR</a> with a fix. If that&rsquo;s closed, then we&rsquo;re good to go. In the mean time, Make your <code>app/controllers/batman_controller.rb</code> look like this:</p>
+
+<p>```ruby app/controllers/batman_controller.rb
+class BatmanController &lt; ApplicationController
+  def index</p>
+
+<pre><code>if request.xhr?
+  prefix_length = Rails.application.config.assets.prefix.length + 1
+  path = request.path[prefix_length..-1]
+  render :text =&gt; Rails.application.assets[path]
+else
+  render nothing: true, layout: 'batman'
+end
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>When this is done, any files ending in <code>.html.slim</code> in <code>assets</code> will be served as rendered HTML in response to XHR (Ajax) requests. Note that <em>all non-XHR</em> requests will still receive the <code>batman</code> layout (but then Batman will respond to the request, so you&rsquo;re all good).</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Adding Batman.js to an Existing Rails App]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/"/>
+    <updated>2013-10-19T22:08:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app</id>
+    <content type="html"><![CDATA[<p>I had an existing app, but I wanted to take the front end to the next level. <a href="http://batmanjs.org/">Batman.js</a> is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful <a href="https://github.com/batmanjs/batman-rails">Rails integration</a>.</p>
+
+<!-- more -->
+
+
+<h3>Installing Batman.js</h3>
+
+<p>I was already using <a href="https://github.com/rails-api/active_model_serializers">ActiveModel::Serializer</a> to serve JSON from my app. To get Batman on the scene, I included
+<code>batman-rails</code> in my Gemfile and installed it:</p>
+
+<p>```ruby Gemfile.rb</p>
+
+<pre><code>require 'batman-rails', '~&gt; 0.15'
+</code></pre>
+
+<p>```</p>
+
+<p><code>bash
+  $ bundle install
+</code></p>
+
+<p>The <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> comes with a generator to get everything in order.
+I ran it and restarted my Rails server:</p>
+
+<p><code>bash
+  $ rails g batman:app # that's not _your_ app name, it's just "app"
+  $ powder restart # restart your Rails server one way or another
+</code></p>
+
+<p>I visited my app&rsquo;s <code>root_url</code> and found Batman-rails landing page. How&rsquo;d it get there!? Sure enough, the Batman generator had added a punchy line to the top of my routes file:</p>
+
+<p><code>ruby config/routes.rb
+  get "(*redirect_path)", to: "batman#index", constraints: lambda { |request| request.format == "text/html" }
+</code></p>
+
+<p>It captures all <code>text/html</code> requests and passes them to <code>BatmanController</code>, which was also created by the generator:</p>
+
+<p>```ruby app/controllers/batman_controller
+  class BatmanController &lt; ApplicationController</p>
+
+<pre><code>def index
+  render nothing: true, layout: 'batman'
+end
+</code></pre>
+
+<p>  end
+```</p>
+
+<p>Along with that, there was a new file in my <code>app/views/layouts</code> folder, and then of course, <code>app/assets/batman</code>.</p>
+
+<h3>My first view</h3>
+
+<p>I didn&rsquo;t want the Batman landing page at my <code>root_url</code>, I wanted a list of sounds! So, I ran a Batman generator, beefed up the model and controller, created the index html, and redefined the route:</p>
+
+<p><code>
+  $ rails g batman:scaffold Sounds
+</code></p>
+
+<p>```coffeescript app/assets/batman/models/sound.js.coffee</p>
+
+<pre><code>class Lang.Sound extends Batman.Model
+  @resourceName: 'sounds'
+  @storageKey: 'sounds'
+
+  @persist Batman.RailsStorage
+
+  # Use @encode to tell batman.js which properties Rails will send back with its JSON.
+  @encode 'letter'
+  @encodeTimestamps()
+</code></pre>
+
+<p>```</p>
+
+<p>```coffeescript app/assets/batman/controllers/sounds_controller.js.coffee</p>
+
+<pre><code>class Lang.SoundsController extends Lang.ApplicationController
+  routingKey: 'sounds'
+  index: (params) -&gt;
+    @set("sounds", Lang.Sound.get('all'))
+</code></pre>
+
+<p>```</p>
+
+<p>```haml app/assets/batman/html/sounds/index.html</p>
+
+<pre><code>&lt;ul&gt;
+  &lt;li data-foreach-sound="sounds"&gt;
+    &lt;span data-bind="sound.letter" /&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+</code></pre>
+
+<p>```</p>
+
+<p><em>your filename will be your app name:</em>
+```coffeescript app/assets/batman/lang.js.coffee</p>
+
+<pre><code>class Lang extends Batman.App
+  @root "sounds#index"
+</code></pre>
+
+<p>```</p>
+
+<p>And now I had my own landing page!</p>
+]]></content>
+  </entry>
+  
+</feed>
