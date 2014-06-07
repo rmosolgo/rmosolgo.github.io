@@ -121,30 +121,39 @@
 
 <p>If you&rsquo;re brand new to batman.js, here&rsquo;s the quick-and-dirty:</p>
 
-<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition. There are 2 possible syntaxes:</p>
+<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition.</p>
+
+<p>There are 2 possible syntaxes:</p>
+
+<ul>
+<li><strong>Read and write</strong> accessors:</li>
+</ul>
+
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Comment</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span> <span class="c1"># which extends Batman.Object</span>
-</span><span class='line'>  <span class="c1"># get and set:</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Comment</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
 </span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;mood&#39;</span><span class="p">,</span>
 </span><span class='line'>    <span class="nv">get: </span><span class="nf">(key)        -&gt;</span> <span class="c1"># getter function</span>
 </span><span class='line'>    <span class="nv">set: </span><span class="nf">(key, value) -&gt;</span> <span class="c1"># setter function</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="c1"># read-only property:</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;isPositive&#39;</span><span class="p">,</span> <span class="nf">(key) -&gt;</span> <span class="c1"># getter function only</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. <code>Batman.View</code> and <code>Batman.Controller</code> subclasses can have accessors, too, which is great for view bindings.</p>
+<ul>
+<li><strong>Read-only</strong> accessors:</li>
+</ul>
 
-<p>Accessors are <em>always</em> accessed via <code>get</code> and <code>set</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;isPositive&#39;</span><span class="p">,</span> <span class="nf">(key) -&gt;</span> <span class="c1"># getter function only</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. You can defined accessors in your <code>Batman.Model</code>, <code>Batman.Controller</code> and <code>Batman.View</code> subclasses.</p>
+
+<p>Accessors are <em>always</em> <strong>accessed via <code>get</code> and <code>set</code></strong>:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>

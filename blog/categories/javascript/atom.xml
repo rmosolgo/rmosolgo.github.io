@@ -4,7 +4,7 @@
   <title><![CDATA[Category: JavaScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-07T08:18:52-07:00</updated>
+  <updated>2014-06-07T11:14:38-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -39,24 +39,37 @@
 
 <p>If you&rsquo;re brand new to batman.js, here&rsquo;s the quick-and-dirty:</p>
 
-<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition. There are 2 possible syntaxes:</p>
+<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition.</p>
+
+<p>There are 2 possible syntaxes:</p>
+
+<ul>
+<li><strong>Read and write</strong> accessors:</li>
+</ul>
+
 
 <p>```coffeescript
-class App.Comment extends Batman.Model # which extends Batman.Object
-  # get and set:
+class App.Comment extends Batman.Model
   @accessor &lsquo;mood&rsquo;,</p>
 
 <pre><code>get: (key)        -&gt; # getter function
 set: (key, value) -&gt; # setter function
 </code></pre>
 
-<p>  # read-only property:
-  @accessor &lsquo;isPositive&rsquo;, (key) &ndash;> # getter function only
-```</p>
+<p>```</p>
 
-<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. <code>Batman.View</code> and <code>Batman.Controller</code> subclasses can have accessors, too, which is great for view bindings.</p>
+<ul>
+<li><strong>Read-only</strong> accessors:</li>
+</ul>
 
-<p>Accessors are <em>always</em> accessed via <code>get</code> and <code>set</code>:</p>
+
+<p><code>coffeescript
+  @accessor 'isPositive', (key) -&gt; # getter function only
+</code></p>
+
+<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. You can defined accessors in your <code>Batman.Model</code>, <code>Batman.Controller</code> and <code>Batman.View</code> subclasses.</p>
+
+<p>Accessors are <em>always</em> <strong>accessed via <code>get</code> and <code>set</code></strong>:</p>
 
 <p><code>coffeescript
 myComment.set("mood", "pensive")
