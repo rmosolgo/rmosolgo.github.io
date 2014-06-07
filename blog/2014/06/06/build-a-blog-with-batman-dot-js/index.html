@@ -1,0 +1,1363 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Build a Blog with Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="In this whirlwind tutorial, we&rsquo;ll build a blog with batman.js and Firebase. To get a feel for batman.js, let&rsquo;s build an blog where: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Build a Blog With Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-06T08:38:00-07:00" pubdate data-updated="true">Jun 6<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In this whirlwind tutorial, we&rsquo;ll build a blog with <a href="http://batmanjs.org">batman.js</a> and <a href="http://firebase.com">Firebase</a>.</p>
+
+<!-- more -->
+
+
+<p>To get a feel for batman.js, let&rsquo;s build an blog where:</p>
+
+<ul>
+<li>People may sign in (with Github)</li>
+<li>The owner may create, edit and destroy posts</li>
+<li>Other signed-in users may leave comments and delete their own comments</li>
+<li>The owner may destroy comments</li>
+</ul>
+
+
+<p>If you run into any problems on the way, just let me know in the comments section at the bottom of this page! Also, the <a href="https://github.com/rmosolgo/batmanjs-blog">completed source of this tutorial is available on Github</a>.</p>
+
+<h1>Preface: Batman.js Objects and Properties</h1>
+
+<p>If you&rsquo;re brand new to batman.js, here&rsquo;s the quick-and-dirty:</p>
+
+<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition. There are 2 possible syntaxes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Comment</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span> <span class="c1"># which extends Batman.Object</span>
+</span><span class='line'>  <span class="c1"># get and set:</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;mood&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nv">get: </span><span class="nf">(key)        -&gt;</span> <span class="c1"># getter function</span>
+</span><span class='line'>    <span class="nv">set: </span><span class="nf">(key, value) -&gt;</span> <span class="c1"># setter function</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># read-only property:</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;isPositive&#39;</span><span class="p">,</span> <span class="nf">(key) -&gt;</span> <span class="c1"># getter function only</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. <code>Batman.View</code> and <code>Batman.Controller</code> subclasses can have accessors, too, which is great for view bindings.</p>
+
+<p>Accessors are <em>always</em> accessed via <code>get</code> and <code>set</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">myComment</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;mood&quot;</span><span class="p">,</span> <span class="s">&quot;pensive&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">myComment</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;mood&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These property names are also called <em>keypaths</em> and maybe be &ldquo;deep&rdquo;, chained with <code>.</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">myComment</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;post.name&#39;</span><span class="p">)</span> <span class="c1"># equivalent to myComment.get(&#39;post&#39;).get(&#39;name&#39;)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Under the hood, accessors power batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a> and view bindings. Now, back to your regularly scheduled programming!</p>
+
+<h1>Setup</h1>
+
+<p>To build this blog, you&rsquo;ll need:</p>
+
+<ul>
+<li>A <a href="http://github.com">Github account</a></li>
+<li><a href="http://nodejs.org/">node.js</a></li>
+<li>A <a href="http://firebase.com">Firebase account</a></li>
+</ul>
+
+
+<p>Also, you&rsquo;ll need a copy of <a href="http://github.com/rmosolgo/batmanjs-starter">rmosolgo/batmanjs-starter</a>, which can be installed with:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nb">cd</span> ~/code <span class="c"># or wherever you keep it</span>
+</span><span class='line'>git clone git@github.com:rmosolgo/batman-starter.git batmanjs_blog
+</span><span class='line'><span class="nb">cd </span>batmanjs_blog
+</span><span class='line'>npm install
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can make sure it&rsquo;s all ready-to-go with:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>npm install -g gulp
+</span><span class='line'>gulp
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then visit <a href="http://localhost:9000">localhost:9000</a>. If you see <code>Welcome to batman.js!</code>, then you&rsquo;re all set!</p>
+
+<h1>Storage and Authentication</h1>
+
+<p>We don&rsquo;t have a server for this app, but we do have to set up Firebase!</p>
+
+<h3>Set Up Firebase</h3>
+
+<p>First, open <a href="http://firebase.com">Firebase</a> and click <code>Login</code> and click the Github logo. Then, create a new app. Any name will work, for example <code>rm-batmanjs-blog</code>. Ok, you have a firebase!</p>
+
+<h3>Register Your App with Github</h3>
+
+<p>Then, in another tab, sign into <a href="http://github.com">Github</a>, and click: <code>Account Settings</code> (top right) > <code>Applications</code> (in the sidebar) > <code>Register New Application</code>. Add this information:</p>
+
+<ul>
+<li>Application name: firebase name (eg, <code>rm-batmanjs-blog</code>)</li>
+<li>Application URL: <code>http://#{firebase name}.firebaseapp.com</code> (eg, <code>http://rm-batmanjs-blog.firebaseapp.com</code>)</li>
+<li>Callback URL: <code>https://auth.firebase.com/auth/github/callback</code> (<a href="https://www.firebase.com/docs/security/simple-login-github.html">provided by Firebase</a>)</li>
+</ul>
+
+
+<p>Click <code>Register Application</code>. Ok, you have your Client ID and Client Secret!</p>
+
+<p>Now, provide the Client ID and Client Secret to Firebase. In your Firebase app manangement tab, click <code>Manage App</code> > <code>Simple Login</code> > <code>Github</code>:</p>
+
+<ul>
+<li>Check <code>Enabled</code></li>
+<li>Paste in Client ID and Client Secret</li>
+</ul>
+
+
+<p>(Firebase automatically saves your input.)</p>
+
+<h3>Configure Your Batman.js App</h3>
+
+<p>Now, configure your app to use your firebase. Open <code>app.coffee</code>, then replace the <code>@syncsWithFirebase</code> name and add <code>@authorizesWithFirebase()</code>. For example, it should look like:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@syncsWithFirebase</span> <span class="s">&quot;rm-batmanjs-blog&quot;</span>
+</span><span class='line'>  <span class="nx">@authorizesWithFirebase</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Also in <code>app.coffee</code>, make a app accessor <code>isAdmin</code>, looking up your github ID from <code>https://api.github.com/users/#{yourUserId}</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@classAccessor</span> <span class="s">&#39;isAdmin&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;currentUser.uid&#39;</span><span class="p">)</span> <span class="o">is</span> <span class="s">&quot;github:{yourGitHubId}&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To show the <code>Log In</code>/<code>Log Out</code> buttons, remove the <code>&lt;!-- requires @authorizesWithFirebase</code> / <code>--&gt;</code> comment wrapper in <code>index.html</code>.</p>
+
+<p>Now, you will see the <code>Log In</code> button, and it will log you in with Github!</p>
+
+<p><em>At the end of this post, we&rsquo;ll use Firebase Security Rules to provide &ldquo;server-side&rdquo; authentication, which is a must-have!</em></p>
+
+<h1>Posts</h1>
+
+<p>To add posts to our blog, we will:</p>
+
+<ul>
+<li>define the <code>App.Post</code> model</li>
+<li>define <code>App.PostsController</code> and make routes to it</li>
+<li>write some HTML for the controller to render</li>
+</ul>
+
+
+<h2>Post Model</h2>
+
+<p>In a batman.js project, models go in the <code>models/</code> directory. In the starter package, you&rsquo;ll find the <code>App.Greeting</code> model in <code>greeting.coffee</code>. Remove it. Then, add <code>post.coffee</code>. Here&rsquo;s the <code>Post</code> model:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="vi">@resourceName: </span><span class="s">&#39;post&#39;</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">BatFire</span><span class="p">.</span><span class="nx">Storage</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@validate</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="nv">presence: </span><span class="kc">true</span>
+</span><span class='line'>  <span class="nx">@validate</span> <span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="nv">minLength: </span><span class="mi">25</span>
+</span><span class='line'>  <span class="nx">@belongsToCurrentUser</span><span class="p">(</span><span class="nv">ownership: </span><span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">@encodesTimestamps</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;createdAtFormatted&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;created_at&#39;</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="nx">toDateString</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s break that down:</p>
+
+<h3>Class Definition</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In a batman.js app, all models are children of <a href="http://batmanjs.org/docs/api/batman.model.html"><code>Batman.Model</code></a>. Since we&rsquo;re using CoffeeScript&rsquo;s <code>extend</code>, you can extend your own models, too &mdash; the inheritance hierarchy will be maintained.</p>
+
+<h3>Persistence</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="vi">@resourceName: </span><span class="s">&#39;post&#39;</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">BatFire</span><span class="p">.</span><span class="nx">Storage</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;content&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These define how the model is persisted:</p>
+
+<ul>
+<li><code>@resourceName</code> is a minification-safe model name. It may also define &ldquo;where&rdquo; to save the model (for example, a URL segment).</li>
+<li><code>@persist</code> says which <a href="http://batmanjs.org/docs/api/batman.storageadapter.html"><code>Batman.StorageAdapter</code></a> will connect this model to a storage backend. We&rsquo;re using a Firebase adapter, but batman.js also ships with <code>Batman.LocalStorage</code> and <code>Batman.RestStorage</code>. <code>Batman.RailsStorage</code> is in the <code>batman.rails</code> extra.</li>
+<li><code>@encode</code> tells batman.js which attributes will be persisted with the storage adapter.</li>
+</ul>
+
+
+<h3>Validations</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@validate</span> <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="nv">presence: </span><span class="kc">true</span>
+</span><span class='line'>  <span class="nx">@validate</span> <span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="nv">minLength: </span><span class="mi">25</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Batman.js models may validate their attributes. See the docs for <a href="http://batmanjs.org/docs/api/batman.model_validations.html">all supported validators</a> and the custom validation API.</p>
+
+<h3>Special BatFire.Storage Functions</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@belongsToCurrentUser</span><span class="p">(</span><span class="nv">ownership: </span><span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>  <span class="nx">@encodesTimestamps</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These are provided by <a href="http://github.com/rmosolgo/batfire"><code>BatFire.Storage</code></a> as conveniences.</p>
+
+<ul>
+<li><code>@belongsToCurrentUser(ownership: true)</code> adds <code>created_by_uid</code> to our model and provides client-side validation that only the creator may alter any persisted records</li>
+<li><code>@encodesTimestamps()</code> defines and encodes <code>created_at</code> and <code>updated_at</code> attributues.</li>
+</ul>
+
+
+<h3>Accessors</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;createdAtFormatted&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;created_at&#39;</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="nx">toDateString</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This shows how you can define properties on your models. Now, <code>post.get('createdAtFormatted')</code> will return a (slightly) prettier version of the <code>created_at</code> date string. Since it&rsquo;s a <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><code>Batman.Object</code> accessor</a>, if <code>created_at</code> somehow changed, <code>createdAtFormatted</code> would also be updated.</p>
+
+<h2>PostsController</h2>
+
+<p><code>Batman.Controller</code> is modeled after Rails controllers. It has actions that are invoked by routes and are responsible for rendering views. They belong in <code>controllers/</code>, so create <code>controllers/posts_controller.coffee</code>. Let&rsquo;s define a controller to render our posts:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">PostsController</span> <span class="k">extends</span> <span class="nx">App</span><span class="p">.</span><span class="nx">ApplicationController</span>
+</span><span class='line'>  <span class="nv">routingKey: </span><span class="s">&#39;posts&#39;</span>
+</span><span class='line'>  <span class="nv">index: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@set</span> <span class="s">&#39;posts&#39;</span><span class="p">,</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;all.sortedByDescending.created_at&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">new</span><span class="o">:</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@set</span> <span class="s">&#39;post&#39;</span><span class="p">,</span> <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">show: </span><span class="nf">(params) -&gt;</span>
+</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span><span class="p">.</span><span class="nx">find</span> <span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="nx">err</span> <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;post&#39;</span><span class="p">,</span> <span class="nx">record</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">edit: </span><span class="nf">(params) -&gt;</span>
+</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span><span class="p">.</span><span class="nx">find</span> <span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="nx">err</span> <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;post&#39;</span><span class="p">,</span> <span class="nx">record</span><span class="p">.</span><span class="nx">transaction</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">savePost: </span><span class="nf">(post) -&gt;</span>
+</span><span class='line'>    <span class="nx">post</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nx">err</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">!</span><span class="p">(</span><span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">ErrorsSet</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">throw</span> <span class="nx">err</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="nx">@redirect</span><span class="p">(</span><span class="nv">action: </span><span class="s">&quot;index&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">destroyPost: </span><span class="nf">(post) -&gt;</span>
+</span><span class='line'>    <span class="nx">post</span><span class="p">.</span><span class="nx">destroy</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="nx">@redirect</span><span class="p">(</span><span class="nv">action: </span><span class="s">&quot;index&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, you can see:</p>
+
+<ul>
+<li><code>App.PostsController extends App.ApplicationController</code>: all controllers extends a base controller. In big apps, <code>ApplicationController</code> is home to things like <a href="http://batmanjs.org/docs/api/batman.controller.html#error_handling">error handling</a> and <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-render_into_modal">dialog render helpers</a>.</li>
+<li>Controllers must have a <code>routingKey</code>. This is a <a href="http://batmanjs.org/docs/api/batman.controller.html#routingkey_and_minification">minification-safe name</a> which is used by the router.</li>
+<li>Controllers have <a href="http://batmanjs.org/docs/api/batman.controller.html#actions"><strong>actions</strong></a> which fetch data and render views. In <code>PostsController</code>, the <em>actions</em> are <code>index</code>, <code>new</code>, <code>show</code>, and <code>edit</code>.</li>
+<li><code>savePost</code> and <code>destroyPost</code> will be invoked by user input (described in the HTML section, next)</li>
+</ul>
+
+
+<p>Let&rsquo;s also add routes for this controller. In <code>app.coffee</code>, remove any <code>@root</code> or <code>@resources</code> declarations and add:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">@root</span> <span class="s">&#39;posts#index&#39;</span>
+</span><span class='line'>  <span class="nx">@resources</span> <span class="s">&#39;posts&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This sets up <code>/</code> to dispatch <code>PostsController</code>&rsquo;s <code>index</code> action and sets up <a href="http://batmanjs.org/docs/api/batman.app_routing.html#class_function_resources">resource-based routes</a> for <code>PostsController</code>.</p>
+
+<p>There are a few other things to point out:</p>
+
+<ul>
+<li>We didn&rsquo;t call <code>@render</code> in any of our actions. This is because batman.js <em>automatically renders</em> after any controller actions that didn&rsquo;t explicitly render. This is called the <em>implicit render</em> and may be overriden, for example, if you want to <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-defer_render">wait for data to load before rendering views</a>.</li>
+<li><em>Actions</em> and <em>event handlers</em> are both functions on the controller. This is possible because the controller is in the binding context of the view (see &ldquo;Render Context&rdquo; in the <a href="http://batmanjs.org/docs/bindings.html">bindings guide</a>).</li>
+</ul>
+
+
+<p>Also, since we have routes, let&rsquo;s update the navbar <code>&lt;ul&gt;</code> in <code>index.html</code> to look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav navbar-nav&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts&#39;</span><span class="nt">&gt;</span>Blog Posts<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li</span> <span class="na">data-showif=</span><span class="s">&#39;isAdmin&#39;</span><span class="nt">&gt;&lt;a</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts.new&#39;</span><span class="nt">&gt;</span>New Post<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(More about those <code>data-</code> attributes to follow&hellip;)</p>
+
+<h2>Posts HTML</h2>
+
+<p>We need HTML to be rendered in by our controller. <em>HTML templates</em> are distinct from <em>views</em>, but may be used together. This is described in detail below. For now, let&rsquo;s add some HTML. In a batman.js project, HTML for a controller action belongs in <code>html/#{routingKey}/#{action}.html</code>.</p>
+
+<h3>show.html</h3>
+
+<p>Let&rsquo;s define <code>html/posts/show.html</code>. It will be loaded by <code>posts#show</code> to display a post instance:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h1</span> <span class="na">class=</span><span class="s">&#39;page-header&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;post.title&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;small</span> <span class="na">data-bind=</span><span class="s">&#39;post.createdAtFormatted&#39;</span><span class="nt">&gt;&lt;/small&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.content&#39;</span><span class="nt">&gt;&lt;/p&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Besides the <a href="http://getbootstrap.com">bootstrap boilerplate</a>, you might notice <code>data-bind</code> on some of these HTML tags. <code>data-*</code> attributes is how batman.js binds data to the DOM. Those attributes are called <strong><a href="http://batmanjs.org/docs/bindings.html">data bindings</a></strong>.</p>
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-bind"><code>data-bind</code> binding</a> is the simplest data binding: it simply connects the node to the property which is passed to it.</p>
+
+<p>When combining data and text, it&rsquo;s common to use <code>&lt;span data-bind="..."&gt;&lt;/span&gt;</code>, as in the <code>&lt;h1/&gt;</code> above.</p>
+
+<h3>index.html</h3>
+
+<p>Let&rsquo;s define <code>html/posts/index.html</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;h1</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;&quot;Post&quot; | pluralize posts.length&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&#39;list-unstyled&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li</span> <span class="na">data-foreach-post=</span><span class="s">&#39;posts&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;a</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts[post]&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;lead col-sm-4&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.title&#39;</span><span class="nt">&gt;&lt;/p&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-2&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;a</span> <span class="na">data-showif=</span><span class="s">&#39;post.isOwnedByCurrentUser&#39;</span> <span class="na">class=</span><span class="s">&#39;btn btn-warning pull-right&#39;</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts[post].edit&#39;</span><span class="nt">&gt;</span>Edit<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-2&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;a</span> <span class="na">data-showif=</span><span class="s">&#39;post.isOwnedByCurrentUser&#39;</span> <span class="na">class=</span><span class="s">&#39;btn btn-danger pull-right&#39;</span> <span class="na">data-event-click=</span><span class="s">&#39;destroyPost | withArguments post&#39;</span><span class="nt">&gt;</span>Delete<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&#39;text-muted col-sm-4&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        Posted on
+</span><span class='line'>        <span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&quot;post.createdAtFormatted&quot;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.content | truncate 100&#39;</span><span class="nt">&gt;&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;isAdmin&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-2&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&#39;btn btn-default&#39;</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts.new&#39;</span><span class="nt">&gt;</span>New Post<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s look at some interesting parts:</p>
+
+<h4>View Filters</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;&quot;Post&quot; | pluralize posts.length&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will output things like <code>3 Posts</code>. It takes a plain string, then passes it to the <a href="http://batmanjs.org/docs/api/batman.view_filters.html#pluralize(value%2C_count)_%3A_string">pluralize view filter</a>, with <code>posts.length</code> as an argument. Since it&rsquo;s bound to <code>posts.length</code>, it will automatically update whenever the number of <code>Post</code>s change.</p>
+
+<p>There are quite a lot of batman.js view filters, be sure to <a href="http://batmanjs.org/docs/api/batman.view_filters.html">check out the documentation</a>.</p>
+
+<h4>Iterator Binding</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&#39;list-unstyled&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;li</span> <span class="na">data-foreach-post=</span><span class="s">&#39;posts&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- ... --&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-foreach"><code>data-foreach-#{item}="collection"</code> binding</a> is how you bind to a collection. The <code>&lt;li /&gt;</code> is called the &ldquo;prototype node&rdquo;, and one will be rendered for each item in the collection. As long as <code>"collection"</code> is a batman.js data structure (ie, not a plain JS array), the binding will be automatically updated when items are added and removed. (Unless you explicitly make arrays yourself, you don&rsquo;t have to worry; batman.js always uses observable data structures like <a href="http://batmanjs.org/docs/api/batman.set.html">Batman.Set</a> and <a href="http://batmanjs.org/docs/api/batman.hash.html">Batman.Hash</a>.)</p>
+
+<h4>Named Routes</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;a</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts[post]&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!-- ... --&gt;</span>
+</span><span class='line'><span class="nt">&lt;/a&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-route"><code>data-route</code> binding</a> is how you link to other routes in your app. The &ldquo;route query&rdquo; passed to the binding is based on your declared routes. Here are a few other valid routes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>data-route=&quot;routes.posts&quot;               # =&gt; goes to `posts#index`
+</span><span class='line'>data-route=&quot;routes.posts.new&quot;           # =&gt; goes to `posts#new`
+</span><span class='line'>data-route=&quot;routes.posts[myPost]&quot;       # =&gt; goes to `posts#show` for a post instance `myPost`
+</span><span class='line'>data-route=&quot;routes.posts[myPost].edit&quot;  # =&gt; goes to `posts#edit` for a post instance `myPost`
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the binding above, <code>post</code> refers to a post instance, so the <code>&lt;a/&gt;</code> will point to that post&rsquo;s <code>show</code> page.</p>
+
+<h4>Showif / Event</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;a</span> <span class="na">data-showif=</span><span class="s">&#39;post.isOwnedByCurrentUser&#39;</span> <span class="na">class=</span><span class="s">&#39;btn btn-danger pull-right&#39;</span> <span class="na">data-event-click=</span><span class="s">&#39;destroyPost | withArguments post&#39;</span><span class="nt">&gt;</span>Delete<span class="nt">&lt;/a&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This has two bindings:</p>
+
+<ul>
+<li><code>data-showif</code> shows the node if the keypath returns truthy. <code>isOwnedByCurrentUser</code> is provided by <code>BatFire.Storage</code>.</li>
+<li><code>data-event-click</code> points to a function to call when the node is clicked, in this case <code>AppPostsController::destroyPost</code>, which we defined above</li>
+</ul>
+
+
+<h3>new.html</h3>
+
+<p>For <code>new.html</code>, let&rsquo;s plan ahead: we&rsquo;ll make <code>new.html</code> include a reusable form, <code>form.html</code>. So, <code>new.html</code> is very simple:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;h1</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    New Post
+</span><span class='line'>  <span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">data-partial=</span><span class="s">&#39;posts/form&#39;</span><span class="nt">&gt;&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Partial</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">data-partial=</span><span class="s">&#39;posts/form&#39;</span><span class="nt">&gt;&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will render <code>html/posts/form.html</code> inside that node.</p>
+
+<p>Let&rsquo;s add <code>form.html</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;form</span> <span class="na">data-formfor-post=</span><span class="s">&#39;post&#39;</span> <span class="na">data-event-submit=</span><span class="s">&#39;savePost | withArguments post&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;errors alert alert-warning&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;post.errors.length&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;form-group&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;label&gt;</span>Title<span class="nt">&lt;/label&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;text&#39;</span> <span class="na">class=</span><span class="s">&#39;form-control&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.title&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;form-group&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;label&gt;</span>Content<span class="nt">&lt;/label&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;textarea</span> <span class="na">class=</span><span class="s">&#39;form-control&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.content&#39;</span><span class="nt">&gt;&lt;/textarea&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;form-group&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;submit&#39;</span> <span class="na">class=</span><span class="s">&#39;btn btn-primary&#39;</span> <span class="na">value=</span><span class="s">&#39;Save&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&#39;btn btn-danger&#39;</span> <span class="na">data-route=</span><span class="s">&#39;routes.posts&#39;</span><span class="nt">&gt;</span>Cancel<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/form&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s examine some of the details:</p>
+
+<h4>Form Binding</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;form</span> <span class="na">data-formfor-post=</span><span class="s">&#39;post&#39;</span> <span class="na">data-event-submit=</span><span class="s">&#39;savePost | withArguments post&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!-- ... --&gt;</span>
+</span><span class='line'><span class="nt">&lt;/form&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-formfor"><code>data-formfor-#{formName}="item"</code> binding</a> will automatically bind validation errors to the element matching <code>.errors</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;errors alert alert-warning&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;post.errors.length&#39;</span><span class="nt">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Also, the <code>data-event-submit</code> will invoke <code>App.PostsController::savePost</code> when the form is submitted.</p>
+
+<h4>Input Bindings</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;text&#39;</span> <span class="na">class=</span><span class="s">&#39;form-control&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;post.title&#39;</span> <span class="nt">/&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When you use <code>data-bind</code> on an <code>&lt;input /&gt;</code> (or <code>&lt;select /&gt;</code>, etc), you create a two-way binding. Any changes to the input will change the attribute of the model.
+You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/html#sec-input_bindings">bind to all different kinds of inputs</a>.</p>
+
+<h3>edit.html</h3>
+
+<p>In <code>edit.html</code>, let&rsquo;s reuse our <code>form.html</code> partial:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;h1</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    Edit Post
+</span><span class='line'>  <span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">data-partial=</span><span class="s">&#39;posts/form&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Where were the views?</h2>
+
+<p>In batman.js, <em>views</em> are CoffeeScript classes that render templates and maintain bindings. They&rsquo;re intantiated and destroyed when controller actions are rendered. It&rsquo;s a bit like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>ROUTER                      --&gt;  CONTROLLER        --&gt;  VIEW                      --&gt;  HTML TEMPLATE
+</span><span class='line'>- responds to URL change         - executes action      - parses bindings from HTML    - copied into views
+</span><span class='line'>- dispatches controller action   - renders view         - inserts HTML into DOM        - just sits there
+</span><span class='line'>                                                        - maintains bindings
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You might have noticed that we made a <em>controller</em> and a <em>template</em>, but no <code>Batman.View</code>. Why not?</p>
+
+<p>This is because <code>Batman.Controller</code> will use a vanilla <code>Batman.View</code> to render your HTML unless you define one by hand. Custom views a great for a ton of things:</p>
+
+<ul>
+<li>Rendering <a href="http://rmosolgo.github.io/blog/2013/11/23/dynamic-navigation-view-with-batman-dot-js/">specialized UI components</a></li>
+<li>Integrating other librarires, like <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/view#sec-jquery_initialization">jQuery plugins</a> or <a href="http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/">leaflet.js</a></li>
+<li><a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/view#sec-view_transitions">Animating page changes</a></li>
+</ul>
+
+
+<p>But we didn&rsquo;t need one, so we didn&rsquo;t make one!</p>
+
+<p>(PS: Learn more about <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-default_views">controllers&#8217; default views</a> or <a href="http://batmanjs.org/docs/views.html">custom views</a>.)</p>
+
+<h1>Comments</h1>
+
+<p>Let&rsquo;s allow other signed-in users to comment on our blog posts. We&rsquo;ll need to:</p>
+
+<ul>
+<li>define the model, <code>App.Comment</code></li>
+<li>associate it to <code>App.Post</code></li>
+<li>add a comment form to <code>posts/show</code></li>
+</ul>
+
+
+<h2>App.Comment</h2>
+
+<p>Open up <code>models/comment.coffee</code> and define <code>App.Comment</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Comment</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="vi">@resourceName: </span><span class="s">&#39;comment&#39;</span>
+</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">BatFire</span><span class="p">.</span><span class="nx">Storage</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;content&#39;</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;post&#39;</span>
+</span><span class='line'>  <span class="nx">@validate</span> <span class="s">&#39;content&#39;</span><span class="p">,</span> <span class="nv">presence: </span><span class="kc">true</span>
+</span><span class='line'>  <span class="nx">@belongsToCurrentUser</span><span class="p">()</span>
+</span><span class='line'>  <span class="nx">@encodesTimestamps</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;createdAtFormatted&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;created_at&#39;</span><span class="p">)</span><span class="o">?</span><span class="p">.</span><span class="nx">toDateString</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;canBeDeleted&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;isOwnedByCurrentUser&#39;</span><span class="p">)</span> <span class="o">||</span> <span class="nx">App</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isAdmin&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Most of this looks familiar: persistence, encoding, validations, accessors. There is one new thing:</p>
+
+<h3>Model Association</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">@belongsTo</span> <span class="s">&#39;post&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This defines a <a href="http://batmanjs.org/docs/api/batman.model_associations.html">model association</a> between <code>Comment</code> and <code>Post</code>. In this case, we defined a <code>belongsTo</code> association, so:</p>
+
+<ul>
+<li>A <code>Comment</code> has a <code>post</code> attribute:</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nx">myComment</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;post&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &lt;Post instance&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>A <code>Comment</code> will encode <code>post_id</code>, which is the <code>id</code> of its associated <code>Post</code>.</li>
+</ul>
+
+
+<p>We also need to add this concern to our <code>Post</code>-related code. Open <code>models/post.coffee</code>, and after your <code>@encode</code> call, add:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Post</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;comments&#39;</span><span class="p">,</span> <span class="nv">inverseOf: </span><span class="s">&#39;post&#39;</span><span class="o">`</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We have defined a <code>hasMany</code> relation from Post to Comment. So, a Post has a <code>comments</code> attribute, which returns a <code>Batman.Set</code> full of Comments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">myPost</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;comments&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &lt;Batman.Set [Comment, Comment...]&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since <code>Post</code> and <code>Comment</code> are associated, we have to make sure that a <code>Post</code>&rsquo;s <code>Comment</code>s are destroyed when the <code>Post</code> is destroyed. So, update <code>App.PostsController::destroyPost</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">destroyPost: </span><span class="nf">(post) -&gt;</span>
+</span><span class='line'>    <span class="nx">post</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;comments&#39;</span><span class="p">).</span><span class="nx">forEach</span> <span class="nf">(c) -&gt;</span> <span class="nx">c</span><span class="p">.</span><span class="nx">destroy</span><span class="p">()</span>
+</span><span class='line'>    <span class="nx">post</span><span class="p">.</span><span class="nx">destroy</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="nx">@redirect</span><span class="p">(</span><span class="nv">action: </span><span class="s">&quot;index&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, whenever you destroy a <code>Post</code>, you&rsquo;ll also destroy its comments, so you don&rsquo;t end up with orphaned comments. We used <code>Batman.Set::forEach</code> &mdash; see <a href="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/">this blog post</a> for an introduction to <code>Batman.Set</code>!</p>
+
+<h2>Comment Form</h2>
+
+<p>Let&rsquo;s add comment form to <code>posts/show</code> so that users can log in. Append each of these blocks of HTML to the bottom of <code>html/posts/show.html</code>.</p>
+
+<h3>Heading</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h3&gt;</span> Comments <span class="nt">&lt;/h3&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Nothing to see here, move along &hellip;</p>
+
+<h3>List of Comments</h3>
+
+<p>This will render existing comments for a post:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&#39;list-unstyled&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- render comments: --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li</span> <span class="na">data-foreach-comment=</span><span class="s">&#39;post.comments&#39;</span> <span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;col-sm-4&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;strong</span> <span class="na">class=</span><span class="s">&#39;pull-right&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>          On <span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;comment.createdAtFormatted&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>, <span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;comment.created_by_username&#39;</span><span class="nt">&gt;&lt;/span&gt;</span> said:
+</span><span class='line'>        <span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;col-sm-6&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;comment.content&#39;</span><span class="nt">&gt;&lt;/p&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-2&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;comment.canBeDeleted&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&#39;btn btn-danger btn-xs&#39;</span> <span class="na">data-event-click=</span><span class="s">&#39;destroyComment | withArguments comment&#39;</span><span class="nt">&gt;</span> Delete <span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- &quot;design&quot; for empty state --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;post.comments.isEmpty&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&#39;text-muted&#39;</span><span class="nt">&gt;</span>No comments yet!<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A few things of note:</p>
+
+<ul>
+<li>There&rsquo;s a <code>data-foreach</code> binding with a <code>&lt;li/&gt;</code> prototype node. I included another <code>&lt;li/&gt;</code> with <code>data-showif='post.comments.isEmpty'</code>, just in case there aren&rsquo;t any comments yet.</li>
+<li><code>data-showif='comment.canBeDeleted'</code> is using the accessor we defined in the model definition.</li>
+<li>We&rsquo;re using <code>data-event-click='destroyComment | withArguments comment'</code> but we haven&rsquo;t defined <code>destroyComment</code> yet. We&rsquo;ll do that next!</li>
+</ul>
+
+
+<h3>Comment Form</h3>
+
+<p>Notice that there are actually two parts of the HTML: one to show if <code>loggedOut</code>, the other to show if <code>loggedIn</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;loggedOut&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;well&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;p&gt;</span>You must be <span class="nt">&lt;a</span> <span class="na">data-event-click=</span><span class="s">&#39;login&#39;</span><span class="nt">&gt;</span>logged in<span class="nt">&lt;/a&gt;</span> to leave a comment!<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;row&#39;</span> <span class="na">data-showif=</span><span class="s">&#39;loggedIn&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;col-sm-12&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;form</span> <span class="na">data-formfor-comment=</span><span class="s">&#39;newComment&#39;</span> <span class="na">data-event-submit=</span><span class="s">&#39;saveComment | withArguments newComment&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&#39;form-group&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;label&gt;</span>New Comment:<span class="nt">&lt;/label&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;textarea</span>
+</span><span class='line'>          <span class="na">class=</span><span class="s">&#39;form-control&#39;</span>
+</span><span class='line'>          <span class="na">data-bind=</span><span class="s">&#39;newComment.content&#39;</span>
+</span><span class='line'>          <span class="na">data-bind-placeholder=</span><span class="s">&#39;&quot;Leave a comment as &quot; | append currentUser.username | append &quot;...&quot;&#39;</span>
+</span><span class='line'>          <span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/textarea&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;submit&#39;</span> <span class="na">class=</span><span class="s">&#39;btn btn-primary&#39;</span> <span class="na">value=</span><span class="s">&#39;Leave a comment&#39;</span> <span class="nt">/&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/form&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Conditionals in HTML</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">data-showif=</span><span class="s">&#39;loggedOut&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!-- show this to logged-out users --&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">data-showif=</span><span class="s">&#39;loggedIn&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="c">&lt;!-- show this to logged-in users --&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Using multiple <code>data-showif</code>/<code>data-hideif</code> bindings is a common way of expressing conditional logic in batman.js templates.</p>
+
+<h4>Binding to Attributes</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;textarea</span> <span class="na">data-bind-placeholder=</span><span class="s">&#39;&quot;Leave a comment as &quot; | append currentUser.username | append &quot;...&quot;&#39;</span> <span class="nt">&gt;&lt;/textarea&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here, we have bound data to the <code>&lt;textarea /&gt;</code>&rsquo;s <code>placeholder</code> attribute. You can use <code>data-bind-#{attr}</code> to bind to any HTML attribute.</p>
+
+<h2>Use a Custom View</h2>
+
+<p><a href="http://batmanjs.org/docs/views.html">Views</a> inject new accessors and functions into the render context. They also have <a href="http://batmanjs.org/docs/api/batman.view_lifecycle.html">lifecycle hooks</a> that can be used for initialization, etc.</p>
+
+<p>To handle some actions with the comment form, we&rsquo;ll <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-default_views">implement the default view</a> for the <code>posts#show</code> action. Open <code>views/posts/posts_show_view.coffee</code> and add:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">PostsShowView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
+</span><span class='line'>  <span class="nv">viewWillAppear: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@_resetComment</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">saveComment: </span><span class="nf">(comment) -&gt;</span>
+</span><span class='line'>    <span class="c1"># set up the association:</span>
+</span><span class='line'>    <span class="nx">comment</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;post&#39;</span><span class="p">,</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;controller.post&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">comment</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) =&gt;</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="nx">err</span> <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+</span><span class='line'>      <span class="nx">@_resetComment</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">_resetComment: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@set</span><span class="p">(</span><span class="s">&#39;newComment&#39;</span><span class="p">,</span> <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Comment</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nv">destroyComment: </span><span class="nf">(comment) -&gt;</span>
+</span><span class='line'>    <span class="nx">comment</span><span class="p">.</span><span class="nx">destroy</span> <span class="nf">(err, r) -&gt;</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="nx">err</span> <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Because our view is named <code>App.PostsShowView</code>, it will automatically be used by the <code>posts#new</code> controller action. It&rsquo;s called the &ldquo;default view&rdquo; of <code>posts#show</code>.</p>
+
+<p>Notably:</p>
+
+<ul>
+<li><code>data-event</code> handlers may be on controllers <em>or</em> views; both of them are in the &ldquo;render context&rdquo;.</li>
+<li>we used a lifecycle hook, <code>viewWillAppear</code>, to initialize our empty form.</li>
+<li>we set the comment&rsquo;s <code>post</code> during <code>saveComment</code> because it might not have loaded yet when the view is rendered. You can also avoid this problem by <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-defer_render">waiting until data is loaded to render the view</a>.</li>
+</ul>
+
+
+<h1>Firebase Security Rules</h1>
+
+<p>You <strong>always</strong> need server-side validation to accompany client-side validations. Otherwise, a mean-spirited user could wreck your data from the JS console.</p>
+
+<p>It&rsquo;s beyond the scope of this post to explain <a href="https://www.firebase.com/docs/security/security-rules.html">Firebase security rules</a>, but here are some to go with this app (be sure to insert your Github ID instead of mine!) :</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="cm">/* These rules are provided for imformational purposes only :) */</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;rules&quot;</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* All items are namespaced by `BatFire` */</span>
+</span><span class='line'>    <span class="s2">&quot;BatFire&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="cm">/* Make `@syncs` accessors read-only */</span>
+</span><span class='line'>      <span class="s2">&quot;syncs&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="s2">&quot;.write&quot;</span> <span class="o">:</span> <span class="kc">false</span>
+</span><span class='line'>      <span class="p">},</span>
+</span><span class='line'>      <span class="cm">/* All records namespaced by `records` */</span>
+</span><span class='line'>      <span class="s2">&quot;records&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="s2">&quot;scoped&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>          <span class="cm">/* &quot;Server-side&quot; validation for @belongsToCurrentUser(scoped: true) */</span>
+</span><span class='line'>          <span class="s2">&quot;$uid&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="s2">&quot;.write&quot;</span> <span class="o">:</span> <span class="s2">&quot;$uid == auth.uid&quot;</span><span class="p">,</span>
+</span><span class='line'>            <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="s2">&quot;$uid == auth.uid&quot;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>        <span class="p">},</span>
+</span><span class='line'>        <span class="s2">&quot;posts&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>          <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>          <span class="s2">&quot;.write&quot;</span> <span class="o">:</span> <span class="s2">&quot;&#39;github:2231765&#39; == auth.uid &quot;</span> <span class="cm">/* that&#39;s me */</span>
+</span><span class='line'>        <span class="p">},</span>
+</span><span class='line'>        <span class="s2">&quot;comments&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>          <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>          <span class="s2">&quot;$recordId&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="cm">/* can be deleted by creator or by admin ... me */</span>
+</span><span class='line'>            <span class="s2">&quot;.write&quot;</span> <span class="o">:</span>  <span class="s2">&quot;!data.exists() || auth.uid == data.child(&#39;created_by_uid&#39;).val() || &#39;github:2231765&#39; == auth.uid&quot;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>        <span class="p">},</span>
+</span><span class='line'>        <span class="s2">&quot;$resourceName&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>          <span class="cm">/* &quot;Server-side&quot; validation for @belongsToCurrentUser(ownership: true) */</span>
+</span><span class='line'>          <span class="s2">&quot;$recordId&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>            <span class="cm">/* Allows non-belongsToCurrentUser records to be written but protect owned ones */</span>
+</span><span class='line'>            <span class="s2">&quot;.write&quot;</span> <span class="o">:</span> <span class="s2">&quot;!data.hasChild(&#39;has_user_ownership&#39;) || data.child(&#39;created_by_uid&#39;).val() == auth.uid&quot;</span>
+</span><span class='line'>          <span class="p">},</span>
+</span><span class='line'>          <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>          <span class="cm">/* nothing gets written here -- everything gets an ID _before_ create */</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>    <span class="cm">/* Everything else is fair game */</span>
+</span><span class='line'>    <span class="s2">&quot;$other&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="s2">&quot;.read&quot;</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>      <span class="s2">&quot;.write&quot;</span> <span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Wrap Up</h1>
+
+<p>Congratulations, you have a beautiful new blog! You can let the whole world see it by deploying it to Firebase:</p>
+
+<ul>
+<li>update <code>firebase.json</code> to have your Firebase name (eg, <code>"rm-batmanjs-blog"</code>)</li>
+<li><code>firebase deploy</code></li>
+<li><code>firebase open</code></li>
+</ul>
+
+
+<p>And you&rsquo;re live!</p>
+
+<p>I hope you have enjoyed this tour of batman.js! For more information:</p>
+
+<ul>
+<li>check out the <a href="http://batmanjs.org">batman.js website</a> or the <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">Batman.js MVC Cookbook</a></li>
+<li>join the <a href="https://groups.google.com/forum/#!forum/batmanjs">mailing list</a></li>
+<li>drop by the IRC channel (#batmanjs)</li>
+<li>leave a comment here or open an issue on the <a href="http://github.com/batmanjs/batman">github repo</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-06-06T08:38:00-07:00" pubdate data-updated="true">Jun 6<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/coffeescript/'>CoffeeScript</a>, <a class='category' href='/blog/categories/firebase/'>Firebase</a>, <a class='category' href='/blog/categories/javascript/'>JavaScript</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/" title="Previous Post: Client-Side Image Preview with Batman.js">&laquo; Client-Side Image Preview with Batman.js</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
