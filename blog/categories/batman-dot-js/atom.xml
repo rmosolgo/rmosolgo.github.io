@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-07T11:14:38-07:00</updated>
+  <updated>2014-06-16T11:39:50-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -949,6 +949,7 @@ comment.save (err, record) =&gt;
 
 <ul>
 <li>update <code>firebase.json</code> to have your Firebase name (eg, <code>"rm-batmanjs-blog"</code>)</li>
+<li><code>npm install -g firebase-tools</code></li>
 <li><code>firebase deploy</code></li>
 <li><code>firebase open</code></li>
 </ul>
