@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-16T11:39:50-07:00</updated>
+  <updated>2014-06-27T09:20:02-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,101 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.js Accessors as Methods]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods/"/>
+    <updated>2014-06-27T08:10:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a CoffeeScript front-end MVC framework. One of its core features is <em>accessors</em>, which can be used like properties or methods of a <code>Batman.Object</code>. They can even take arguments!</p>
+
+<!-- more -->
+
+
+<p><code>Batman.Object</code> has properties defined with <code>@accessor</code> in the class definition. Examples of <code>@accessor</code> as accessible properties and computed properties are bountiful. However, I recently learned that accessors can also be made to take arguments, too!</p>
+
+<p><em>(You can see this example live on at <a href="http://jsbin.com/dalodifo/3/edit">http://jsbin.com/dalodifo/3/edit</a> .)</em></p>
+
+<h2>Definining Accessors with Arguments</h2>
+
+<p>To make an accessor that takes arguments, use <code>Batman.TerminalAccessible</code>. Let&rsquo;s say I have a <code>MathObject</code> which stores a <code>value</code> and allows you to perform calculations on it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MathObject</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;value&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;times&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">TerminalAccessible</span> <span class="nf">(multiplier) =&gt;</span>
+</span><span class='line'>      <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;value&#39;</span><span class="p">)</span> <span class="o">*</span> <span class="nx">multiplier</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, my <code>times</code> accessor takes an argument (<code>multiplier</code>) and returns the multiplied value. I pass the argument with <code>get</code>, like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">fiveObject = </span><span class="k">new</span> <span class="nx">MathObject</span><span class="p">(</span><span class="nv">value: </span><span class="mi">5</span><span class="p">)</span>
+</span><span class='line'><span class="nx">fiveObject</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;time&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># =&gt; 50</span>
+</span><span class='line'><span class="nx">fiveObject</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;time&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>  <span class="c1"># =&gt; 15</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Under the hood, <code>fiveObject.get('time')</code> returns a <code>Batman.TerminalAccessible</code>. This object provides <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a> for the function that it calls.</p>
+
+<h2>Objects as Arguments</h2>
+
+<p>You can also have <code>Batman.Objects</code> as arguments. For example, if we wanted to multiply two <code>MathObject</code>s:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MathObject</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;value&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;timesMathObject&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">TerminalAccessible</span> <span class="nf">(mathObj) =&gt;</span>
+</span><span class='line'>      <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;times&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="nx">mathObj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;value&#39;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, the other <code>mathObj</code> will be included in the source tracking. If <code>mathObj.value</code> changes, the value will be recalculated.  This is <strong>essential</strong> for values computed from two <code>Batman.Object</code>s!</p>
+
+<h2>What&rsquo;s the point?</h2>
+
+<p>This allows <strong>observable</strong> &ldquo;method calls&rdquo;. It&rsquo;s wrapped in batman.js <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a>, so whenever the object or the arguments change, the value will be recalculated.</p>
+
+<p>For example, I use it for checking whether a room is at maximum occupancy for certain events:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">location</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isFullFor&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="nx">earlyEvent</span><span class="p">)</span> <span class="c1"># =&gt; false</span>
+</span><span class='line'><span class="nx">location</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isFullFor&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="nx">lateEvent</span><span class="p">)</span>  <span class="c1"># =&gt; true</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And in view bindings:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;p</span> <span class="na">data-showif=</span><span class="s">&#39;location.isFullFor[earlyEvent]&#39;</span><span class="nt">&gt;</span> Full for early event<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;p</span> <span class="na">data-showif=</span><span class="s">&#39;location.isFullFor[lateEvent]&#39;</span> <span class="nt">&gt;</span> Full for late  event<span class="nt">&lt;/p&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When people attend the event (or the location max occupancy is changed), these values are automatically recalculated!</p>
+
+<p>This is the same approach used in batman.js internals for accessing SetIndexes (<a href="https://github.com/batmanjs/batman/blob/master/src/set/set.coffee#L19">source</a>).</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Build a Blog with Batman.js]]></title>
@@ -3340,56 +3435,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p>Cha-ching!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Dynamically-Generated Headers for ActiveResource Requests]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests/"/>
-    <updated>2014-02-05T15:47:00-08:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests</id>
-    <content type="html"><![CDATA[<p>Need to add a header to an ActiveResource request? If you need to do it at dynamically at request-time, redefine <code>.headers</code>.</p>
-
-<!-- more -->
-
-
-<p>I needed to include header in my requests, but I didn&rsquo;t just want to set it in the class definition.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MyResource</span> <span class="o">&lt;</span> <span class="ss">ActiveResource</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">headers</span><span class="o">[</span><span class="s2">&quot;My-Header&quot;</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;Something-Useful&quot;</span> <span class="c1"># boo hiss, I want it dynamically!</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>So, I overwrote <code>.headers</code> to be a method rather than just a pointer to a hash:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MyResource</span> <span class="o">&lt;</span> <span class="ss">ActiveResource</span><span class="p">:</span><span class="ss">:Base</span>
-</span><span class='line'>  <span class="n">cattr_accessor</span> <span class="ss">:static_headers</span>
-</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">static_headers</span> <span class="o">=</span> <span class="n">headers</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">headers</span>
-</span><span class='line'>    <span class="n">new_headers</span> <span class="o">=</span> <span class="n">static_headers</span><span class="o">.</span><span class="n">clone</span>
-</span><span class='line'>    <span class="n">new_headers</span><span class="o">[</span><span class="s2">&quot;My-header&quot;</span><span class="o">]</span> <span class="o">=</span> <span class="no">MyClass</span><span class="o">.</span><span class="n">some_method</span> <span class="c1"># voila, evaluated at request-time</span>
-</span><span class='line'>    <span class="n">new_headers</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now, I can add whatever value to the headers I want, whenever I want!</p>
 ]]></content>
   </entry>
   

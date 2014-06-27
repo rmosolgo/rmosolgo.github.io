@@ -4,7 +4,7 @@
   <title><![CDATA[Category: CoffeeScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/coffeescript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-16T11:39:50-07:00</updated>
+  <updated>2014-06-27T09:20:02-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,88 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.js Accessors as Methods]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods/"/>
+    <updated>2014-06-27T08:10:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a CoffeeScript front-end MVC framework. One of its core features is <em>accessors</em>, which can be used like properties or methods of a <code>Batman.Object</code>. They can even take arguments!</p>
+
+<!-- more -->
+
+
+<p><code>Batman.Object</code> has properties defined with <code>@accessor</code> in the class definition. Examples of <code>@accessor</code> as accessible properties and computed properties are bountiful. However, I recently learned that accessors can also be made to take arguments, too!</p>
+
+<p><em>(You can see this example live on at <a href="http://jsbin.com/dalodifo/3/edit">http://jsbin.com/dalodifo/3/edit</a> .)</em></p>
+
+<h2>Definining Accessors with Arguments</h2>
+
+<p>To make an accessor that takes arguments, use <code>Batman.TerminalAccessible</code>. Let&rsquo;s say I have a <code>MathObject</code> which stores a <code>value</code> and allows you to perform calculations on it:</p>
+
+<p>```coffeescript
+class MathObject extends Batman.Object
+  @accessor &lsquo;value&rsquo;</p>
+
+<p>  @accessor &lsquo;times&rsquo;, &ndash;></p>
+
+<pre><code>new Batman.TerminalAccessible (multiplier) =&gt;
+  @get('value') * multiplier
+</code></pre>
+
+<p>```</p>
+
+<p>Now, my <code>times</code> accessor takes an argument (<code>multiplier</code>) and returns the multiplied value. I pass the argument with <code>get</code>, like this:</p>
+
+<p><code>coffeescript
+fiveObject = new MathObject(value: 5)
+fiveObject.get('time').get(10) # =&gt; 50
+fiveObject.get('time').get(3)  # =&gt; 15
+</code></p>
+
+<p>Under the hood, <code>fiveObject.get('time')</code> returns a <code>Batman.TerminalAccessible</code>. This object provides <a href="/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a> for the function that it calls.</p>
+
+<h2>Objects as Arguments</h2>
+
+<p>You can also have <code>Batman.Objects</code> as arguments. For example, if we wanted to multiply two <code>MathObject</code>s:</p>
+
+<p>```coffeescript
+class MathObject extends Batman.Object
+  @accessor &lsquo;value&rsquo;</p>
+
+<p>  @accessor &lsquo;timesMathObject&rsquo;, &ndash;></p>
+
+<pre><code>new Batman.TerminalAccessible (mathObj) =&gt;
+  @get('times').get(mathObj.get('value'))
+</code></pre>
+
+<p>```</p>
+
+<p>Now, the other <code>mathObj</code> will be included in the source tracking. If <code>mathObj.value</code> changes, the value will be recalculated.  This is <strong>essential</strong> for values computed from two <code>Batman.Object</code>s!</p>
+
+<h2>What&rsquo;s the point?</h2>
+
+<p>This allows <strong>observable</strong> &ldquo;method calls&rdquo;. It&rsquo;s wrapped in batman.js <a href="/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a>, so whenever the object or the arguments change, the value will be recalculated.</p>
+
+<p>For example, I use it for checking whether a room is at maximum occupancy for certain events:</p>
+
+<p><code>coffeescript
+location.get('isFullFor').get(earlyEvent) # =&gt; false
+location.get('isFullFor').get(lateEvent)  # =&gt; true
+</code></p>
+
+<p>And in view bindings:</p>
+
+<p><code>html
+  &lt;p data-showif='location.isFullFor[earlyEvent]'&gt; Full for early event&lt;/p&gt;
+  &lt;p data-showif='location.isFullFor[lateEvent]' &gt; Full for late  event&lt;/p&gt;
+</code></p>
+
+<p>When people attend the event (or the location max occupancy is changed), these values are automatically recalculated!</p>
+
+<p>This is the same approach used in batman.js internals for accessing SetIndexes (<a href="https://github.com/batmanjs/batman/blob/master/src/set/set.coffee#L19">source</a>).</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Build a Blog with Batman.js]]></title>
@@ -1149,125 +1231,6 @@ stub.calls.length # =&gt; 1
 </code></p>
 
 <p>However, this <code>stubAccessor</code> <em>doesn&rsquo;t</em> stub <code>set</code>! Maybe that&rsquo;s a to-do, I haven&rsquo;t needed it yet.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Integrate Batman.js and Leaflet with a Custom View]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/"/>
-    <updated>2014-04-30T23:33:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">batman.js</a> views are one of the best ways to integrate other JS libraries with batman.js data structures like <code>Batman.Object</code> and <code>Batman.Set</code>. For example, you can use a custom view to display <code>Batman.Model</code>s with <a href="http://leafletjs.com">leaflet.js</a></p>
-
-<!-- more -->
-
-
-<p>I&rsquo;ve always wanted to try batman.js + leaflet. I had to:</p>
-
-<ul>
-<li>Use <code>@option</code> to define view APIs</li>
-<li>Initialize the custom view, controlling for async loading of data &amp; map</li>
-<li>Observe <code>Batman.Object</code>s to keep leaflet up-to-date.</li>
-<li>Listen to leaflet to keep batman.js up to date</li>
-</ul>
-
-
-<p>I ended up making an abstract <code>LeafletView</code>, implemented by <code>LeafletPointView</code> and <code>LeafletCollectionPointView</code>.</p>
-
-<p>Be sure to check out the <a href="http://bl.ocks.org/rmosolgo/11443841">live example</a> and source code (<a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee">custom views</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/index.jade#L19">index html</a>, <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/html/monuments/edit.jade#L19">edit html</a>)!</p>
-
-<h2><code>@option</code> in Custom Views</h2>
-
-<p><code>@option</code> allows you to pass values explicitly into your custom view. That way, you can eliminate the guesswork of climbing the view tree or looking up to the controller for some value.</p>
-
-<p>It provides a view binding <em>and</em> an accessor for your custom view. In my case, I used:</p>
-
-<p><code>coffeescript
-class App.LeafletView extends Batman.View
-  @option 'draggable'
-</code></p>
-
-<p>To provide in my HTML:</p>
-
-<p>```html</p>
-
-<div data-view='App.LeafletView' data-view-draggable='true'></div>
-
-
-<p>```</p>
-
-<p>And in my view code:</p>
-
-<p><code>coffeescript
-@get('draggable') # =&gt; returns the value passed to the binding
-</code></p>
-
-<p>This also works for objects, as in <code>@option 'item'</code>:</p>
-
-<p>```html</p>
-
-<div data-view='App.LeafletPointView' data-view-item='monument'></div>
-
-
-<p>```</p>
-
-<p>Then I have easy access to my record:</p>
-
-<p><code>coffeescript
-@get('item')
-</code></p>
-
-<h2>Initializing Custom Views</h2>
-
-<p>Initializing custom batman.js views is tough because:</p>
-
-<ul>
-<li>Views are constructed before they&rsquo;re added to the DOM</li>
-<li>Bindings are initialized without values (and their objects may not be loaded from the server yet)</li>
-<li>Lifecycle events may fire more than once</li>
-</ul>
-
-
-<p>So, you have to be prepared for undefined values and for <code>viewDidAppear</code> to be fired more than once.</p>
-
-<ul>
-<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L38"><strong>Use <code>observeOnce</code></strong></a> to fire on change from <code>undefined</code> to some value. My case was different because I had to wait for the binding <em>and</em> for the map to load, hence the <code>leafletReady</code> event.</li>
-<li><a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L52"><strong>Check for initialization</strong> in <code>viewDidAppear</code> handlers</a></li>
-</ul>
-
-
-<h2>Keeping Other Libraries up to Date</h2>
-
-<p>Integrating batman.js with other JavaScript libraries usually means setting up event handlers so that events pass from an outside proxy of a <code>Batman.Object</code> to the object itself.</p>
-
-<p>For example, to update a leaflet marker when a <code>Batman.Object</code> is changed, you have to observe the <code>Batman.Object</code> so that <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L149">whenever <code>latitude</code> or <code>longitude</code> changes, you update the marker</a>:</p>
-
-<p>```coffeescript</p>
-
-<h1>From App.LeafletPointView, @get(&lsquo;item&rsquo;) returns the object</h1>
-
-<p>@observe &lsquo;item.latitude&rsquo;, (nv, ov) &ndash;>
-  @updateMarker(@get(&lsquo;item&rsquo;), centerOnItem: true) if nv?
-@observe &lsquo;item.longitude&rsquo;, (nv, ov) &ndash;>
-  @updateMarker(@get(&lsquo;item&rsquo;), centerOnItem: true) if nv?
-```</p>
-
-<p>You have to link the other way too. To update a record when its marker is updated (by dragging), <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L85">create a handler</a>:</p>
-
-<p>```coffeescript</p>
-
-<h1>from App.LeafletView</h1>
-
-<p>marker.on &lsquo;dragend&rsquo;, =>
-  # &hellip;
-  # get values from leaflet and update batman.js
-  latLng = marker.getLatLng()
-  item.set &lsquo;latitude&rsquo;, latLng.lat
-  item.set &lsquo;longitude&rsquo;, latLng.lng
-  # &hellip;
-```</p>
-
-<p><code>App.LeafletCollectionPointView</code> uses <a href="http://batmanjs.org/docs/api/batman.setobserver.html"><code>Batman.SetObserver</code></a> to <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L174">track adding, removing and modifying items</a> (just like <code>Batman.SetSort</code>).</p>
 ]]></content>
   </entry>
   
