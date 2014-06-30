@@ -175,18 +175,36 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>And in view bindings:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;p</span> <span class="na">data-showif=</span><span class="s">&#39;location.isFullFor[earlyEvent]&#39;</span><span class="nt">&gt;</span> Full for early event<span class="nt">&lt;/p&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;p</span> <span class="na">data-showif=</span><span class="s">&#39;location.isFullFor[lateEvent]&#39;</span> <span class="nt">&gt;</span> Full for late  event<span class="nt">&lt;/p&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
 <p>When people attend the event (or the location max occupancy is changed), these values are automatically recalculated!</p>
 
 <p>This is the same approach used in batman.js internals for accessing SetIndexes (<a href="https://github.com/batmanjs/batman/blob/master/src/set/set.coffee#L19">source</a>).</p>
+
+<h2>Accessor Arguments in View Bindings</h2>
+
+<p>To pass arguments to accessors in view bindings, you can use the <code>[...]</code> or <code>withArguments</code> filters. Let&rsquo;s say I want to put this operation in a view binding:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">location</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;isFullFor&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="nx">earlyEvent</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>[...]</code> is shorthand for calling <code>get</code> with the given argument. I can use it like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;location.isFullFor[earlyEvent]&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>earlyEvent</code> will be looked up in context and the value will be passed to <code>get</code>, as in the CoffeeScript above.</p>
+
+<p>You can also use the <code>withArguments</code> filter (as of 0.16, <a href="https://github.com/batmanjs/batman/pull/923">PR</a>) like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;span</span> <span class="na">data-bind=</span><span class="s">&#39;location.isFullFor | withArguments earlyEvent&#39;</span><span class="nt">&gt;&lt;/span&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>withArguments</code> recognizes that it should use <code>get</code> in this case.</p>
 </div>
 
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: CoffeeScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/coffeescript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-27T09:20:02-07:00</updated>
+  <updated>2014-06-30T07:28:07-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -82,16 +82,33 @@ location.get('isFullFor').get(earlyEvent) # =&gt; false
 location.get('isFullFor').get(lateEvent)  # =&gt; true
 </code></p>
 
-<p>And in view bindings:</p>
-
-<p><code>html
-  &lt;p data-showif='location.isFullFor[earlyEvent]'&gt; Full for early event&lt;/p&gt;
-  &lt;p data-showif='location.isFullFor[lateEvent]' &gt; Full for late  event&lt;/p&gt;
-</code></p>
-
 <p>When people attend the event (or the location max occupancy is changed), these values are automatically recalculated!</p>
 
 <p>This is the same approach used in batman.js internals for accessing SetIndexes (<a href="https://github.com/batmanjs/batman/blob/master/src/set/set.coffee#L19">source</a>).</p>
+
+<h2>Accessor Arguments in View Bindings</h2>
+
+<p>To pass arguments to accessors in view bindings, you can use the <code>[...]</code> or <code>withArguments</code> filters. Let&rsquo;s say I want to put this operation in a view binding:</p>
+
+<p><code>coffeescript
+location.get('isFullFor').get(earlyEvent)
+</code></p>
+
+<p><code>[...]</code> is shorthand for calling <code>get</code> with the given argument. I can use it like this:</p>
+
+<p><code>html
+&lt;span data-bind='location.isFullFor[earlyEvent]'&gt;&lt;/span&gt;
+</code></p>
+
+<p><code>earlyEvent</code> will be looked up in context and the value will be passed to <code>get</code>, as in the CoffeeScript above.</p>
+
+<p>You can also use the <code>withArguments</code> filter (as of 0.16, <a href="https://github.com/batmanjs/batman/pull/923">PR</a>) like this:</p>
+
+<p><code>html
+&lt;span data-bind='location.isFullFor | withArguments earlyEvent'&gt;&lt;/span&gt;
+</code></p>
+
+<p><code>withArguments</code> recognizes that it should use <code>get</code> in this case.</p>
 ]]></content>
   </entry>
   
