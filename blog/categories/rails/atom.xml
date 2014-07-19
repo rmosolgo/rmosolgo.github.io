@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-19T09:50:10-07:00</updated>
+  <updated>2014-07-19T15:23:06-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -88,7 +88,9 @@ end
 <p>  },
   &ldquo;dependencies&rdquo;: {</p>
 
-<pre><code>"karma": "&gt;= 0.10"
+<pre><code>"karma": "&gt;= 0.10", 
+"karma-chrome-launcher", "~0.1",
+"karma-jasmine", "~0.2" // Or something else, if you prefer
 </code></pre>
 
 <p>  }
