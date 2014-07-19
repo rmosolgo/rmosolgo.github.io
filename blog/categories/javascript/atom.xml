@@ -4,7 +4,7 @@
   <title><![CDATA[Category: JavaScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-30T07:28:07-07:00</updated>
+  <updated>2014-07-19T09:50:10-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,139 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js/"/>
+    <updated>2014-07-19T09:15:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><code>Model::transaction</code> provides a deep-copied, &ldquo;shadow-realm&rdquo; version of a record which is great for rendering into edit forms. Any changes made to it can be saved (which updates the original record too), or just forgotten.</p>
+
+<!-- more -->
+
+
+<p>Here&rsquo;s the problem transactions exist to solve:</p>
+
+<ul>
+<li>You want your user to edit something</li>
+<li>You render a record into an edit form</li>
+<li>User edits the form</li>
+<li>User clicks back button</li>
+<li>User is surprised to see that the record&rsquo;s changes were &ldquo;saved&rdquo; (In fact, only the in-memory record was changed &mdash; the change wasn&rsquo;t sent to the server)</li>
+</ul>
+
+
+<p><code>Model::transaction</code> solves this problem by returning a <em>deep copy</em> of the record at hand which can be:</p>
+
+<ul>
+<li><strong>saved</strong>, just like a normal record, in which case changes are applied to the original</li>
+<li><strong>forgotten</strong>, by simply navigating away</li>
+<li><strong>applied</strong>, which applies changes to the original, but doesn&rsquo;t update the server.</li>
+</ul>
+
+
+<p><em>The name &ldquo;transaction&rdquo; hearkens back to database transactions where changes aren&rsquo;t applied unless they&rsquo;re all successful. In the same way, changes to a <code>Batman.Transaction</code> aren&rsquo;t applied unless you explicitly <code>save</code> or <code>applyChanges</code>.</em></p>
+
+<h2>Setting up a Transaction</h2>
+
+<p>To set up a transaction, call <code>transaction</code> on the record at hand:</p>
+
+<p>```coffeescript
+class MyApp.RaceHorsesController extends MyApp.ApplicationController
+  edit: (params) &ndash;></p>
+
+<pre><code>MyApp.RaceHorse.find params.id, (err, record) -&gt;
+  deepCopy = record.transaction()
+  @set 'raceHorse', deepCopy
+</code></pre>
+
+<p>```</p>
+
+<h2>Transaction&rsquo;s Deep Copy</h2>
+
+<p>A transaction is actually an instance of the original model. It differs in 2 ways:</p>
+
+<ul>
+<li>It isn&rsquo;t added to the <code>loaded</code> set (aka &ldquo;the memory map&rdquo;)</li>
+<li>It has <code>Batman.Transaction</code> mixed in, which defines some new functions and overrides <code>Model::save</code></li>
+</ul>
+
+
+<p><code>Model::transaction</code> peforms a deep copy of a <code>Batman.Model</code> by
+ iterating over the model&rsquo;s <code>attributes</code> hash. The <code>attributes</code> hash is where encoded properties are stored (and other properties, unless you define an accessor that says otherwise).</p>
+
+<p>Batman.js copies the attributes hash into the transaction by handling each value:</p>
+
+<ul>
+<li>If the value is a <code>Batman.Model</code>, it&rsquo;s also copied with <code>Model::transaction</code></li>
+<li>If the value is a <code>Batman.AssociationSet</code>, it&rsquo;s cloned into a <code>Batman.TransactionAssociationSet</code> and its members are copied with <code>Model::transaction</code></li>
+<li>Otherwise, the value is set into the transaction&rsquo;s attributes.</li>
+</ul>
+
+
+<p>Under the hood, batman.js tracks which objects it has already cloned. That way, it doesn&rsquo;t get thrown into an infinite loop.</p>
+
+<p>If a mutable object is copied from the original to the transaction, batman.js issues a warning. This is because it can&rsquo;t isolate changes. The transaction and the original are both refering to the <em>same object</em>, so changes to one will also affect the other. Mutable objects include:</p>
+
+<ul>
+<li>Dates (although mutating dates is such a pain in JS, I doubt this will cause a problem)</li>
+<li>Arrays</li>
+<li>Batman.Set, Batman.Hash, etc</li>
+<li>any JavaScript object</li>
+</ul>
+
+
+<h2>Saving a Transaction</h2>
+
+<p>To save a transaction, call <code>save</code> on it. This will:</p>
+
+<ul>
+<li>validate the transaction (with client-side validations)</li>
+<li>apply changes to the original model</li>
+<li>save the transaction (ie, the storage operation will be performed with the transaction, not the original)</li>
+<li>pass the original to the <code>save</code> callback</li>
+</ul>
+
+
+<p>This means a transaction behaves just like a normal model. You can save it like this:</p>
+
+<p>```coffeescript
+  saveRaceHorse: (raceHorse) &ndash;></p>
+
+<pre><code>raceHorse.isTransaction # =&gt; true, just checking
+raceHorse.save (err, record) -&gt;
+  if !err 
+    Batman.redirect("/race_horses")
+</code></pre>
+
+<p>```</p>
+
+<p><strong>Note:</strong> at time of writing, transaction <strong>does not account for server-side validations</strong>. There is an open issue for this <a href="https://github.com/batmanjs/batman/issues/1049">on github</a>.</p>
+
+<h2>Forgetting a Transaction</h2>
+
+<p>If you don&rsquo;t want changes on transaction to be applied, just leave it alone.</p>
+
+<ul>
+<li>It&rsquo;s not in the <code>loaded</code> set, so it won&rsquo;t intefere with your app&rsquo;s other data.</li>
+<li>The original record has no references to it.</li>
+<li>It&rsquo;s still set on your controller (probably), but it will get overrided next time your user edits something.</li>
+</ul>
+
+
+<p>Once it&rsquo;s released from the controller, it will probably just be garbage-collected when the browser gets a chance.</p>
+
+<h2>Applying Changes without Saving</h2>
+
+<p>Transactions have an <code>applyChanges</code> function that updates the original record without performing any storage operations.</p>
+
+<p><code>coffeescript
+transaction.applyChanges()
+</code></p>
+
+<p>You might use this if your save operation is really complicated and you need to control it by hand.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Batman.js Accessors as Methods]]></title>
@@ -1199,55 +1332,6 @@ class Household extends Batman.Model
 <p>```</p>
 
 <p>Again, the <code>Batman.SetMapping</code> will take care of keeping everything in sync!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Jasmine-Friendly Batman.js Accessor Stubs]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs/"/>
-    <updated>2014-05-16T12:53:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><code>Batman.Object</code> accessors</a> are the bread and butter of <a href="http://batmanjs.org">batman.js</a>. Stubbing them can make testing much easier.</p>
-
-<!-- more -->
-
-
-<p>I haven&rsquo;t figured out <a href="http://batmanjs.org/docs/testing.html"><code>Batman.TestCase</code></a> yet, so I&rsquo;m still using <a href="http://jasmine.github.io/">jasmine</a>. <code>Batman.TestCase</code> <a href="https://github.com/batmanjs/batman/blob/master/src/extras/testing/test_case.coffee#L90">includes <code>stubAccessor</code> out of the box</a>, and I ported it to jasmine:</p>
-
-<p>```coffeescript
-window.stubAccessor = (object, keypath) &ndash;>
-  if object.prototype?</p>
-
-<pre><code>console.warn "You're stubbing an accessor on #{object.name},
-    which won't be un-stubbed when the example group finishes!
-    Stub accessors on instances, not classes, if possible!"
-</code></pre>
-
-<p>  stub = spyOn(object.property(keypath), &lsquo;getValue&rsquo;)
-  object.property(keypath).refresh()
-  stub.calls.pop() # ^^ remove call from refresh
-  stub
-```</p>
-
-<p>This way, the <code>stub</code> works just like normal jasmine spies:</p>
-
-<p><code>coffeescript
-record = new App.MyModel
-stub = stubAccessor(record, 'myProperty').andReturn('stubbed!')
-record.get('myProperty') # =&gt; "stubbed!"
-record.get('myProperty')
-stub.calls.length # =&gt; 2
-</code></p>
-
-<p><code>
-record = new App.MyModel
-stub = stubAccessor(record, 'myProperty').andCallThrough()
-record.set('myProperty', "value!")
-record.get('myProperty') # =&gt; "value!"
-stub.calls.length # =&gt; 1
-</code></p>
-
-<p>However, this <code>stubAccessor</code> <em>doesn&rsquo;t</em> stub <code>set</code>! Maybe that&rsquo;s a to-do, I haven&rsquo;t needed it yet.</p>
 ]]></content>
   </entry>
   

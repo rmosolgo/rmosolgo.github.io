@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-06-30T07:28:07-07:00</updated>
+  <updated>2014-07-19T09:50:10-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,144 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js/"/>
+    <updated>2014-07-19T09:15:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><code>Model::transaction</code> provides a deep-copied, &ldquo;shadow-realm&rdquo; version of a record which is great for rendering into edit forms. Any changes made to it can be saved (which updates the original record too), or just forgotten.</p>
+
+<!-- more -->
+
+
+<p>Here&rsquo;s the problem transactions exist to solve:</p>
+
+<ul>
+<li>You want your user to edit something</li>
+<li>You render a record into an edit form</li>
+<li>User edits the form</li>
+<li>User clicks back button</li>
+<li>User is surprised to see that the record&rsquo;s changes were &ldquo;saved&rdquo; (In fact, only the in-memory record was changed &mdash; the change wasn&rsquo;t sent to the server)</li>
+</ul>
+
+
+<p><code>Model::transaction</code> solves this problem by returning a <em>deep copy</em> of the record at hand which can be:</p>
+
+<ul>
+<li><strong>saved</strong>, just like a normal record, in which case changes are applied to the original</li>
+<li><strong>forgotten</strong>, by simply navigating away</li>
+<li><strong>applied</strong>, which applies changes to the original, but doesn&rsquo;t update the server.</li>
+</ul>
+
+
+<p><em>The name &ldquo;transaction&rdquo; hearkens back to database transactions where changes aren&rsquo;t applied unless they&rsquo;re all successful. In the same way, changes to a <code>Batman.Transaction</code> aren&rsquo;t applied unless you explicitly <code>save</code> or <code>applyChanges</code>.</em></p>
+
+<h2>Setting up a Transaction</h2>
+
+<p>To set up a transaction, call <code>transaction</code> on the record at hand:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">RaceHorsesController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationController</span>
+</span><span class='line'>  <span class="nv">edit: </span><span class="nf">(params) -&gt;</span>
+</span><span class='line'>    <span class="nx">MyApp</span><span class="p">.</span><span class="nx">RaceHorse</span><span class="p">.</span><span class="nx">find</span> <span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nf">(err, record) -&gt;</span>
+</span><span class='line'>      <span class="nv">deepCopy = </span><span class="nx">record</span><span class="p">.</span><span class="nx">transaction</span><span class="p">()</span>
+</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;raceHorse&#39;</span><span class="p">,</span> <span class="nx">deepCopy</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Transaction&rsquo;s Deep Copy</h2>
+
+<p>A transaction is actually an instance of the original model. It differs in 2 ways:</p>
+
+<ul>
+<li>It isn&rsquo;t added to the <code>loaded</code> set (aka &ldquo;the memory map&rdquo;)</li>
+<li>It has <code>Batman.Transaction</code> mixed in, which defines some new functions and overrides <code>Model::save</code></li>
+</ul>
+
+
+<p><code>Model::transaction</code> peforms a deep copy of a <code>Batman.Model</code> by
+ iterating over the model&rsquo;s <code>attributes</code> hash. The <code>attributes</code> hash is where encoded properties are stored (and other properties, unless you define an accessor that says otherwise).</p>
+
+<p>Batman.js copies the attributes hash into the transaction by handling each value:</p>
+
+<ul>
+<li>If the value is a <code>Batman.Model</code>, it&rsquo;s also copied with <code>Model::transaction</code></li>
+<li>If the value is a <code>Batman.AssociationSet</code>, it&rsquo;s cloned into a <code>Batman.TransactionAssociationSet</code> and its members are copied with <code>Model::transaction</code></li>
+<li>Otherwise, the value is set into the transaction&rsquo;s attributes.</li>
+</ul>
+
+
+<p>Under the hood, batman.js tracks which objects it has already cloned. That way, it doesn&rsquo;t get thrown into an infinite loop.</p>
+
+<p>If a mutable object is copied from the original to the transaction, batman.js issues a warning. This is because it can&rsquo;t isolate changes. The transaction and the original are both refering to the <em>same object</em>, so changes to one will also affect the other. Mutable objects include:</p>
+
+<ul>
+<li>Dates (although mutating dates is such a pain in JS, I doubt this will cause a problem)</li>
+<li>Arrays</li>
+<li>Batman.Set, Batman.Hash, etc</li>
+<li>any JavaScript object</li>
+</ul>
+
+
+<h2>Saving a Transaction</h2>
+
+<p>To save a transaction, call <code>save</code> on it. This will:</p>
+
+<ul>
+<li>validate the transaction (with client-side validations)</li>
+<li>apply changes to the original model</li>
+<li>save the transaction (ie, the storage operation will be performed with the transaction, not the original)</li>
+<li>pass the original to the <code>save</code> callback</li>
+</ul>
+
+
+<p>This means a transaction behaves just like a normal model. You can save it like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">saveRaceHorse: </span><span class="nf">(raceHorse) -&gt;</span>
+</span><span class='line'>    <span class="nx">raceHorse</span><span class="p">.</span><span class="nx">isTransaction</span> <span class="c1"># =&gt; true, just checking</span>
+</span><span class='line'>    <span class="nx">raceHorse</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) -&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">!</span><span class="nx">err</span>
+</span><span class='line'>        <span class="nx">Batman</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s">&quot;/race_horses&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Note:</strong> at time of writing, transaction <strong>does not account for server-side validations</strong>. There is an open issue for this <a href="https://github.com/batmanjs/batman/issues/1049">on github</a>.</p>
+
+<h2>Forgetting a Transaction</h2>
+
+<p>If you don&rsquo;t want changes on transaction to be applied, just leave it alone.</p>
+
+<ul>
+<li>It&rsquo;s not in the <code>loaded</code> set, so it won&rsquo;t intefere with your app&rsquo;s other data.</li>
+<li>The original record has no references to it.</li>
+<li>It&rsquo;s still set on your controller (probably), but it will get overrided next time your user edits something.</li>
+</ul>
+
+
+<p>Once it&rsquo;s released from the controller, it will probably just be garbage-collected when the browser gets a chance.</p>
+
+<h2>Applying Changes without Saving</h2>
+
+<p>Transactions have an <code>applyChanges</code> function that updates the original record without performing any storage operations.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">transaction</span><span class="p">.</span><span class="nx">applyChanges</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You might use this if your save operation is really complicated and you need to control it by hand.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Batman.js Accessors as Methods]]></title>
@@ -3360,99 +3498,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 <blockquote><p>&ldquo;The land of a rich man produced plentifully, and he thought to himself, &hellip;  &lsquo;Soul, you have ample goods laid up for many years; relax, eat, drink, be merry.&rsquo; But God said to him, &lsquo;Fool! This night your soul is required of you, and the things you have prepared, whose will they be?&rsquo;&rdquo;</p></blockquote>
 
 <p>To be sure, Jesus must have had <em>some</em> considerations for the future, if only to <a href="http://www.esvbible.org/Matthew%2B6%253A19-21/">&ldquo;store up treasures in heaven&rdquo;</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Reload HTML for Batman.Views]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/02/21/reload-html-for-batman-dot-views/"/>
-    <updated>2014-02-21T08:40:00-08:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/02/21/reload-html-for-batman-dot-views</id>
-    <content type="html"><![CDATA[<p>When working on HTML for <a href="http://batmanjs.org/docs/api/batman.view.html"><code>Batman.View</code></a>s, it can be annoying to refresh and navigate back to wherever you were. Hacking into <code>Batman.HTMLStore</code> enables you to reload HTML without refreshing</p>
-
-<!-- more -->
-
-
-<h1>The Code</h1>
-
-<p><em>You&rsquo;ll want to include all this code </em>after<em> batman.js and </em>before<em> your app.</em></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># alter `Batman.HTMLStore`&#39;s default accessor so that it isn&#39;t `final` and has an `unset` action:</span>
-</span><span class='line'><span class="nv">storeAccessor = </span><span class="nx">Batman</span><span class="p">.</span><span class="nx">HTMLStore</span><span class="o">::</span><span class="nx">_batman</span><span class="p">.</span><span class="nx">getFirst</span><span class="p">(</span><span class="s">&#39;defaultAccessor&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nv">storeAccessor.final = </span><span class="kc">false</span>
-</span><span class='line'><span class="nv">storeAccessor.unset = </span><span class="nf">(path) -&gt;</span>
-</span><span class='line'>  <span class="k">if</span> <span class="o">!</span><span class="nx">path</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">is</span> <span class="s">&quot;/&quot;</span>
-</span><span class='line'>    <span class="nv">path = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
-</span><span class='line'>  <span class="nx">@_requestedPaths</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
-</span><span class='line'>  <span class="nx">@_htmlContents</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">undefined</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># returns the next superview with a defined source</span>
-</span><span class='line'><span class="nv">Batman.View::superviewWithSource = </span><span class="nf">-&gt;</span>
-</span><span class='line'>  <span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">)</span><span class="o">?</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">@</span>
-</span><span class='line'>  <span class="k">else</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">@superview</span><span class="p">.</span><span class="nx">superviewWithSource</span><span class="p">()</span>
-</span><span class='line'>
-</span><span class='line'><span class="c1"># Unset the view&#39;s HTML, then reload it and re-initialize the view when it loads</span>
-</span><span class='line'><span class="nv">Batman.View::refreshHTML = </span><span class="nf">-&gt;</span>
-</span><span class='line'>  <span class="c1"># climb the view tree to find a view with a defined `source`</span>
-</span><span class='line'>  <span class="nx">@sourceView</span> <span class="o">?=</span> <span class="nx">@superviewWithSource</span><span class="p">()</span>
-</span><span class='line'>  <span class="nv">sourceView = </span><span class="nx">@sourceView</span>
-</span><span class='line'>  <span class="nv">sourceView.html = </span><span class="kc">undefined</span>
-</span><span class='line'>  <span class="nv">path = </span><span class="nx">sourceView</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">if</span> <span class="nx">path</span><span class="p">.</span><span class="nx">charAt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">isnt</span> <span class="s">&quot;/&quot;</span>
-</span><span class='line'>    <span class="nv">path = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
-</span><span class='line'>  <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="nx">path</span><span class="p">)</span>
-</span><span class='line'>  <span class="nx">sourceView</span><span class="p">.</span><span class="nx">_HTMLObserver</span> <span class="o">?=</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">store</span><span class="p">.</span><span class="nx">observe</span> <span class="nx">path</span><span class="p">,</span> <span class="nf">(nv, ov) =&gt;</span>
-</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;html&#39;</span><span class="p">,</span> <span class="nx">nv</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">loadView</span><span class="p">()</span>
-</span><span class='line'>    <span class="nx">sourceView</span><span class="p">.</span><span class="nx">initializeBindings</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now, you can call <code>refreshHTML()</code> on a <code>Batman.View</code> to reload its HTML from the server.</p>
-
-<h1>Do It</h1>
-
-<p>In Chrome:</p>
-
-<ul>
-<li><strong>right-click, &ldquo;Inspect Element&rdquo;</strong> on a HTML element. The element is now available at <code>$0</code> in your console</li>
-<li><strong><code>$context($0).refreshHTML()</code></strong> to get the view for the node and call <code>refreshHTML</code> on it.</li>
-</ul>
-
-
-<p>Cha-ching!</p>
 ]]></content>
   </entry>
   
