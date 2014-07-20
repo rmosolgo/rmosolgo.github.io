@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-19T15:23:06-07:00</updated>
+  <updated>2014-07-20T14:06:42-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -90,6 +90,7 @@ end
 
 <pre><code>"karma": "&gt;= 0.10", 
 "karma-chrome-launcher", "~0.1",
+"karma-coffee-preprocessor": "~0.1",
 "karma-jasmine", "~0.2" // Or something else, if you prefer
 </code></pre>
 
@@ -108,6 +109,14 @@ module.exports = (config) &ndash;>
 
 <pre><code>basePath: '../../'
 frameworks: ['jasmine'] # that's my weapon of choice, anyways.
+plugins: [
+  'karma-coffee-preprocessor'
+  'karma-chrome-launcher'
+  'karma-jasmine'
+]
+preprocessors: {
+  '../spec/**/*.coffee': ['coffee']
+}
 files: [
   'http://your-app.dev/assets/your-app.js' # point it at the app file on your dev server
   # yours might look like 'http://localhost:3000/assets/application.js' or something like that.

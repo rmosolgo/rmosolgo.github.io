@@ -130,6 +130,7 @@
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
+<span class='line-number'>13</span>
 </pre></td><td class='code'><pre><code class='json'><span class='line'><span class="p">{</span>
 </span><span class='line'>  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;your-app-name&quot;</span><span class="p">,</span>
 </span><span class='line'>  <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.1&quot;</span><span class="p">,</span>
@@ -139,6 +140,7 @@
 </span><span class='line'>  <span class="nt">&quot;dependencies&quot;</span><span class="p">:</span> <span class="p">{</span>
 </span><span class='line'>    <span class="nt">&quot;karma&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;= 0.10&quot;</span><span class="p">,</span>
 </span><span class='line'>    <span class="nt">&quot;karma-chrome-launcher&quot;</span><span class="p">,</span> <span class="nt">&quot;~0.1&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nt">&quot;karma-coffee-preprocessor&quot;</span><span class="p">:</span> <span class="s2">&quot;~0.1&quot;</span><span class="p">,</span>
 </span><span class='line'>    <span class="nt">&quot;karma-jasmine&quot;</span><span class="p">,</span> <span class="nt">&quot;~0.2&quot;</span> <span class="err">//</span> <span class="err">Or</span> <span class="err">something</span> <span class="err">else</span><span class="p">,</span> <span class="err">if</span> <span class="err">you</span> <span class="err">prefer</span>
 </span><span class='line'>  <span class="p">}</span>
 </span><span class='line'><span class="p">}</span>
@@ -168,10 +170,26 @@
 <span class='line-number'>16</span>
 <span class='line-number'>17</span>
 <span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
 </pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">module.exports = </span><span class="nf">(config) -&gt;</span>
 </span><span class='line'>  <span class="nx">config</span><span class="p">.</span><span class="nx">set</span>
 </span><span class='line'>    <span class="nv">basePath: </span><span class="s">&#39;../../&#39;</span>
 </span><span class='line'>    <span class="nv">frameworks: </span><span class="p">[</span><span class="s">&#39;jasmine&#39;</span><span class="p">]</span> <span class="c1"># that&#39;s my weapon of choice, anyways.</span>
+</span><span class='line'>    <span class="nv">plugins: </span><span class="p">[</span>
+</span><span class='line'>      <span class="s">&#39;karma-coffee-preprocessor&#39;</span>
+</span><span class='line'>      <span class="s">&#39;karma-chrome-launcher&#39;</span>
+</span><span class='line'>      <span class="s">&#39;karma-jasmine&#39;</span>
+</span><span class='line'>    <span class="p">]</span>
+</span><span class='line'>    <span class="nv">preprocessors: </span><span class="p">{</span>
+</span><span class='line'>      <span class="s">&#39;../spec/**/*.coffee&#39;</span><span class="o">:</span> <span class="p">[</span><span class="s">&#39;coffee&#39;</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>    <span class="nv">files: </span><span class="p">[</span>
 </span><span class='line'>      <span class="s">&#39;http://your-app.dev/assets/your-app.js&#39;</span> <span class="c1"># point it at the app file on your dev server</span>
 </span><span class='line'>      <span class="c1"># yours might look like &#39;http://localhost:3000/assets/application.js&#39; or something like that.</span>
