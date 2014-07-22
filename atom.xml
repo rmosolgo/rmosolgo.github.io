@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-20T14:06:42-07:00</updated>
+  <updated>2014-07-21T19:54:15-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,289 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Batman.js and Devise]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise/"/>
+    <updated>2014-07-21T09:08:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise</id>
+    <content type="html"><![CDATA[<p>Using <a href="http://batmanjs.org">batman.js</a> with <a href="https://github.com/plataformatec/devise">Devise</a> is pretty straightforward.</p>
+
+<!-- more -->
+
+
+<p>It&rsquo;s also pretty cool-looking, because when you define <code>App.currentUser</code>, all your view bindings are instantly updated to reflect the user&rsquo;s signed-in status!</p>
+
+<p>You just have to consider three things:</p>
+
+<ul>
+<li>Make Devise communicate in JSON</li>
+<li>Make batman.js send Devise-friendly requests</li>
+<li>Keep your CSRF token up-to-date</li>
+</ul>
+
+
+<h2>Make Devise Communicate in JSON</h2>
+
+<p>To make your Devise controllers accept and send JSON, register <code>:json</code> as a valid format. Do this by adding to <code>app/config/application.rb</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">config</span><span class="o">.</span><span class="n">to_prepare</span> <span class="k">do</span>
+</span><span class='line'>  <span class="no">DeviseController</span><span class="o">.</span><span class="n">respond_to</span> <span class="ss">:html</span><span class="p">,</span> <span class="ss">:json</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(From a <a href="https://github.com/plataformatec/devise/issues/2209#issuecomment-12150223">comment on plataformatec/devise</a>)</p>
+
+<p>Now, all the provided Devise controllers will accept the JSON format.</p>
+
+<h2>Make Batman.js Send Devise-friendly Requests</h2>
+
+<p>At time of writing (v0.16), the batman.js rails extra <em>only</em> sends the CSRF token with <code>Batman.RailsStorage</code> storage operations. So, all your requests will be &ldquo;disguised&rdquo; as storage operations.</p>
+
+<p>(These samples include code for updating the CSRF token which is described in detail below)</p>
+
+<h3>Signing In / Signing Up</h3>
+
+<p>I made one form with two states: &ldquo;signing in&rdquo; or &ldquo;signing up&rdquo;. I initialized a User to bind to the form:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">SessionsController</span> <span class="k">extends</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">ApplicationController</span>
+</span><span class='line'>  <span class="k">new</span><span class="o">:</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@set</span> <span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span>
+</span><span class='line'>    <span class="nx">@dialog</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the form, <code>actionName</code> was either &ldquo;Sign In&rdquo; or &ldquo;Create an Account&rdquo;:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='jade'><span class='line'><span class="nc">.row</span>
+</span><span class='line'>  <span class="nc">.col-xs-12</span>
+</span><span class='line'>    <span class="nt">form</span> data-event-submit=&#39;signIn&#39;
+</span><span class='line'>      <span class="nt">div</span><span class="nc">.alert.alert-danger</span> data-showif=&#39;user.errors.length&#39;
+</span><span class='line'>        <span class="nt">ul</span>
+</span><span class='line'>          <span class="nt">li</span> data-foreach-e=&#39;user.errors&#39; data-bind=&#39;e.fullMessage&#39;
+</span><span class='line'>      <span class="nc">.form-group</span>
+</span><span class='line'>        <span class="nt">label</span> Email
+</span><span class='line'>        <span class="nt">input</span><span class="nc">.form-control</span> type=&#39;text&#39; data-bind=&#39;user.email&#39;
+</span><span class='line'>      <span class="nc">.form-group</span>
+</span><span class='line'>        <span class="nt">label</span> Password
+</span><span class='line'>        <span class="nt">input</span><span class="nc">.form-control</span> type=&#39;password&#39; data-bind=&#39;user.password&#39;
+</span><span class='line'>      <span class="nc">.form-group</span> data-showif=&#39;signingUp&#39;
+</span><span class='line'>        <span class="nt">label</span> Password Confirmation
+</span><span class='line'>        <span class="nt">input</span><span class="nc">.form-control</span> type=&#39;password&#39; data-bind=&#39;user.password_confirmation&#39;
+</span><span class='line'>      <span class="nc">.form-group</span>
+</span><span class='line'>        <span class="nc">.row</span>
+</span><span class='line'>          <span class="nc">.col-sm-4</span>
+</span><span class='line'>            <span class="nt">input</span><span class="nc">.btn.btn-primary</span> type=&#39;submit&#39; data-bind-value=&#39;actionName | append &quot;!&quot;&#39;
+</span><span class='line'>          <span class="nc">.col-sm-8</span>
+</span><span class='line'>            <span class="nt">a</span><span class="nc">.pull-right</span> data-event-click=&#39;signingUp | toggle&#39; data-bind=&#39;otherActionName&#39;
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>(the <code>toggle</code> filter will be released in Batman.js 0.17)</em></p>
+
+<p>It turned out looking like this:</p>
+
+<p><img src="http://rmosolgo.github.io/images/sign_in_form.png" width="500"> <img src="http://rmosolgo.github.io/images/sign_up_form.png" width="500"></p>
+
+<p>Here&rsquo;s the handler for submitting that form. Notice that it handles <em>creating an account</em> and <em>signing up</em>. This might have been stupid of me.</p>
+
+<p>Notice the bit about initializing a new User &mdash; it&rsquo;s because the <code>401</code> puts the user in &ldquo;error&rdquo; state (even with <code>@catchError</code>), which can&rsquo;t be cleared. This stinks and should be fixed in batman.js.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">signIn: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nv">url = </span><span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;signingUp&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="s">&quot;/users.json&quot;</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="s">&quot;/users/sign_in.json&quot;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;user&#39;</span><span class="p">).</span><span class="nx">save</span> <span class="p">{</span><span class="nx">url</span><span class="p">},</span> <span class="nf">(err, record, env) =&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nv">newToken = </span><span class="nx">env</span><span class="o">?</span><span class="p">.</span><span class="nx">data</span><span class="o">?</span><span class="p">.</span><span class="nx">csrf_token</span>
+</span><span class='line'>        <span class="nx">@updateCSRFToken</span><span class="p">(</span><span class="nx">newToken</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+</span><span class='line'>        <span class="k">if</span> <span class="nx">err</span> <span class="k">instanceof</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">StorageAdapter</span><span class="p">.</span><span class="nx">UnauthorizedError</span>
+</span><span class='line'>          <span class="nx">@set</span> <span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">(</span><span class="nx">record</span><span class="p">.</span><span class="nx">toJSON</span><span class="p">())</span>
+</span><span class='line'>          <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;user.errors&#39;</span><span class="p">).</span><span class="nx">add</span><span class="p">(</span><span class="s">&quot;base&quot;</span><span class="p">,</span> <span class="s">&quot;Email/password don&#39;t match our records!&quot;</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">return</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="nx">record</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;password&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">record</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;password_confirmation&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;current&#39;</span><span class="p">,</span> <span class="nx">record</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">Funzies</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nx">completelyReload</span><span class="p">()</span>
+</span><span class='line'>        <span class="nx">@closeDialog</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Signing Out</h3>
+
+<p>To send a <code>DELETE</code> request, we&rsquo;ll make a new user, then &ldquo;destroy&rdquo; it:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">signOut: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">new</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">).</span><span class="nx">destroy</span> <span class="p">{</span><span class="nv">url: </span><span class="s">&quot;/users/sign_out.json&quot;</span><span class="p">},</span> <span class="nf">(err, record, env) =&gt;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="nv">newToken = </span><span class="nx">env</span><span class="o">?</span><span class="p">.</span><span class="nx">data</span><span class="o">?</span><span class="p">.</span><span class="nx">csrf_token</span>
+</span><span class='line'>        <span class="nx">@updateCSRFToken</span><span class="p">(</span><span class="nx">newToken</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;current&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">Funzies</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nx">completelyReload</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Normally, destroying a not-yet-saved record throws an error. It doesn&rsquo;t throw an error in this case because the storage adapter doesn&rsquo;t check for presence of an ID. (Since we provide a URL, it doesn&rsquo;t need the ID for anything.)</p>
+
+<h2>Keeping the CSRF Token Up-To-Date</h2>
+
+<p>When Rails changes the session, it also provides a new CSRF token for that session. This means that when your user signs in our out, Rails will expect a new CSRF token in the requests from that user. So, make devise send <code>csrf_token</code> when a user signs in or out.</p>
+
+<p>Add to your Devise routes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'>  <span class="n">devise_for</span> <span class="ss">:users</span><span class="p">,</span> <span class="ss">controllers</span><span class="p">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="ss">sessions</span><span class="p">:</span> <span class="s2">&quot;users/sessions&quot;</span><span class="p">,</span> <span class="c1"># for sending CSRF tokens</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then define the <code>users/sessions</code> controller. Put this in <code>app/controllers/users/sessions_controller.rb</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Users</span><span class="o">::</span><span class="no">SessionsController</span> <span class="o">&lt;</span> <span class="ss">Devise</span><span class="p">:</span><span class="ss">:SessionsController</span>
+</span><span class='line'>  <span class="n">respond_to</span> <span class="ss">:json</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">create</span>
+</span><span class='line'>    <span class="n">resource</span> <span class="o">=</span> <span class="n">warden</span><span class="o">.</span><span class="n">authenticate!</span><span class="p">(</span>
+</span><span class='line'>      <span class="ss">:scope</span> <span class="o">=&gt;</span> <span class="n">resource_name</span><span class="p">,</span>
+</span><span class='line'>      <span class="ss">:recall</span> <span class="o">=&gt;</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">controller_path</span><span class="si">}</span><span class="s2">#failure&quot;</span>
+</span><span class='line'>      <span class="p">)</span>
+</span><span class='line'>    <span class="n">sign_in_and_redirect</span><span class="p">(</span><span class="n">resource_name</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">destroy</span>
+</span><span class='line'>    <span class="n">sign_out</span><span class="p">(</span><span class="n">resource_name</span><span class="p">)</span>
+</span><span class='line'>    <span class="c1"># on sign-out, send back the CSRF token</span>
+</span><span class='line'>    <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="p">{</span><span class="n">csrf_token</span><span class="p">:</span> <span class="n">form_authenticity_token</span><span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">sign_in_and_redirect</span><span class="p">(</span><span class="n">resource_or_scope</span><span class="p">,</span> <span class="n">resource</span><span class="o">=</span><span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">scope</span> <span class="o">=</span> <span class="ss">Devise</span><span class="p">:</span><span class="ss">:Mapping</span><span class="o">.</span><span class="n">find_scope!</span><span class="p">(</span><span class="n">resource_or_scope</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">resource</span> <span class="o">||=</span> <span class="n">resource_or_scope</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">warden</span><span class="o">.</span><span class="n">user</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span> <span class="o">!=</span> <span class="n">resource</span>
+</span><span class='line'>      <span class="n">sign_in</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="c1"># on sign-in, put the CSRF token in the JSON!</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="n">current_user</span><span class="o">.</span><span class="n">as_json</span><span class="o">.</span><span class="n">merge</span><span class="p">({</span><span class="n">csrf_token</span><span class="p">:</span> <span class="n">form_authenticity_token</span><span class="p">})</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">failure</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">render</span> <span class="ss">:json</span> <span class="o">=&gt;</span> <span class="p">{</span><span class="ss">:success</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">,</span> <span class="ss">:errors</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="s2">&quot;Login failed.&quot;</span><span class="o">]</span><span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, add a way for batman.js to update its <code>Batman.config.CSRF_TOKEN</code>. I put a function on my <code>SessionsController</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">SessionsController</span>
+</span><span class='line'>  <span class="nv">updateCSRFToken: </span><span class="nf">(token) -&gt;</span>
+</span><span class='line'>    <span class="nv">Batman.config.CSRF_TOKEN = </span><span class="nx">token</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&rsquo;s what I use in <code>signIn</code> and <code>signOut</code> above.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
@@ -3476,28 +3759,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Christian Life as a Lazy Enumerable]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable/"/>
-    <updated>2014-02-28T18:43:00-08:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable</id>
-    <content type="html"><![CDATA[<p>Living a day at a time sounds a bit like <a href="http://ruby-doc.org/core-2.0/Enumerable.html#method-i-lazy">lazy enumeration</a>.</p>
-
-<!-- more -->
-
-
-<p>Jesus said <a href="http://www.esvbible.org/Matthew%2B6%253A25-34/">not to worry about your life</a>:</p>
-
-<blockquote><p>&ldquo;Do not be anxious about tomorrow, for tomorrow will be anxious for itself.&rdquo;</p></blockquote>
-
-<p>It&rsquo;s a bit like the lazy enumeration pattern. Don&rsquo;t load all the items into memory, just load the one you need right now. Loading all the days of your life right away <a href="http://www.esvbible.org/Luke%2B12%253A13-21/">might not be worth it</a>:</p>
-
-<blockquote><p>&ldquo;The land of a rich man produced plentifully, and he thought to himself, &hellip;  &lsquo;Soul, you have ample goods laid up for many years; relax, eat, drink, be merry.&rsquo; But God said to him, &lsquo;Fool! This night your soul is required of you, and the things you have prepared, whose will they be?&rsquo;&rdquo;</p></blockquote>
-
-<p>To be sure, Jesus must have had <em>some</em> considerations for the future, if only to <a href="http://www.esvbible.org/Matthew%2B6%253A19-21/">&ldquo;store up treasures in heaven&rdquo;</a>.</p>
 ]]></content>
   </entry>
   
