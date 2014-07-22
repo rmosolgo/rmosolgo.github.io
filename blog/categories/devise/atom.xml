@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Devise | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/devise/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-21T19:54:15-07:00</updated>
+  <updated>2014-07-22T08:00:23-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -23,7 +23,7 @@
 <!-- more -->
 
 
-<p>It&rsquo;s also pretty cool-looking, because when you define <code>App.currentUser</code>, all your view bindings are instantly updated to reflect the user&rsquo;s signed-in status!</p>
+<p>It&rsquo;s also pretty cool-looking, because when you define <code>App.User.current</code>, all your view bindings are instantly updated to reflect the user&rsquo;s signed-in status!</p>
 
 <p>You just have to consider three things:</p>
 
@@ -131,7 +131,6 @@ class Funzies.SessionsController extends Funzies.ApplicationController
     record.unset('password')
     record.unset('password_confirmation')
     Funzies.User.set('current', record)
-    Funzies.Component.completelyReload()
     @closeDialog()
 </code></pre>
 

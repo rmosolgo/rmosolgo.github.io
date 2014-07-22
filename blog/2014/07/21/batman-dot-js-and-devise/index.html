@@ -9,7 +9,7 @@
   <meta name="author" content="Robert Mosolgo">
 
   
-  <meta name="description" content="Using batman.js with Devise is pretty straightforward. It&rsquo;s also pretty cool-looking, because when you define App.currentUser, all your view &hellip;">
+  <meta name="description" content="Using batman.js with Devise is pretty straightforward. It&rsquo;s also pretty cool-looking, because when you define App.User.current, all your view &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -105,7 +105,7 @@
 <!-- more -->
 
 
-<p>It&rsquo;s also pretty cool-looking, because when you define <code>App.currentUser</code>, all your view bindings are instantly updated to reflect the user&rsquo;s signed-in status!</p>
+<p>It&rsquo;s also pretty cool-looking, because when you define <code>App.User.current</code>, all your view bindings are instantly updated to reflect the user&rsquo;s signed-in status!</p>
 
 <p>You just have to consider three things:</p>
 
@@ -231,7 +231,6 @@
 <span class='line-number'>18</span>
 <span class='line-number'>19</span>
 <span class='line-number'>20</span>
-<span class='line-number'>21</span>
 </pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">signIn: </span><span class="nf">-&gt;</span>
 </span><span class='line'>    <span class="nv">url = </span><span class="k">if</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;signingUp&#39;</span><span class="p">)</span>
 </span><span class='line'>        <span class="s">&quot;/users.json&quot;</span>
@@ -251,7 +250,6 @@
 </span><span class='line'>        <span class="nx">record</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;password&#39;</span><span class="p">)</span>
 </span><span class='line'>        <span class="nx">record</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;password_confirmation&#39;</span><span class="p">)</span>
 </span><span class='line'>        <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;current&#39;</span><span class="p">,</span> <span class="nx">record</span><span class="p">)</span>
-</span><span class='line'>        <span class="nx">Funzies</span><span class="p">.</span><span class="nx">Component</span><span class="p">.</span><span class="nx">completelyReload</span><span class="p">()</span>
 </span><span class='line'>        <span class="nx">@closeDialog</span><span class="p">()</span>
 </span></code></pre></td></tr></table></div></figure>
 
