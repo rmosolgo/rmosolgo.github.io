@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-22T08:00:23-07:00</updated>
+  <updated>2014-07-22T21:33:22-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -143,7 +143,9 @@ class Funzies.SessionsController extends Funzies.ApplicationController
 <p>```coffeescript
   signOut: &ndash;></p>
 
-<pre><code>(new Funzies.User).destroy {url: "/users/sign_out.json"}, (err, record, env) =&gt;
+<pre><code>user = new Funzies.User
+user.url = "/users/sign_out.json"
+user.destroy (err, record, env) =&gt;
   if newToken = env?.data?.csrf_token
     @updateCSRFToken(newToken)
   Funzies.User.unset('current')

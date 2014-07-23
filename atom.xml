@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-22T08:00:23-07:00</updated>
+  <updated>2014-07-22T21:33:22-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -182,8 +182,12 @@
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
 </pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">signOut: </span><span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="p">(</span><span class="k">new</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">).</span><span class="nx">destroy</span> <span class="p">{</span><span class="nv">url: </span><span class="s">&quot;/users/sign_out.json&quot;</span><span class="p">},</span> <span class="nf">(err, record, env) =&gt;</span>
+</span><span class='line'>    <span class="nv">user = </span><span class="k">new</span> <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span>
+</span><span class='line'>    <span class="nv">user.url = </span><span class="s">&quot;/users/sign_out.json&quot;</span>
+</span><span class='line'>    <span class="nx">user</span><span class="p">.</span><span class="nx">destroy</span> <span class="nf">(err, record, env) =&gt;</span>
 </span><span class='line'>      <span class="k">if</span> <span class="nv">newToken = </span><span class="nx">env</span><span class="o">?</span><span class="p">.</span><span class="nx">data</span><span class="o">?</span><span class="p">.</span><span class="nx">csrf_token</span>
 </span><span class='line'>        <span class="nx">@updateCSRFToken</span><span class="p">(</span><span class="nx">newToken</span><span class="p">)</span>
 </span><span class='line'>      <span class="nx">Funzies</span><span class="p">.</span><span class="nx">User</span><span class="p">.</span><span class="nx">unset</span><span class="p">(</span><span class="s">&#39;current&#39;</span><span class="p">)</span>
