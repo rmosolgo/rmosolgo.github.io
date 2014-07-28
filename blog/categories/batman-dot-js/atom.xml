@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-22T21:33:57-07:00</updated>
+  <updated>2014-07-28T14:18:31-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,234 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Event Handlers in Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js/"/>
+    <updated>2014-07-28T13:23:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>In <a href="http://batmanjs.org">batman.js</a>, event handlers respond to user interactions like &ldquo;click&rdquo; and &ldquo;submit&rdquo;. You can use them to modify application state in response to those interactions.</p>
+
+<!-- more -->
+
+
+<p>Let&rsquo;s look at:</p>
+
+<ul>
+<li>What event handlers are and where they&rsquo;re defined</li>
+<li>How you can connect handlers to DOM events</li>
+<li>How you can pass arguments to event handlers</li>
+<li>What <code>@</code> refers to inside event handlers</li>
+</ul>
+
+
+<h2>What Are Event Handlers?</h2>
+
+<p>In short, an <em>event handler</em> can be <em>any function inside the render context</em>.</p>
+
+<p>Usually, this means it&rsquo;s a prototype function on a view:</p>
+
+<p><code>coffeescript
+class MyApp.ItemsIndexView extends Batman.View
+  myEventHandler: -&gt; # handle some event
+</code></p>
+
+<p>or, it&rsquo;s a prototype function on a controller:</p>
+
+<p><code>coffeescript
+class MyApp.ItemsController extends MyApp.ApplicationController
+  myEventHandler: -&gt; # handle some event
+</code></p>
+
+<p>Since the main <code>MyApp</code> is also inside the render context, you can also use class functions on the app as event handlers:</p>
+
+<p><code>coffeescript
+class window.MyApp extends Batman.App
+  @myEventHandler: -&gt; # handle some event
+</code></p>
+
+<p><strong>All</strong> of those functions are fair game to be wired up as event handlers.</p>
+
+<h2>Hooking up Event Handlers</h2>
+
+<p>To connect a function to a DOM event, use the <code>data-event</code> binding. You can bind to pretty much any event (I don&rsquo;t know of one that you <em>can&rsquo;t</em> bind to).</p>
+
+<p>The binding takes the form:</p>
+
+<p><code>coffeescript
+"data-bind-#{eventName}='#{handlerName}'"
+</code></p>
+
+<p>For example, to bind a <code>click</code> event to <code>myEventHandler</code> on this <code>&lt;button&gt;</code>:</p>
+
+<p><code>html
+&lt;button data-event-click='myEventHandler'&gt;Click Me&lt;/button&gt;
+</code></p>
+
+<p>You can also bind to the <code>submit</code> event of a <code>&lt;form&gt;</code>:</p>
+
+<p><code>html
+&lt;form data-event-submit='saveData'&gt;
+  &lt;input type='submit'&gt;Save&lt;/input&gt;
+&lt;/form&gt;
+</code></p>
+
+<h2>Arguments in Event Handlers</h2>
+
+<p>Event handlers have two sets of arguments:</p>
+
+<ul>
+<li>arguments that you pass in via <code>withArguments</code> filters</li>
+<li>arguments that are automatically passed in by batman.js</li>
+</ul>
+
+
+<h3>Custom Arguments with &ldquo;withArguments&rdquo;</h3>
+
+<p>You can choose some values to pass in with a <code>withArguments</code> filter in your binding.</p>
+
+<p>Consider this event handler:</p>
+
+<p>```coffeescript
+class MyApp.ItemsController extends MyApp.ApplicationContorller
+  alertItemName: (item) &ndash;></p>
+
+<pre><code>itemName = item.get('name')
+alert(itemName)
+</code></pre>
+
+<p>```</p>
+
+<p>I could call this with an <code>item</code> by using a <code>withArguments</code> filter:</p>
+
+<p>```html</p>
+
+<h1 data-bind='item.name'></h1>
+
+
+<p><button data-event-click='alertItemName | withArguments item'>Alert!</button>
+```</p>
+
+<p>You can pass multiple arguments with <code>withArgument</code> by separating them with commas.</p>
+
+<p>For example, if I want more flexible alerts, I could redefine the event handler to take <em>two</em> arguments:</p>
+
+<p>```coffeescript
+class MyApp.ItemsController extends MyApp.ApplicationContorller
+  alertItemName: (item, punctuation) &ndash;></p>
+
+<pre><code>itemName = item.get('name')
+alert(itemName + punctuation)
+</code></pre>
+
+<p>```</p>
+
+<p>Then, pass <em>two</em> arguments into it, separated with <code>,</code>:</p>
+
+<p>```html</p>
+
+<h1 data-bind='item.name'></h1>
+
+
+<p><button data-event-click='alertItemName | withArguments item, "!" '>Alert!</button>
+<button data-event-click='alertItemName | withArguments item, "?" '>Alert?</button>
+<button data-event-click='alertItemName | withArguments item, "." '>Alert.</button>
+```</p>
+
+<p><strong>Note</strong> that you <strong>must</strong> provide both arguments to the handler. If you don&rsquo;t, batman.js&rsquo;s automatic arguments will take the place of the missing argument!</p>
+
+<h3>Automatic Arguments</h3>
+
+<p>When batman.js invokes an event handler, it <strong>automatically passes in</strong> a few arguments. Here&rsquo;s a handler that uses the automatic arguments:</p>
+
+<p><code>coffeescript
+class MyApp.ItemsController extends MyApp.ApplicationContorller
+  myEventHandler: (node, event, view) -&gt;
+</code></p>
+
+<p>It&rsquo;s invoked with:</p>
+
+<ul>
+<li><code>node</code>: the DOM node where the event was triggered. For example, a <code>&lt;button&gt;</code>. If you use the same event handler on different nodes, this value will be different.</li>
+<li><code>event</code>: The event object for the event.  If you&rsquo;re using <code>batman.jquery</code>, it&rsquo;s the jQuery event object. It contains meta-information about the event.</li>
+<li><code>view</code>: The nearest <code>Batman.View</code> instance to <code>node</code>.</li>
+</ul>
+
+
+<h3>Combining Custom and Automatic Arguments</h3>
+
+<p>You can combine custom and automatic arguments. Simply define a handler whose <strong>last three</strong> arguments are the batman.js automatic arguments:</p>
+
+<p>```coffeescript
+class MyApp.ItemsController extends MyApp.ApplicationContorller
+  alertItemName: (item, punctuation, node, event, view) &ndash;></p>
+
+<pre><code>itemName = item.get('name')
+alert(itemName + punctuation)
+</code></pre>
+
+<p>```</p>
+
+<p>And use <code>withArguments</code> to pass arguments to the function. You <strong>must</strong> pass the <strong>same number</strong> of arguments. For example:</p>
+
+<p>```html</p>
+
+<h1 data-bind='item.name'></h1>
+
+
+<p><button data-event-click='alertItemName | withArguments item, "!"'>Alert!</button></p>
+
+<!-- note the empty string, "" -->
+
+
+<p><button data-event-click='alertItemName | withArguments item, ""'>Alert</button>
+```</p>
+
+<p>When batman.js passes arguments to the function, it simply merges the <code>withArguments</code> array with its automatic array. So, if your <code>withArguments</code> array is too short, you won&rsquo;t get the same results.</p>
+
+<h2><code>@</code> in Event Handlers</h2>
+
+<p>When batman.js dispatches an event handler, it looks up the base object <em>where that handler is defined</em>. Then, it uses that object as <code>@</code> inside the handler.</p>
+
+<p>For example, consider two event handlers. One is defined on a view:</p>
+
+<p>```coffeescript
+class MyApp.ItemsIndexView extends Batman.View
+  eventHandlerOne: &ndash;></p>
+
+<pre><code>console.log(@) # =&gt; will be the ItemsIndexView instance
+</code></pre>
+
+<p>```</p>
+
+<p>The other is defined on a controller:</p>
+
+<p>```coffeescript
+class MyApp.ItemsController extends App.ApplicationController
+  eventHandlerTwo: &ndash;></p>
+
+<pre><code>console.log(@) # =&gt; will be the ItemsController instance
+</code></pre>
+
+<p>```</p>
+
+<p>If you were to hook up those event handlers to buttons:</p>
+
+<p><code>html
+&lt;button data-event-click='eventHandlerOne'&gt;&lt;/button&gt;
+&lt;button data-event-click='eventHandlerTwo'&gt;&lt;/button&gt;
+</code></p>
+
+<p>then click the buttons, you would see the <code>ItemsIndexView</code> object and the <code>ItemsController</code> object in your console:</p>
+
+<p><code>javascript
+ItemsIndexView {bindings: Array[7], subviews: Set, _batman: _Batman, viewClass: function, source: "events/index"…}
+ItemsController {redirect: function, handleError: function, errorHandler: function, _batman: _Batman, _actionFrames: Array[0]…}
+</code></p>
+
+<p>Since batman.js looks up the base object, event handlers behave just like normal functions in the place you define them.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Batman.js and Devise]]></title>
@@ -1419,64 +1647,6 @@ comment.save (err, record) =&gt;
 <li>leave a comment here or open an issue on the <a href="http://github.com/batmanjs/batman">github repo</a></li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
-    <updated>2014-06-05T07:26:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
-    <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
-
-<!-- more -->
-
-
-<p><strong>The goal</strong> is to have a user add an image to a file input and <em>immediately</em> preview that image. To accomplish this, we&rsquo;ll turn the uploaded file into a data URI, then set that to the <code>src</code> of our <code>&lt;img/&gt;</code>.</p>
-
-<p>First, set up the observer in the model:</p>
-
-<p>```coffeescript
-class App.ModelWithImage extends Batman.Model
-  @encode &lsquo;imageDataURI&rsquo;</p>
-
-<p>  constructor: &ndash;></p>
-
-<pre><code>super
-@observe 'imageFile', (newVal, oldVal) -&gt;
-  if newVal?
-    @_setImageDataURIFromFile()
-  else
-    @set 'imageDataURI', ""
-</code></pre>
-
-<p>```</p>
-
-<p>This says: &ldquo;whenever <code>imageFile</code> changes, if there is a new value, use it to set the data URI, otherwise, set the data URI to <code>""</code>.&rdquo;</p>
-
-<p>Now, implement <code>_setImageDataURIFromFile</code>:</p>
-
-<p>```coffeescript
-  _setImageDataURIFromFile: &ndash;></p>
-
-<pre><code>file = @get('imageFile')
-reader = new FileReader
-reader.onload = (e) =&gt;
-  dataURI = e.target.result
-  @set 'imageDataURI', dataURI
-reader.readAsDataURL(file)
-</code></pre>
-
-<p>```</p>
-
-<p>You can use it in a template like this:</p>
-
-<p><code>html
-  &lt;img data-bind-src='component.imageDataURI' /&gt;
-  &lt;input type='file' data-bind='component.imageFile' /&gt;
-</code></p>
-
-<p>When a user uploads a file, the <code>&lt;img&gt;</code> will be automatically updated!</p>
 ]]></content>
   </entry>
   
