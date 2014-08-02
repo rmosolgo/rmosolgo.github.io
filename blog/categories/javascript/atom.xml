@@ -4,7 +4,7 @@
   <title><![CDATA[Category: JavaScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-28T14:18:31-07:00</updated>
+  <updated>2014-08-02T14:41:33-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,238 +12,6 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
-  
-  <entry>
-    <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js/"/>
-    <updated>2014-07-19T09:15:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><code>Model::transaction</code> provides a deep-copied, &ldquo;shadow-realm&rdquo; version of a record which is great for rendering into edit forms. Any changes made to it can be saved (which updates the original record too), or just forgotten.</p>
-
-<!-- more -->
-
-
-<p>Here&rsquo;s the problem transactions exist to solve:</p>
-
-<ul>
-<li>You want your user to edit something</li>
-<li>You render a record into an edit form</li>
-<li>User edits the form</li>
-<li>User clicks back button</li>
-<li>User is surprised to see that the record&rsquo;s changes were &ldquo;saved&rdquo; (In fact, only the in-memory record was changed &mdash; the change wasn&rsquo;t sent to the server)</li>
-</ul>
-
-
-<p><code>Model::transaction</code> solves this problem by returning a <em>deep copy</em> of the record at hand which can be:</p>
-
-<ul>
-<li><strong>saved</strong>, just like a normal record, in which case changes are applied to the original</li>
-<li><strong>forgotten</strong>, by simply navigating away</li>
-<li><strong>applied</strong>, which applies changes to the original, but doesn&rsquo;t update the server.</li>
-</ul>
-
-
-<p><em>The name &ldquo;transaction&rdquo; hearkens back to database transactions where changes aren&rsquo;t applied unless they&rsquo;re all successful. In the same way, changes to a <code>Batman.Transaction</code> aren&rsquo;t applied unless you explicitly <code>save</code> or <code>applyChanges</code>.</em></p>
-
-<h2>Setting up a Transaction</h2>
-
-<p>To set up a transaction, call <code>transaction</code> on the record at hand:</p>
-
-<p>```coffeescript
-class MyApp.RaceHorsesController extends MyApp.ApplicationController
-  edit: (params) &ndash;></p>
-
-<pre><code>MyApp.RaceHorse.find params.id, (err, record) -&gt;
-  deepCopy = record.transaction()
-  @set 'raceHorse', deepCopy
-</code></pre>
-
-<p>```</p>
-
-<h2>Transaction&rsquo;s Deep Copy</h2>
-
-<p>A transaction is actually an instance of the original model. It differs in 2 ways:</p>
-
-<ul>
-<li>It isn&rsquo;t added to the <code>loaded</code> set (aka &ldquo;the memory map&rdquo;)</li>
-<li>It has <code>Batman.Transaction</code> mixed in, which defines some new functions and overrides <code>Model::save</code></li>
-</ul>
-
-
-<p><code>Model::transaction</code> peforms a deep copy of a <code>Batman.Model</code> by
- iterating over the model&rsquo;s <code>attributes</code> hash. The <code>attributes</code> hash is where encoded properties are stored (and other properties, unless you define an accessor that says otherwise).</p>
-
-<p>Batman.js copies the attributes hash into the transaction by handling each value:</p>
-
-<ul>
-<li>If the value is a <code>Batman.Model</code>, it&rsquo;s also copied with <code>Model::transaction</code></li>
-<li>If the value is a <code>Batman.AssociationSet</code>, it&rsquo;s cloned into a <code>Batman.TransactionAssociationSet</code> and its members are copied with <code>Model::transaction</code></li>
-<li>Otherwise, the value is set into the transaction&rsquo;s attributes.</li>
-</ul>
-
-
-<p>Under the hood, batman.js tracks which objects it has already cloned. That way, it doesn&rsquo;t get thrown into an infinite loop.</p>
-
-<p>If a mutable object is copied from the original to the transaction, batman.js issues a warning. This is because it can&rsquo;t isolate changes. The transaction and the original are both refering to the <em>same object</em>, so changes to one will also affect the other. Mutable objects include:</p>
-
-<ul>
-<li>Dates (although mutating dates is such a pain in JS, I doubt this will cause a problem)</li>
-<li>Arrays</li>
-<li>Batman.Set, Batman.Hash, etc</li>
-<li>any JavaScript object</li>
-</ul>
-
-
-<h2>Saving a Transaction</h2>
-
-<p>To save a transaction, call <code>save</code> on it. This will:</p>
-
-<ul>
-<li>validate the transaction (with client-side validations)</li>
-<li>apply changes to the original model</li>
-<li>save the transaction (ie, the storage operation will be performed with the transaction, not the original)</li>
-<li>pass the original to the <code>save</code> callback</li>
-</ul>
-
-
-<p>This means a transaction behaves just like a normal model. You can save it like this:</p>
-
-<p>```coffeescript
-  saveRaceHorse: (raceHorse) &ndash;></p>
-
-<pre><code>raceHorse.isTransaction # =&gt; true, just checking
-raceHorse.save (err, record) -&gt;
-  if !err 
-    Batman.redirect("/race_horses")
-</code></pre>
-
-<p>```</p>
-
-<p><strong>Note:</strong> at time of writing, transaction <strong>does not account for server-side validations</strong>. There is an open issue for this <a href="https://github.com/batmanjs/batman/issues/1049">on github</a>.</p>
-
-<h2>Forgetting a Transaction</h2>
-
-<p>If you don&rsquo;t want changes on transaction to be applied, just leave it alone.</p>
-
-<ul>
-<li>It&rsquo;s not in the <code>loaded</code> set, so it won&rsquo;t intefere with your app&rsquo;s other data.</li>
-<li>The original record has no references to it.</li>
-<li>It&rsquo;s still set on your controller (probably), but it will get overrided next time your user edits something.</li>
-</ul>
-
-
-<p>Once it&rsquo;s released from the controller, it will probably just be garbage-collected when the browser gets a chance.</p>
-
-<h2>Applying Changes without Saving</h2>
-
-<p>Transactions have an <code>applyChanges</code> function that updates the original record without performing any storage operations.</p>
-
-<p><code>coffeescript
-transaction.applyChanges()
-</code></p>
-
-<p>You might use this if your save operation is really complicated and you need to control it by hand.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Batman.js Accessors as Methods]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods/"/>
-    <updated>2014-06-27T08:10:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/06/27/batman-dot-js-accessors-as-methods</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a CoffeeScript front-end MVC framework. One of its core features is <em>accessors</em>, which can be used like properties or methods of a <code>Batman.Object</code>. They can even take arguments!</p>
-
-<!-- more -->
-
-
-<p><code>Batman.Object</code> has properties defined with <code>@accessor</code> in the class definition. Examples of <code>@accessor</code> as accessible properties and computed properties are bountiful. However, I recently learned that accessors can also be made to take arguments, too!</p>
-
-<p><em>(You can see this example live on at <a href="http://jsbin.com/dalodifo/3/edit">http://jsbin.com/dalodifo/3/edit</a> .)</em></p>
-
-<h2>Definining Accessors with Arguments</h2>
-
-<p>To make an accessor that takes arguments, use <code>Batman.TerminalAccessible</code>. Let&rsquo;s say I have a <code>MathObject</code> which stores a <code>value</code> and allows you to perform calculations on it:</p>
-
-<p>```coffeescript
-class MathObject extends Batman.Object
-  @accessor &lsquo;value&rsquo;</p>
-
-<p>  @accessor &lsquo;times&rsquo;, &ndash;></p>
-
-<pre><code>new Batman.TerminalAccessible (multiplier) =&gt;
-  @get('value') * multiplier
-</code></pre>
-
-<p>```</p>
-
-<p>Now, my <code>times</code> accessor takes an argument (<code>multiplier</code>) and returns the multiplied value. I pass the argument with <code>get</code>, like this:</p>
-
-<p><code>coffeescript
-fiveObject = new MathObject(value: 5)
-fiveObject.get('time').get(10) # =&gt; 50
-fiveObject.get('time').get(3)  # =&gt; 15
-</code></p>
-
-<p>Under the hood, <code>fiveObject.get('time')</code> returns a <code>Batman.TerminalAccessible</code>. This object provides <a href="/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a> for the function that it calls.</p>
-
-<h2>Objects as Arguments</h2>
-
-<p>You can also have <code>Batman.Objects</code> as arguments. For example, if we wanted to multiply two <code>MathObject</code>s:</p>
-
-<p>```coffeescript
-class MathObject extends Batman.Object
-  @accessor &lsquo;value&rsquo;</p>
-
-<p>  @accessor &lsquo;timesMathObject&rsquo;, &ndash;></p>
-
-<pre><code>new Batman.TerminalAccessible (mathObj) =&gt;
-  @get('times').get(mathObj.get('value'))
-</code></pre>
-
-<p>```</p>
-
-<p>Now, the other <code>mathObj</code> will be included in the source tracking. If <code>mathObj.value</code> changes, the value will be recalculated.  This is <strong>essential</strong> for values computed from two <code>Batman.Object</code>s!</p>
-
-<h2>What&rsquo;s the point?</h2>
-
-<p>This allows <strong>observable</strong> &ldquo;method calls&rdquo;. It&rsquo;s wrapped in batman.js <a href="/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">source tracking</a>, so whenever the object or the arguments change, the value will be recalculated.</p>
-
-<p>For example, I use it for checking whether a room is at maximum occupancy for certain events:</p>
-
-<p><code>coffeescript
-location.get('isFullFor').get(earlyEvent) # =&gt; false
-location.get('isFullFor').get(lateEvent)  # =&gt; true
-</code></p>
-
-<p>When people attend the event (or the location max occupancy is changed), these values are automatically recalculated!</p>
-
-<p>This is the same approach used in batman.js internals for accessing SetIndexes (<a href="https://github.com/batmanjs/batman/blob/master/src/set/set.coffee#L19">source</a>).</p>
-
-<h2>Accessor Arguments in View Bindings</h2>
-
-<p>To pass arguments to accessors in view bindings, you can use the <code>[...]</code> or <code>withArguments</code> filters. Let&rsquo;s say I want to put this operation in a view binding:</p>
-
-<p><code>coffeescript
-location.get('isFullFor').get(earlyEvent)
-</code></p>
-
-<p><code>[...]</code> is shorthand for calling <code>get</code> with the given argument. I can use it like this:</p>
-
-<p><code>html
-&lt;span data-bind='location.isFullFor[earlyEvent]'&gt;&lt;/span&gt;
-</code></p>
-
-<p><code>earlyEvent</code> will be looked up in context and the value will be passed to <code>get</code>, as in the CoffeeScript above.</p>
-
-<p>You can also use the <code>withArguments</code> filter (as of 0.16, <a href="https://github.com/batmanjs/batman/pull/923">PR</a>) like this:</p>
-
-<p><code>html
-&lt;span data-bind='location.isFullFor | withArguments earlyEvent'&gt;&lt;/span&gt;
-</code></p>
-
-<p><code>withArguments</code> recognizes that it should use <code>get</code> in this case.</p>
-]]></content>
-  </entry>
   
   <entry>
     <title type="html"><![CDATA[Build a Blog with Batman.js]]></title>
@@ -1260,78 +1028,199 @@ reader.readAsDataURL(file)
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Has Many Through in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js/"/>
-    <updated>2014-05-30T15:27:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> doesn&rsquo;t support <code>hasManyThrough</code> out of the box, but it can be implemented fairly easily with <code>Set::mappedTo</code>.</p>
+    <title type="html"><![CDATA[Using Gulp.js to build Batman.js apps without Rails]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails/"/>
+    <updated>2014-03-22T10:39:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails</id>
+    <content type="html"><![CDATA[<p>If the <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> isn&rsquo;t an option, <a href="http://gulpjs.com">gulp.js</a> is a good candidate for compiling batman.js apps for production.</p>
 
 <!-- more -->
 
 
-<p><em>This feature was just merged into the master branch &mdash; download the latest batman.js <a href="http://batmanjs.org/download.html">here</a>.</em></p>
+<p>To prepare your app for production, you need to:</p>
 
-<h1>What&rsquo;s a &ldquo;Has-Many-Through&rdquo; Association?</h1>
+<ul>
+<li>compile your CoffeeScript files into a JavaScript file</li>
+<li>preload your HTML into <code>Batman.View.store</code>.</li>
+</ul>
 
-<p>It&rsquo;s best shown by example. To join <code>Household</code> to <code>Person</code>, you might have a &ldquo;join model&rdquo;, <code>HouseholdMembership</code>. The associations look like this:</p>
+
+<p>These can both be accomplished with gulp.js tasks.</p>
+
+<h2>Setup</h2>
+
+<p>Let&rsquo;s assume your batman.js project has the folder structure:</p>
+
+<p><code>
+my_app/
+├── batman/
+|   ├── my_app.coffee
+|   ├── models/
+|   |   └── my_model.coffee
+|   ├── controllers/
+|   |   └── my_models_controller.cofee
+|   ├── views/
+|   |   └── my_models/
+|   |       └── my_models_show_view.coffee
+|   └── html/
+|       └── my_models/
+|           ├── show.jade
+|           └── index.jade
+├── javascripts/
+|   └── batman.js
+└── Gulpfile.js
+</code></p>
+
+<p>Notice that the <code>html</code> folder actually contains <code>.jade</code> files. We&rsquo;ll use gulp.js to compile those, but you can skip that step if you&rsquo;re using plain HTML.</p>
+
+<p><strong>Install gulp</strong> with <code>npm install -g gulp</code>. All gulp plugins required below must also be installed &ldquo;by hand&rdquo; with <code>npm install &lt;gulp-plugin&gt;</code></p>
+
+<h2>Compiling your application code</h2>
+
+<p>Here&rsquo;s a gulp.js task that takes the <code>batman/</code> directory above and compiles it to one Javascript file, <code>javascripts/application.js</code>:</p>
+
+<p>```javascript Gulpfile.js
+var gulp = require(&lsquo;gulp&rsquo;);
+var coffee = require(&lsquo;gulp-coffee&rsquo;);
+var concat = require(&lsquo;gulp-concat&rsquo;);</p>
+
+<p>// include top-level .coffee files (<code>my_app.coffee</code>) first:
+var appSources = [&ldquo;./batman/<em>.coffee&rdquo;, &ldquo;./batman/</em>/*.coffee&rdquo;]</p>
+
+<p>gulp.task(&ldquo;build&rdquo;, function(){
+  gulp.src(appSources)</p>
+
+<pre><code>.pipe(concat("application.coffee")) // so CoffeeScript will compile all together
+.pipe(coffee())
+.pipe(concat("application.js"))
+.pipe(gulp.dest("./javascripts/"))
+</code></pre>
+
+<p>})
+```</p>
+
+<p>Now, you can run:</p>
+
+<p><code>
+gulp build
+</code></p>
+
+<h2>Preloading your templates</h2>
+
+<p>Batman.js&rsquo;s fetch-html-as-needed approach is great for develoment, but not for production. Here&rsquo;s a task that will load files from the <code>html/</code> directory, convert them from jade to HTML, then inline them as JavaScript code that preloads the app with the HTML it needs.</p>
+
+<p>```javascript Gulpfile.js
+var gulp = require(&lsquo;gulp&rsquo;);
+var concat = require(&lsquo;gulp-concat&rsquo;);
+var jade = require(&lsquo;gulp-jade&rsquo;);
+var batmanTemplates = require(&ldquo;gulp-batman-templates&rdquo;)</p>
+
+<p>gulp.task(&ldquo;html&rdquo;, function(){
+  gulp.src([&ldquo;./batman/html/<em>*/</em>.jade&rdquo;])</p>
+
+<pre><code>.pipe(jade())
+.pipe(batmanTemplates())
+.pipe(concat('templates.js'))
+.pipe(gulp.dest("./javascripts/"))
+</code></pre>
+
+<p>})
+```</p>
+
+<h2>Finishing Up</h2>
+
+<p>Let&rsquo;s join the to javascript files together:</p>
+
+<p>```javascript Gulpfile.js
+gulp.task(&ldquo;finalize&rdquo;, function() {
+  gulp.src([&ldquo;./javascripts/application.js&rdquo;, &ldquo;./javascripts/templates.js&rdquo;])</p>
+
+<pre><code>.pipe(concat("application.js"))
+.pipe(gulp.dest("./javascripts/"))
+</code></pre>
+
+<p>});
+```</p>
+
+<p>And make our <code>default</code> gulp task to watch the project and build whenever it changes:</p>
+
+<p><code>javascript Gulpfile.js
+gulp.task('default', function(){
+  gulp.watch('./batman/**/*', ["build", "html", "finalize"])
+});
+</code></p>
+
+<p>So now, all we need to do is:</p>
+
+<p><code>
+gulp
+</code></p>
+
+<p>And in the layout:</p>
+
+<p><code>html
+  &lt;script src='http://rmosolgo.github.io/javascripts/batman.js'&gt;&lt;/script&gt;
+  &lt;script src='http://rmosolgo.github.io/javascripts/application.js'&gt;&lt;/script&gt;
+</code></p>
+
+<p>Voila! Your app is compiled and HTML will be preloaded!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Load Batman.js Models from Specific Urls]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/"/>
+    <updated>2013-10-28T10:19:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/">Batman.js</a>&rsquo;s  <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee">REST Storage Adapter</a> provides a clean interface for operating on records with vanilla REST urls &mdash; but what about when you need a lil' something more?</p>
+
+<!-- more -->
+
+
+<p>First of all, the magic happens in <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L90">Batman.RestStorage#UrlForRecord</a>. For an already-persisted record, you have a few options:</p>
+
+<h2>pass <code>recordUrl</code> to loadWithOptions/findWithOptions</h2>
+
+<p><strong>findWithOptions</strong> or <strong>loadWithOptions</strong>&rsquo;s <code>options</code> can take a <code>recordUrl</code> param, which is used to retrieve the record. Use <code>findWithOptions</code> to load a new record:</p>
 
 <p>```coffeescript
-class Household extends Batman.Model
-  @hasMany &lsquo;householdMemberships&rsquo;</p>
+  model_id = 1 # you might get this from the request path or from another model&rsquo;s attributes
+  model_url = &ldquo;/some_models/#{model_id}?language=fr&rdquo;
+  MyApp.SomeModel.findWithOptions model_id, {recordUrl: model_url}, (err, model) &ndash;></p>
 
-<p>class HouseholdMembership extends Batman.Model
-  @belongsTo &lsquo;household&rsquo;
-  @belongsTo &lsquo;person&rsquo;</p>
-
-<p>class Person extends Batman.Model
-  @hasMany &lsquo;householdMemberships&rsquo;
-```</p>
-
-<p>Household <code>hasMany</code> memberships, each membership <code>belongsTo</code> a person.</p>
-
-<p>```</p>
-
-<pre><code>           __ HouseholdMembership ─── Person
-         ╱
-</code></pre>
-
-<p>Household ─── HouseholdMembership ─── Person</p>
-
-<pre><code>         ╲
-           ╲_ HouseholdMembership ─── Person
+<pre><code># your model was loaded with the param language=fr!
 </code></pre>
 
 <p>```</p>
 
-<p>Household has many people <em>through</em> household memberships.</p>
+<p>or use <code>loadWithOptions</code> to reload an existing record:</p>
 
-<h1>Has-Many-Through in Batman.js</h1>
+<p>```coffeescript
+  # using model from above&hellip;
+  model_url = &ldquo;/some_models/#{model.get(&lsquo;id&rsquo;)}?language=es&rdquo;
+  model.loadWithOptions {recordUrl: model_url}, (err, model) &ndash;></p>
 
-<p>Although <code>hasManyThrough</code> isn&rsquo;t part of batman.js, you can implement a <strong>read-only</strong> has-many-through using <a href="http://batmanjs.org/docs/api/batman.set.html#prototype_function_mappedto"><code>Set::mappedTo</code></a>. Given classes as defined above, you could add an accessor for <code>Household::people</code>:</p>
-
-<p>```coffeescript</p>
-
-<h1>class Household</h1>
-
-<p>  @accessor &lsquo;people&rsquo;, &ndash;> @get(&lsquo;householdMemberships&rsquo;).mappedTo(&lsquo;person&rsquo;)
-```</p>
-
-<p>This returns a <code>Batman.Set</code> (actually a <code>Batman.SetMapping</code>) containing unique <code>Person</code>s belonging to those <code>householdMemberships</code>. As batman.js does, items added and removed are <a href="rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a>, so this is safe to use everywhere.</p>
-
-<p>As for <strong>adding items</strong>, you could do it this way:</p>
-
-<p>```coffeescript</p>
-
-<h1>class Household</h1>
-
-<p>  addPerson: (person) &ndash;></p>
-
-<pre><code>@get('householdMemberships').build({person})
+<pre><code># your model was loaded with the param language=es!
 </code></pre>
 
 <p>```</p>
 
-<p>Again, the <code>Batman.SetMapping</code> will take care of keeping everything in sync!</p>
+<h2>Set <code>record.url</code></h2>
+
+<p>If you&rsquo;re reloading an already-loaded model, you can set its (POJO) <code>url</code> attribute to the URL you want to use:</p>
+
+<p>```coffeescript
+  model.url = &ldquo;/#{model.constructor.storageKey}/#{model.get(&lsquo;id&rsquo;)}?language=zh&rdquo;
+  model.load (err, model) &ndash;></p>
+
+<pre><code># your model was loaded with the param language=zh!
+</code></pre>
+
+<p>```</p>
+
+<h2>For a New Records or Collections?</h2>
+
+<p>I&rsquo;m not sure yet. Check out <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L109">Batman.RestStorage#UrlForCollection</a>!</p>
 ]]></content>
   </entry>
   

@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-07-28T14:18:31-07:00</updated>
+  <updated>2014-08-02T14:41:33-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,276 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/"/>
+    <updated>2014-08-02T09:38:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a front-end MVC framework with an unrivaled implementation of key-value observing. I will explore computed properties in batman.js by contrasting them with Ember.js&rsquo;s computed properties.</p>
+
+<!-- more -->
+
+
+<p>First, disclaimers!</p>
+
+<ul>
+<li>I didn&rsquo;t write any of the <code>Batman.Property</code> code that makes this feature possible. I&rsquo;m only a fanboy!</li>
+<li>I don&rsquo;t know Ember.js. I&rsquo;ve just gathered examples from the <a href="http://emberjs.com/guides">Ember Guides</a>.</li>
+</ul>
+
+
+<p>To explore computed properties, let&rsquo;s take the <strong>canonical <code>fullName</code> example</strong>. It:</p>
+
+<ul>
+<li>depends on two other properties, <code>firstName</code> and <code>lastName</code></li>
+<li>returns a string that joins <code>firstName</code> and <code>lastName</code> with a space</li>
+<li>can be set</li>
+<li>sets <code>firstName</code> and <code>lastName</code> by splitting on whitespace</li>
+</ul>
+
+
+<p>We&rsquo;ll also explore an <strong>aggregrated <code>roster</code> property</strong> which:</p>
+
+<ul>
+<li>depends on <code>fullName</code> for each person</li>
+<li>joins <code>fullName</code> with <code>,</code></li>
+</ul>
+
+
+<h2>fullName in Ember.js</h2>
+
+<p>(This is yanked wholesale from the <a href="http://emberjs.com/guides/object-model/computed-properties/">Computed Properties Guide</a>.)</p>
+
+<p>A couple of things to notice:</p>
+
+<ul>
+<li><code>fullName</code> is defined as <em>one function</em> which handles <code>get</code> and <code>set</code> operations.</li>
+<li><code>fullName</code> must be told what properties it depends on.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Person</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">firstName</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="c1">// These aren&#39;t necessary, they&#39;re</span>
+</span><span class='line'>  <span class="nx">lastName</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>  <span class="c1">// just for clarity.</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">fullName</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">previousValue</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// setter</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">nameParts</span> <span class="o">=</span> <span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\s+/</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">,</span>  <span class="nx">nameParts</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// getter, also the return value is cached</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">,</span> <span class="s1">&#39;lastName&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Usage is pretty standard: use <code>get</code> and <code>set</code> to access properties.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">captainAmerica</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">();</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;fullName&#39;</span><span class="p">,</span> <span class="s2">&quot;William Burnside&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">);</span> <span class="c1">// William</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">);</span>  <span class="c1">// Burnside</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>fullName in Batman.js</h2>
+
+<p>Two things to notice:</p>
+
+<ul>
+<li><code>get</code> and <code>set</code> operations are defined <em>separately</em>.</li>
+<li><code>fullName</code> doesn&rsquo;t have to be told what its dependencies are.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;firstName&#39;</span> <span class="c1"># not necessary,</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;lastName&#39;</span>  <span class="c1"># just here for clarity</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;fullName&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nv">get: </span><span class="nf">(key) -&gt;</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s"> </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
+</span><span class='line'>    <span class="nv">set: </span><span class="nf">(key, value) -&gt;</span>
+</span><span class='line'>      <span class="nv">nameParts = </span><span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\s+/</span><span class="p">)</span>
+</span><span class='line'>      <span class="nx">@set</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class='line'>      <span class="nx">@set</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class='line'>      <span class="k">return</span> <span class="nx">value</span> <span class="c1"># should return newly-set value, although the `get` function will be used for caching.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The usage is almost identical:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">captainAmerica = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">,</span> <span class="s">&#39;William Burnside&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span> <span class="c1"># William</span>
+</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span>  <span class="c1"># Burnside</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>roster in Ember.js</h2>
+
+<p>(This was adapted from the <a href="http://emberjs.com/guides/object-model/computed-properties-and-aggregate-data/">Computed Properties and Aggregate Data Guide</a>.)</p>
+
+<p>Some things stood out to me:</p>
+
+<ul>
+<li><code>roster</code>&rsquo;s properties are declared with a DSL. Array dependencies are limited to one layer deep (ie, you can&rsquo;t use <code>@each</code> twice).</li>
+<li><code>mapBy</code> is provided by <code>Ember.Enumerable</code> to handle arrays of objects. Nice!</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">PeopleController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">Controller</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">people</span><span class="o">:</span> <span class="p">[</span>
+</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">firstName</span><span class="o">:</span> <span class="s2">&quot;Tom&quot;</span><span class="p">,</span> <span class="nx">lastName</span><span class="o">:</span> <span class="s2">&quot;Dale&quot;</span><span class="p">}),</span>
+</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">firstName</span><span class="o">:</span> <span class="s2">&quot;Yehuda&quot;</span><span class="p">,</span> <span class="nx">lastName</span><span class="o">:</span> <span class="s2">&quot;Katz&quot;</span><span class="p">})</span>
+</span><span class='line'>  <span class="p">],</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">roster</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">people</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;people&#39;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">people</span><span class="p">.</span><span class="nx">mapBy</span><span class="p">(</span><span class="s1">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s1">&#39;people.@each.fullName&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>roster in Batman.js</h2>
+
+<p>Here&rsquo;s the analogous construction in batman.js:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">PeopleController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;people&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span><span class="p">([</span> <span class="c1"># this is future-code: constructor will take an array in v0.17.0</span>
+</span><span class='line'>      <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Tom&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Dale&quot;</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Yehuda&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Katz&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">])</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;roster&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;people&#39;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One thing is the same:</p>
+
+<ul>
+<li><code>mapToProperty</code> works like <code>mapBy</code></li>
+</ul>
+
+
+<p>You might notice two big differences:</p>
+
+<ul>
+<li><code>people</code> is a <code>Batman.Set</code> instead of a native Array.</li>
+<li><code>roster</code> didn&rsquo;t have to be told what its dependencies are</li>
+</ul>
+
+
+<p>By using batman.js data structures inside <code>@accessor</code> functions, we benefit from batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a>. It looks like automatic source tracking was considered by the Ember core team, but deemed <a href="https://github.com/emberjs/ember.js/issues/269#issuecomment-3178319">impossible</a> or <a href="https://github.com/emberjs/ember.js/issues/386#issuecomment-3523589">prohibitively expensive</a>.</p>
+
+<p>I recently saw a quote in a <a href="https://www.youtube.com/watch?v=-DX3vJiqxm4">React.js talk</a>:</p>
+
+<blockquote><p>Intellectuals solve probelms. Geniuses prevent them. &ndash; Albert Einstein</p></blockquote>
+
+<p>I think that&rsquo;s just what the Shopify team did when they implemented <code>Batman.Observable</code>! The API is very simple and it Just Works<sup>TM</sup>.</p>
+
+<h2>My Opinion</h2>
+
+<p><strong>Pros of batman.js:</strong></p>
+
+<ul>
+<li>Elegant <code>@accessor</code> API for getters and setters: define <code>get</code> and <code>set</code> separately instead of testing for arguments.</li>
+<li>Automatic dependency tracking: batman.js knows what objects &amp; properties were accessed during computation and observes accordingly.</li>
+<li>There&rsquo;s no limit to the depth of enumerable dependencies. Any property of a <code>Batman.Object</code> that&rsquo;s accessed will be tracked, no matter where it exists in the app.</li>
+</ul>
+
+
+<p>In fact, <code>@accessor</code> is the heart and soul of a batman.js app. You&rsquo;re basically declaring a system of computed properties, then updating that system from user input. Batman.js propagates information to wherever it needs to be.</p>
+
+<p><strong>Cons of batman.js:</strong></p>
+
+<ul>
+<li>&ldquo;It&rsquo;s just not Ember.&rdquo; You miss out on huge user base, corporate support, and everything that goes with that.</li>
+<li>Beyond that, batman.js resources are sparse. The <a href="http://batmanjs.org/docs/index.html">new guides</a>, <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">cookbook</a> and <a href="http://batmanjs.org/docs/index.html">API docs</a> are improving every week, but for advanced usage you still have to sourcedive sometimes.</li>
+<li>There <strong>is</strong> a performance hit for global observability. The only place I&rsquo;ve noticed it is with complex iteration views (<a href="https://github.com/batmanjs/batman/issues/1086">batmanjs/batman#1086</a>). I&rsquo;m hoping to tackle this soon since it&rsquo;s becoming an issue in <a href="http://get.planningcenteronline.com/check-ins">PCO Check-ins</a>.</li>
+</ul>
+
+
+<p>I&rsquo;m not aware of any features missing from batman.js, but I do miss the &ldquo;googleability&rdquo; of a well-traveled path. Batman.js also lacks some of the dev tools like a decent Chrome extension and a command-line client.</p>
+
+<p>I always want to know <em>how</em> things works, so getting in the source is actually a benefit for me.</p>
+
+<p><strong>Six of one, half-dozen of the other:</strong></p>
+
+<ul>
+<li>Dependency DSL vs <code>Batman.{DataStructure}</code></li>
+<li>Calling super: <code>this._super</code> vs. <code>@wrapAccessor</code></li>
+<li>External API with <code>get</code> and <code>set</code></li>
+<li>Cached values in computed properties</li>
+<li>In batman.js, you can opt out of tracking with <code>Batman.Property.withoutTracking</code>. It&rsquo;s obscure, but I think it&rsquo;s ok because batman.js always covers the more common case.</li>
+</ul>
+
+
+<p>One thing that I found in neither framework was rate-limited properties, a la Knockout. I&rsquo;d love to have a built-in option for this in batman.js.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Event Handlers in Batman.js]]></title>
@@ -3820,80 +4090,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 <h2>How it works</h2>
 
 <p>Every <code>Batman.Model</code> instance has a <code>InstanceLifecycleStateMachine</code> at <code>lifecycle</code>. That state machine extends <code>Batman.DelegatingStateMachine</code>, which means it fires all of its own events on its base &mdash; in this case, a <code>Batman.Model</code> instance. The batman.js source for <code>Model</code> shows the different state and transition names, and <code>Batman.StateMachine</code> shows how these names translate to events.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Loading Child Records from Embedded IDs in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/03/17/loading-child-records-from-embedded-ids-in-batman-dot-js/"/>
-    <updated>2014-03-17T11:03:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/03/17/loading-child-records-from-embedded-ids-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/">Batman.js</a> provides a powerful <a href="http://batmanjs.org/docs/api/batman.model_associations.html">model associations</a> inspired by Ruby on Rails. But, if you&rsquo;re loading child items from ids, it&rsquo;s not going to work out of the box.</p>
-
-<!-- more -->
-
-
-<h2>The problem</h2>
-
-<p>Batman.js <code>@hasMany</code> (in v0.15.0, anyways) doesn&rsquo;t support loading items from JSON like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'>  <span class="p">{</span>
-</span><span class='line'>    <span class="s2">&quot;parent&quot;</span> <span class="o">:</span> <span class="p">{</span>
-</span><span class='line'>      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
-</span><span class='line'>      <span class="s2">&quot;children&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="cm">/* &lt;- here&#39;s tough part */</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>  <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>The solution</h2>
-
-<p>Instead of <code>Model.hasMany</code>, use a custom encoder to load the records:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;children&#39;</span><span class="p">,</span>
-</span><span class='line'>    <span class="nv">encode: </span><span class="nf">(value, key, builtJSON, record) -&gt;</span>
-</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span><span class="p">.</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span>
-</span><span class='line'>      <span class="nv">builtJSON.key = </span><span class="nx">ids</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nv">decode: </span><span class="nf">(value, key, incomingJSON, outgoingObject, record) -&gt;</span>
-</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span>
-</span><span class='line'>      <span class="nv">childRecords = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span><span class='line'>      <span class="nx">ids</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(id) -&gt;</span>
-</span><span class='line'>        <span class="nv">child = </span><span class="k">new</span> <span class="nx">Child</span> <span class="c1"># &lt;-- your Child class here</span>
-</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
-</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">load</span><span class="p">()</span>
-</span><span class='line'>        <span class="nx">childRecords</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">child</span><span class="p">)</span> <span class="c1"># one caveat -- the childRecords&#39; attributes will be empty until their requests come back.</span>
-</span><span class='line'>      <span class="nx">childRecords</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;loaded&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
-</span><span class='line'>      <span class="nv">outgoingObject.key = </span><span class="nx">childRecords</span>
-</span><span class='line'>      <span class="nx">record</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">childRecords</span><span class="p">)</span> <span class="c1"># this will fire updates in case bindings are waiting for this data</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Make sure to add your own <code>Child</code> class! Also, note that their attributes will be empty until their AJAX requests resolve!</p>
 ]]></content>
   </entry>
   
