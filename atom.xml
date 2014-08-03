@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-08-02T14:41:33-07:00</updated>
+  <updated>2014-08-02T22:33:30-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,38 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Being the Judge]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/08/02/being-the-judge/"/>
+    <updated>2014-08-02T22:08:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/08/02/being-the-judge</id>
+    <content type="html"><![CDATA[<p>I was just pondering whether person ought to have children or not. It&rsquo;s funny when I try to be the judge.</p>
+
+<!-- more -->
+
+
+<p>Propagation of the human race is a funny business. There&rsquo;s no test for it. You don&rsquo;t even have to get a license, like you do for driving or for getting married. You just &hellip; <em>do</em> it. Even if you think about it carefully and make the decision with solemnity, that&rsquo;s no guarantee of the outcome. You might just get a rascal and there&rsquo;s nothing to be done about it.</p>
+
+<h3>Judging</h3>
+
+<p>I often find myself assessing whether something is good or bad, right or wrong, whether its something in my life, or something out in the world, or just an idea of this or that. In the end, I don&rsquo;t believe that I make a great judge: I don&rsquo;t have all the information, I&rsquo;m short-sighted and I&rsquo;m lacking in perception and wisdom.</p>
+
+<p>I realized just now that in a way, it&rsquo;s just <em>not my role</em> to judge. I think that&rsquo;s the meaning of &ldquo;<a href="http://www.esvbible.org/Matthew+13:24/">Don&rsquo;t separate the wheat from the weeds, I&rsquo;ll do that at harvest time</a>&rdquo;. A person&rsquo;s job is to do a live a human life according to God&rsquo;s call. Generally, this means extending patience, forgiveness &amp; guidance in deference to God&rsquo;s judgements on his appointed day.</p>
+
+<h3>It&rsquo;s like&hellip;</h3>
+
+<p>It&rsquo;s like in a movie when a boy finds that the CEO&rsquo;s office is unlocked. He tiptoes to the tall, wide desk. He climbs into the big leather chair and gives it a swing to the right and left. He helps himself to a pen and practices his signature on the company letterhead. &ldquo;Very nice!&rdquo;</p>
+
+<p>Of course, the door clicks again. It&rsquo;s the boss. With a downward flick of his finger, he signals for the boy to get down. Although the boy likes the feeling of the big chair, he&rsquo;s not fit for the duties of CEO.</p>
+
+<h3>My Role</h3>
+
+<p>This is freeing. I&rsquo;m prone to getting caught up in matters of judgement that are, in fact, beyond me. I would do well to determine the way that the Lord has put before me and walk it, leaving executive decisions to the executive. Throughout history and in my experience, he has proven worthy of that trust.</p>
+
+<p>Certainly it&rsquo;s good to try to understand the world, but when you come up short, that&rsquo;s OK. The boss has the whole plan in mind and he&rsquo;s checked the accounts twice. It&rsquo;s going to add up! Fulfill your duties to the utmost!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
@@ -3979,117 +4011,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p>Voila! Your app is compiled and HTML will be preloaded!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Batman.Model Lifecycle Callbacks]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/03/19/batman-dot-model-lifecycle-callbacks/"/>
-    <updated>2014-03-19T10:52:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/03/19/batman-dot-model-lifecycle-callbacks</id>
-    <content type="html"><![CDATA[<p>A <code>Batman.Model</code> has a <code>lifecycle</code> object that fires events on the record when it&rsquo;s being dirtied, cleaned, loaded, saved or destroyed.</p>
-
-<!-- more -->
-
-
-<h2>Hooking up callbacks</h2>
-
-<p>Love &lsquo;em or hate &#8216;em, Active Record callbacks can be just the thing for certain problems. <code>Batman.Model</code> provides similar functionality for records.</p>
-
-<p>You can hook into lifecycle events by creating listeners on the prototype:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&#39;before save&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="c1"># remove contacts with no email:</span>
-</span><span class='line'>    <span class="nv">contacts = </span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;contacts&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">contacts</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(contact) -&gt;</span>
-</span><span class='line'>      <span class="k">if</span> <span class="o">!</span><span class="nx">@contact</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;email&#39;</span><span class="p">)</span>
-</span><span class='line'>        <span class="nx">contacts</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">contact</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>One caveat:</strong> Unlike ActiveRecord&rsquo;s <code>before_validation</code>, you can&rsquo;t abort a storage operation from a batman.js lifecycle callback. You can <code>throw</code>/<code>catch</code>, though:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&#39;before save&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="k">throw</span> <span class="s">&quot;Stop saving!&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nv">addressBook = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span>
-</span><span class='line'><span class="k">try</span>
-</span><span class='line'>  <span class="nx">addressBook</span><span class="p">.</span><span class="nx">save</span><span class="p">()</span>
-</span><span class='line'><span class="k">catch</span> <span class="nx">err</span>
-</span><span class='line'>  <span class="c1"># =&gt; err is &quot;Stop saving!&quot;</span>
-</span><span class='line'>  <span class="nx">addressBook</span><span class="p">.</span><span class="nx">isNew</span><span class="p">()</span> <span class="c1"># =&gt; true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Available callbacks</h2>
-
-<p>These keys can be observed like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AddressBook</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@</span><span class="o">::</span><span class="kc">on</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">someEventName</span><span class="si">}</span><span class="s">&quot;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">someCallback</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Saving Records</h3>
-
-<p>For records where <code>isNew</code> is <code>true</code>, <code>create</code> callbacks are fired. Otherwise, <code>save</code> callbacks are fired.</p>
-
-<ol>
-<li><code>enter dirty</code></li>
-<li><code>set</code></li>
-<li><code>enter creating</code> OR <code>enter saving</code></li>
-<li><code>create</code> OR <code>save</code></li>
-<li><code>exit creating</code> OR <code>exit saving</code></li>
-<li><code>enter clean</code></li>
-<li><code>created</code> OR <code>saved</code></li>
-<li>Callback passed to <code>Model::save</code></li>
-<li><code>enter destroying</code></li>
-<li><code>destroy</code></li>
-<li><code>exit destroying</code></li>
-<li><code>enter destroyed</code></li>
-<li><code>destroyed</code></li>
-<li>Callback passed to <code>Model::destroy</code></li>
-</ol>
-
-
-<h3>Loading a Record From Memory</h3>
-
-<ol>
-<li><code>enter loading</code></li>
-<li><code>load</code></li>
-<li><code>exit loading</code></li>
-<li><code>enter clean</code></li>
-<li><code>loaded</code></li>
-<li>Callback passed to <code>Model.load</code></li>
-</ol>
-
-
-<h3>Others</h3>
-
-<p>There are others&hellip; Check out <code>Batman.StateMachine</code> to see specific transition events and see <code>InstanceLifecycleStateMachine</code> for other events and transitions not listed here. There are tons of combinations, but I tried to hit the main ones!</p>
-
-<h2>How it works</h2>
-
-<p>Every <code>Batman.Model</code> instance has a <code>InstanceLifecycleStateMachine</code> at <code>lifecycle</code>. That state machine extends <code>Batman.DelegatingStateMachine</code>, which means it fires all of its own events on its base &mdash; in this case, a <code>Batman.Model</code> instance. The batman.js source for <code>Model</code> shows the different state and transition names, and <code>Batman.StateMachine</code> shows how these names translate to events.</p>
 ]]></content>
   </entry>
   

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Christianity | Robert Mosolgo]]></title>
-  <link href="http://rmosolgo.github.io/blog/categories/christianity/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Life | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/life/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
   <updated>2014-08-02T22:33:30-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
@@ -42,28 +42,6 @@
 <p>This is freeing. I&rsquo;m prone to getting caught up in matters of judgement that are, in fact, beyond me. I would do well to determine the way that the Lord has put before me and walk it, leaving executive decisions to the executive. Throughout history and in my experience, he has proven worthy of that trust.</p>
 
 <p>Certainly it&rsquo;s good to try to understand the world, but when you come up short, that&rsquo;s OK. The boss has the whole plan in mind and he&rsquo;s checked the accounts twice. It&rsquo;s going to add up! Fulfill your duties to the utmost!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Christian Life as a Lazy Enumerable]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable/"/>
-    <updated>2014-02-28T18:43:00-08:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/02/28/christian-life-as-a-lazy-enumerable</id>
-    <content type="html"><![CDATA[<p>Living a day at a time sounds a bit like <a href="http://ruby-doc.org/core-2.0/Enumerable.html#method-i-lazy">lazy enumeration</a>.</p>
-
-<!-- more -->
-
-
-<p>Jesus said <a href="http://www.esvbible.org/Matthew%2B6%253A25-34/">not to worry about your life</a>:</p>
-
-<blockquote><p>&ldquo;Do not be anxious about tomorrow, for tomorrow will be anxious for itself.&rdquo;</p></blockquote>
-
-<p>It&rsquo;s a bit like the lazy enumeration pattern. Don&rsquo;t load all the items into memory, just load the one you need right now. Loading all the days of your life right away <a href="http://www.esvbible.org/Luke%2B12%253A13-21/">might not be worth it</a>:</p>
-
-<blockquote><p>&ldquo;The land of a rich man produced plentifully, and he thought to himself, &hellip;  &lsquo;Soul, you have ample goods laid up for many years; relax, eat, drink, be merry.&rsquo; But God said to him, &lsquo;Fool! This night your soul is required of you, and the things you have prepared, whose will they be?&rsquo;&rdquo;</p></blockquote>
-
-<p>To be sure, Jesus must have had <em>some</em> considerations for the future, if only to <a href="http://www.esvbible.org/Matthew%2B6%253A19-21/">&ldquo;store up treasures in heaven&rdquo;</a>.</p>
 ]]></content>
   </entry>
   
