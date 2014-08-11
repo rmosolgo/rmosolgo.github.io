@@ -5,8 +5,6 @@ date: 2014-05-16 12:53
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [`Batman.Object` accessors](http://batmanjs.org/docs/api/batman.object_accessors.html) are the bread and butter of [batman.js](http://batmanjs.org). Stubbing them can make testing much easier.

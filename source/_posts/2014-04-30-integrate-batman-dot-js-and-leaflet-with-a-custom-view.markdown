@@ -5,8 +5,6 @@ date: 2014-04-30 23:33
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [batman.js](http://batmanjs.org) views are one of the best ways to integrate other JS libraries with batman.js data structures like `Batman.Object` and `Batman.Set`. For example, you can use a custom view to display `Batman.Model`s with [leaflet.js](http://leafletjs.com)

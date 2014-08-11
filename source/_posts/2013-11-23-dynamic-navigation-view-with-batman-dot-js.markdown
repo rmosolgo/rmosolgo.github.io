@@ -4,8 +4,6 @@ title: "Dynamic Navigation View with Batman.js"
 date: 2013-11-23 14:50
 comments: true
 categories:
-  - JavaScript
-  - CoffeeScript
   - Batman.js
 ---
 

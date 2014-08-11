@@ -5,8 +5,6 @@ date: 2014-04-15 22:39
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 You can use [batman.js](http://batmanjs.org) with any backend!

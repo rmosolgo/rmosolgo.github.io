@@ -5,8 +5,6 @@ date: 2014-04-07 18:12
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [Batman.js](http://batmanjs.org)'s [`prevent`](http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_prevent) and [`allowAndFire`](http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_allowandfire) make it easy to fire a callback when you're finished working on the members of a [Batman.Set](http://batmanjs.org/docs/api/batman.set.html).

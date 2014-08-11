@@ -4,6 +4,7 @@ title: "Getting to Know Batman.Set"
 date: 2014-04-30 07:54
 comments: true
 categories:
+  - Batman.js
 ---
 
 [`Batman.Set`](http://batmanjs.org/docs/api/batman.set.html) is the array-like enumerable of [batman.js](http://batmanjs.org). It offers observable properties (which are automatically tracked by `@accessor`) and useful change events.

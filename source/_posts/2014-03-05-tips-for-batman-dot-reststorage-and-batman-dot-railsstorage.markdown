@@ -5,8 +5,6 @@ date: 2014-03-05 13:52
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 Just a few things I've picked up about `Batman.RestStorage` and `Batman.RailsStorage`.

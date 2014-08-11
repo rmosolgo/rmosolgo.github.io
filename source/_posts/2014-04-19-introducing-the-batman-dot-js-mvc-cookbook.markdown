@@ -5,8 +5,6 @@ date: 2014-04-19 13:47
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 The ["Batman.js MVC Cookbook"](https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook) is a collection of annotated code snippets for getting things done with [batman.js](http://batmanjs.org).

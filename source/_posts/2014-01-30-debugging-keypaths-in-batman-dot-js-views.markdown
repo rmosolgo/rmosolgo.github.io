@@ -5,8 +5,6 @@ date: 2014-01-30 09:23
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 Debugging can be tedious, especially when `cntl-R` is your only resort for trying new options. Instead, use batman.js's `$context` function to access the context of a specific node.

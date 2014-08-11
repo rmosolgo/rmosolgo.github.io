@@ -5,8 +5,6 @@ date: 2014-02-21 08:40
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 When working on HTML for [`Batman.View`](http://batmanjs.org/docs/api/batman.view.html)s, it can be annoying to refresh and navigate back to wherever you were. Hacking into `Batman.HTMLStore` enables you to reload HTML without refreshing

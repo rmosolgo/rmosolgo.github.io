@@ -5,8 +5,6 @@ date: 2014-04-20 21:18
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 In [batman.js](http://batmanjs.org), properties automatically track their sources. This is done by tracking all calls to `get` when an accessor function is executed.
 

@@ -6,8 +6,6 @@ comments: true
 categories:
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [Batman.js](http://batmanjs.org/) provides a powerful [model associations](http://batmanjs.org/docs/api/batman.model_associations.html) inspired by Ruby on Rails. But, if you're loading child items from ids, it's not going to work out of the box.

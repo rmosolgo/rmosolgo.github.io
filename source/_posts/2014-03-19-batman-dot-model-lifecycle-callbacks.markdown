@@ -5,8 +5,6 @@ date: 2014-03-19 10:52
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 A `Batman.Model` has a `lifecycle` object that fires events on the record when it's being dirtied, cleaned, loaded, saved or destroyed.

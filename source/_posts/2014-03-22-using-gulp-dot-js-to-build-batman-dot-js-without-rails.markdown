@@ -7,7 +7,6 @@ categories:
   - Gulp.js
   - Batman.js
   - JavaScript
-  - CoffeeScript
 ---
 
 If the [batman-rails gem](https://github.com/batmanjs/batman-rails) isn't an option, [gulp.js](http://gulpjs.com) is a good candidate for compiling batman.js apps for production.

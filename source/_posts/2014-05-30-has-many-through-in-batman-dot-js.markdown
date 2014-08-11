@@ -5,8 +5,6 @@ date: 2014-05-30 15:27
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [Batman.js](http://batmanjs.org) doesn't support `hasManyThrough` out of the box, but it can be implemented fairly easily with `Set::mappedTo`.

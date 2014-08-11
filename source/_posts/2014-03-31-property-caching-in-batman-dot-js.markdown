@@ -5,8 +5,6 @@ date: 2014-03-31 09:09
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 [Batman.js](http://batmanjs.org) objects ([`Batman.Object`](batmanjs.org/docs/api/batman.object.html) instances) have properties defined with [`@accessor`](batmanjs.org/docs/api/batman.object_accessors.html). These properties are cached until one of their sources busts their cache.

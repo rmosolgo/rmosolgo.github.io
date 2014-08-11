@@ -5,8 +5,6 @@ date: 2014-04-22 08:30
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 You can use [jasmine](http://jasmine.github.io/) to test [batman.js](http://batmanjs.org) controllers by looking them up from the controller directory, then executing actions with `executeAction`.

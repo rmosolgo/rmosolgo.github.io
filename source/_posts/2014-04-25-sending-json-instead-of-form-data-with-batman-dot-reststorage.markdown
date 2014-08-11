@@ -5,8 +5,6 @@ date: 2014-04-25 13:02
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
 ---
 
 By default, `Batman.Request` sends data as HTTP form data. However, you can override this with `Batman.RestStorage`.

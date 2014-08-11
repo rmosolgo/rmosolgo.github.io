@@ -5,8 +5,6 @@ date: 2014-01-18 14:38
 comments: true
 categories:
   - Batman.js
-  - JavaScript
-  - CoffeeScript
   - Rails
 ---
 
@@ -33,7 +31,10 @@ You'll need [`node`](http://nodejs.org/) and [`npm`](https://npmjs.org/) for thi
     "node": ">= 0.10"
   },
   "dependencies": {
-    "karma": ">= 0.10"
+    "karma": ">= 0.10",
+    "karma-chrome-launcher", "~0.1",
+    "karma-coffee-preprocessor": "~0.1",
+    "karma-jasmine", "~0.2" // Or something else, if you prefer
   }
 }
 ```
@@ -45,6 +46,14 @@ module.exports = (config) ->
   config.set
     basePath: '../../'
     frameworks: ['jasmine'] # that's my weapon of choice, anyways.
+    plugins: [
+      'karma-coffee-preprocessor'
+      'karma-chrome-launcher'
+      'karma-jasmine'
+    ]
+    preprocessors: {
+      '../spec/**/*.coffee': ['coffee']
+    }
     files: [
       'http://your-app.dev/assets/your-app.js' # point it at the app file on your dev server
       # yours might look like 'http://localhost:3000/assets/application.js' or something like that.

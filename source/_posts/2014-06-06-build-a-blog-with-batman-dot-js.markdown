@@ -789,6 +789,7 @@ It's beyond the scope of this post to explain [Firebase security rules](https://
 Congratulations, you have a beautiful new blog! You can let the whole world see it by deploying it to Firebase:
 
 - update `firebase.json` to have your Firebase name (eg, `"rm-batmanjs-blog"`)
+- `npm install -g firebase-tools`
 - `firebase deploy`
 - `firebase open`
 

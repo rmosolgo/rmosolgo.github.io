@@ -6,8 +6,6 @@ comments: true
 categories:
   - Ruby
   - Rails
-  - Javascript
-  - CoffeeScript
   - Batman.js
 ---
 
