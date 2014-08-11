@@ -210,11 +210,17 @@
         <loc>
             http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/
         </loc>
-        <lastmod>2014-08-02T14:41:19-07:00</lastmod>
+        <lastmod>2014-08-10T16:17:59-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/2014/08/02/being-the-judge/</loc>
         <lastmod>2014-08-02T22:43:35-07:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/
+        </loc>
+        <lastmod>2014-08-10T17:34:05-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/about/</loc>
@@ -222,11 +228,11 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/archives/</loc>
-        <lastmod>2014-08-02T22:43:35-07:00</lastmod>
+        <lastmod>2014-08-10T17:34:05-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/</loc>
-        <lastmod>2014-08-02T22:43:35-07:00</lastmod>
+        <lastmod>2014-08-10T17:34:05-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/robots.txt</loc>

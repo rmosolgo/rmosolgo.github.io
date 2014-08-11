@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Render Scope in AngularJS and Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.js and AngularJS both create hierarchical view scopes, but their implementations are very different. (please forgive my inconsistent rendering &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Render Scope in AngularJS and Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-10T18:45:00-07:00" pubdate data-updated="true">Aug 10<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org">Batman.js</a> and <a href="http://angularjs.org">AngularJS</a> both create hierarchical view scopes, but their implementations are very different.</p>
+
+<!-- more -->
+
+
+<p><em>(please forgive my inconsistent rendering of AngularJS/Angular/Angular.js/angular, I don&rsquo;t know which one is right!)</em></p>
+
+<p>In batman.js and Angular, there is a view scope <em>hierarchy</em> which mirrors the DOM. In this heirarchy, objects may:</p>
+
+<ul>
+<li>add values into the render scope</li>
+<li>access <em>their own</em> values</li>
+<li>belong to a <em>parent object</em></li>
+<li>access values from <em>their parents</em></li>
+<li>have <em>child objects</em> of their own</li>
+</ul>
+
+
+<p>Consider a page like this:</p>
+
+<p><a href="/images/batmanjs_nested_views.png"><img src="/images/batmanjs_nested_views.png" alt="Batman.js view hierarchy" /></a></p>
+
+<p>The <code>HouseholdView</code> has many child views. The <code>PersonView</code>s belong to their parent, <code>HouseholdView</code>. They may access values from <code>HouseholdView</code> (such as the shared <code>householdName</code>).</p>
+
+<p><em>Note: The batman.js view hierarchy includes a few other objects as well &mdash; see below.</em></p>
+
+<h1>Finding Values in the Hierarchy</h1>
+
+<p>To answer the question &ldquo;how can child views access data from their parents&rdquo;, Batman.js and Angular take different approaches.</p>
+
+<h3>$scope &amp; Prototypal Inheritance</h3>
+
+<p>In Angular, data bindings are evaluated against a <strong>magical <code>$scope</code> object</strong>. The scope object has key-value pairs which correspond to values in the data bindings. When <code>$scope</code>s are created, Angular massages (tampers with?) the prototypal inheritance chain so that a child scope&rsquo;s prototype <em>is</em> its parent scope.</p>
+
+<p>(Usually, an object&rsquo;s prototype is another &ldquo;pristine&rdquo; object of its same type. It&rsquo;s generally treated as the &ldquo;perfect instance&rdquo; of the type. Other instances delegate to the prototype for properties that aren&rsquo;t defined explicitly on themselves.)</p>
+
+<p>In this case, a child <code>$scope</code>&rsquo;s prototype is not a &ldquo;pristine instance&rdquo;, but instead it&rsquo;s the parent <code>$scope</code> object. That way, if a value isn&rsquo;t found in a child scope, it is looked up in the prototype chain. This is <strong>brilliant</strong>. Angular delegates value lookup to built-in JavaScript features. (There is one gotcha described below.)</p>
+
+<p>When a parent <code>$scope</code> has many children, all children have the same parent <code>$scope</code> object as their prototype.</p>
+
+<h3>Batman.View &amp; View::lookupKeypath</h3>
+
+<p>Batman.js builds a <strong>tree of <code>Batman.View</code> objects</strong>. The root of the tree is called the <code>LayoutView</code> and it is created automatically by batman.js. Each view keeps track of its children in its <code>subviews</code>, which is a <code>Batman.Set</code> containing views that are rendered inside it. Each view also keeps track of its <code>superview</code>, which is its parent <code>Batman.View</code>.</p>
+
+<p>To evaluate data bindings, batman.js uses <code>lookupKeypath</code> on the view in question. This function climbs the &ldquo;view hierarchy&rdquo;, which actually includes a few extra objects:</p>
+
+<ul>
+<li>The <code>Batman.Controller</code> instance which rendered the view</li>
+<li><code>Batman.currentApp</code>, which is the <code>Batman.App</code> subclass that you defined (the clas, not an instance)</li>
+<li><code>Batman.container</code>, which is usually <code>window</code></li>
+</ul>
+
+
+<p>Here&rsquo;s the whole view hierarchy from the previous example:</p>
+
+<p><a href="/images/batmanjs_nested_views_whole_tree.png"><img src="/images/batmanjs_nested_views_whole_tree.png" alt="The whole batman.js view hierarchy" /></a></p>
+
+<p>Since <code>Batman.currentApp</code> is in the view hierarchy, any <code>@classAccessor</code>s you define there are accessible in view bindings, akin to global scope in JavaScript.</p>
+
+<h1>Automatically-Created Scopes</h1>
+
+<p>In batman.js and Angular, there are data bindings that create child scopes of their own. For example, <code>ng-repeat</code> and <code>data-foreach</code> both create a collection of child scopes with the same parent.</p>
+
+<p>Angular does this by creating many child <code>$scopes</code> with the same parent <code>$scope</code> as their prototype.</p>
+
+<p>Batman.js does this by automatically adding nodes to the view hierarchy. One downside of batman.js is that creating lots and lots of new views is CPU-intensive. I don&rsquo;t know whether the same is true for creating <code>$scope</code>s.</p>
+
+<h1>How Does It Know Which Scope to Bind To?</h1>
+
+<p>When I was reading about <code>$scope</code>, I learned that some new Angular users hit a snag when they try to set values on a <em>parent scope</em> from within a <em>child scope</em>. As JavaScript should, it updates the child <code>$scope</code> with the new value, not the parent <code>$scope</code>, which is the child&rsquo;s prototype.</p>
+
+<p>That&rsquo;s how prototypal inheritance works: It looks up missing values on the prototype, but it sets <em>new</em> values on the instance. Then, it stops &ldquo;falling back&rdquo; to the prototype for the property that was set on the instance.</p>
+
+<p>To work around this, it&rsquo;s recommended to &ldquo;always use a <code>.</code> in your <code>ng-model</code>s&rdquo;. (<code>ng-model</code> is a binding that creates a child scope.)</p>
+
+<p>Batman.js doesn&rsquo;t have this problem because, when uses <code>lookupKeypath</code>, it remembers which <code>View</code> object was the target for that keypath, then updates <em>that object</em> whenever the keypath changes.</p>
+
+<p>However, Batman.js is prone to a different gotcha. If you leave an accessor unset (ie, returns <code>undefined</code>), then set it <em>after</em> a view has rendered, it&rsquo;s possible that <code>View::lookupKeypath</code> won&rsquo;t find it correctly. To avoid this, set defaults (or <code>null</code>) before bindings are evaluated:</p>
+
+<ul>
+<li>before <code>@render</code> in controller actions</li>
+<li>in the <code>constructor</code> for view instances</li>
+</ul>
+
+
+<p>Or, make sure <code>@accessor</code>s return <code>null</code> instead of <code>undefined</code>.</p>
+
+<p>Batman.js treats <code>undefined</code> as the signal that an object doesn&rsquo;t have an accessor for a keypath, so be careful when setting keys <code>undefined</code>!</p>
+
+<h1>How Does It Know When to Update the DOM?</h1>
+
+<p>When these scope objects (<code>View</code> or <code>$scope</code>) change, the framework must update the DOM accordingly.</p>
+
+<p>Angular has a &ldquo;digest cycle&rdquo; where it checks for changes in the <code>$scope</code> since last run, then updates the DOM if necessary. It automatically tracks any values that are put into templates. You can also watch other keys on <code>$scope</code> with <code>$scope.$watch</code>. If you modify <code>$scope</code> from <em>outside</em> Angular.js code, you must manually trigger the digest cycle with <code>$scope.$apply</code>.</p>
+
+<p><code>Batman.View</code> uses the <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/"><code>Batman.Property</code></a> system to automatically track dependencies and changes. Any keypath that is passed to a <code>data-</code> binding is automatically observed. DOM updates are triggered when:</p>
+
+<ul>
+<li>A keypath is updated with <code>set</code>. Doesn&rsquo;t matter whether it&rsquo;s inside batman.js code or inside an AJAX callback &mdash; batman.js will recognize the update either way.</li>
+<li>A property&rsquo;s dependencies change. When you declare a computed property with <code>@accessor</code> and bind it to a view, the view will update the DOM whenever that property&rsquo;s dependencies cause it to change.</li>
+</ul>
+
+
+<p>(In fact, those two cases are the heart of observability in batman.js: assign a value with <code>set</code> or delegate to batman.js&rsquo;s source tracking.)</p>
+
+<p>To force an update, use <code>set</code> to update a bound property or one of its dependencies.</p>
+
+<h1>Other Random Points</h1>
+
+<ul>
+<li>Angular&rsquo;s &ldquo;evalute an expression&rdquo; is like batman.js&rsquo;s &ldquo;lookup a keypath&rdquo;</li>
+<li><code>Batman.View::propagateToSubviews</code> is like <code>$scope.$broadcast</code>: it sends messages down the view tree.</li>
+<li>As of batman.js almost-v0.17, there is no analog for <code>$scope.$emit</code> (which sends events <em>up</em> the view chain)</li>
+<li>batman.js exports global function <code>$context($0)</code> which is just like <code>angular.element($0).scope()</code> (where <code>$0</code> is the highlighted element in the Chrome inspector).</li>
+</ul>
+
+
+<h1>My Opinion</h1>
+
+<p>I think Angular&rsquo;s <code>$scope</code> is brilliant. I imagine it&rsquo;s performant as well, although I don&rsquo;t know (and I&rsquo;m currently writing without internet access). It introduces few gotchas. In general, it seems like it Just Works<sup>TM</sup>.</p>
+
+<p>I&rsquo;m in the market to improve the performance of <code>Batman.View</code>, but I&rsquo;m not sure I can take anything from <code>$scope</code>. All of batman.js depends on playing by the observability rules. I don&rsquo;t see any way I can get native JS prototypal inheritance to participate in that.</p>
+
+<p>I also like sticking with the &ldquo;It&rsquo;s just batman.js&rdquo; in the view layer. If you can write good <code>@accessor</code>s, then you&rsquo;ve mastered <code>Batman.View</code>, too.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-08-10T18:45:00-07:00" pubdate data-updated="true">Aug 10<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/angular-dot-js/'>Angular.js</a>, <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>, <a class='category' href='/blog/categories/framework-comparison/'>Framework Comparison</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/08/02/being-the-judge/" title="Previous Post: Being the Judge">&laquo; Being the Judge</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
