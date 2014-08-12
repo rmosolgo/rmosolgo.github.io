@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-08-11T08:13:26-07:00</updated>
+  <updated>2014-08-12T13:30:47-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -89,9 +89,15 @@ end
   &ldquo;dependencies&rdquo;: {</p>
 
 <pre><code>"karma": "&gt;= 0.10",
-"karma-chrome-launcher", "~0.1",
+"karma-chrome-launcher": "~0.1",
 "karma-coffee-preprocessor": "~0.1",
-"karma-jasmine", "~0.2" // Or something else, if you prefer
+"karma-jasmine": "~0.2"
+</code></pre>
+
+<p>  },
+  &ldquo;devDependencies&rdquo;: {</p>
+
+<pre><code>"coffee-script": "^1.7.1"
 </code></pre>
 
 <p>  }
@@ -115,7 +121,7 @@ plugins: [
   'karma-jasmine'
 ]
 preprocessors: {
-  '../spec/**/*.coffee': ['coffee']
+  'spec/batman/**/*.coffee': ['coffee']
 }
 files: [
   'http://your-app.dev/assets/your-app.js' # point it at the app file on your dev server
