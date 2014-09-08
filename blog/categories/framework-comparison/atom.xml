@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Framework Comparison | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/framework-comparison/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-08-12T13:30:47-07:00</updated>
+  <updated>2014-09-07T20:48:13-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -288,7 +288,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#109;&#97;&#x69;&#x6c;&#116;&#x6f;&#x3a;&#112;&#x65;&#111;&#112;&#x6c;&#101;&#46;&#x40;&#x65;&#97;&#x63;&#x68;&#46;&#102;&#117;&#108;&#x6c;&#x4e;&#97;&#x6d;&#101;">&#x70;&#101;&#x6f;&#x70;&#108;&#101;&#46;&#64;&#101;&#x61;&#99;&#x68;&#x2e;&#x66;&#117;&#108;&#x6c;&#78;&#x61;&#x6d;&#x65;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#109;&#x61;&#x69;&#108;&#x74;&#111;&#58;&#112;&#x65;&#111;&#112;&#x6c;&#x65;&#x2e;&#x40;&#x65;&#97;&#99;&#104;&#x2e;&#102;&#117;&#x6c;&#108;&#x4e;&#x61;&#x6d;&#x65;">&#112;&#101;&#111;&#112;&#x6c;&#101;&#46;&#64;&#101;&#x61;&#x63;&#x68;&#x2e;&#x66;&#x75;&#108;&#108;&#78;&#97;&#109;&#101;</a>&rsquo;)
 });
 ```</p>
 

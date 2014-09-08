@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-08-12T13:30:47-07:00</updated>
+  <updated>2014-09-07T20:48:13-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,88 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Why (I Think) We're Leaving Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js/"/>
+    <updated>2014-09-07T20:19:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Sadly, <a href="http://get.planningcenteronline.com">PCO</a> is getting out of the batman.js game.</p>
+
+<!-- more -->
+
+
+<p>From where I sit, I think it boils down to:</p>
+
+<ul>
+<li>The framework never hit critical mass (and lost what it had)</li>
+<li>The framework&rsquo;s magic made some problems impossible to debug</li>
+<li>Client-side apps aren&rsquo;t good for business</li>
+<li>Rails, Turbolinks &amp; React will do just fine</li>
+</ul>
+
+
+<p>After discussing those issues, I&rsquo;ll say where I think I&rsquo;m going next. Batman.js is a great framework with some amazing, well-tested features and I&rsquo;m sorry to see it go this way for us!</p>
+
+<h2>No Critical Mass</h2>
+
+<p>Batman.js was an early entrant to the &ldquo;Framework Wars&rdquo;. It was production-ready by early 2013, which made it appealing at that point. However,</p>
+
+<ul>
+<li>there was very little &ldquo;evangelism&rdquo; by its creators (almost no talks, very little documentation, no &ldquo;media presence&rdquo;)</li>
+<li>early adopters were not &ldquo;invited in&rdquo; (unanswered github issues, for example)</li>
+</ul>
+
+
+<p>When Shopify pulled out (around <a href="https://github.com/batmanjs/batman/graphs/contributors">fall 2013</a>?), a ton of knowledge and resources were removed with no viable replacement.</p>
+
+<h2>Magic Problems</h2>
+
+<p>Batman.js is loaded with awesome APIs that were fun to use and satisfying when they worked. However, when it <em>didn&rsquo;t work</em>, you were up a creek without a paddle. There was:</p>
+
+<ul>
+<li>no helpful error messages</li>
+<li>no support on github, stack overflow or IRC</li>
+<li>no documentation or information of any kind about the inner workings</li>
+<li>no debugging tools</li>
+</ul>
+
+
+<p>I&rsquo;ve seen a lot of batman.js users pull their hair out yelling, &ldquo;Why doesn&rsquo;t this <em>work</em>?!&rdquo; Indeed, that&rsquo;s what drove me to learn it from the source.</p>
+
+<h2>Client-Side Issues</h2>
+
+<p>Making a whole app in JavaScript has a lot of sex appeal, but several things make it bad for real-life business:</p>
+
+<ul>
+<li>Bug-tracking tools (namely Bugsnag for JS) are not as good (especially when you throw CoffeeScript &amp; minification in the mix)</li>
+<li>Browser environments are outside your control (I got a lot of bugsnags for peoples&#8217; browser extensions)</li>
+<li>State can get weird &mdash; after having the app open for an hour, data can just get messed up! (Maybe this doesn&rsquo;t happen for better programmers.)</li>
+</ul>
+
+
+<p>You just don&rsquo;t realize the luxury of reliable bugsnags until they&rsquo;re gone! So many Check-Ins bugsnags leave no trace of what actually went wrong.</p>
+
+<h2>Other Options are OK, too</h2>
+
+<p>We have a solid data model, HTML templates and CSS to boot. It stinks to throw away all that code, but I forgot how amazingly fast it is to code Ruby on Rails.</p>
+
+<p>JS MVC types will look down their noses at Turbolinks, but it <em>works</em> and it has a lot of eyes on it. Combined with <code>react-rails</code>, it&rsquo;s a really strong option!</p>
+
+<h2>What Now?</h2>
+
+<p>In short, Rails-rendered HTML, Turbolinks &amp; <code>form_for ... remote: true</code>, and ReactJS for live-updates. There are a few things I am looking forward to:</p>
+
+<ul>
+<li><strong>RUBY BUGSNAGS</strong> with stack traces, request environments and everything!</li>
+<li><strong>Less state.</strong> Fewer things that can randomly affect other things in ways I didn&rsquo;t think about.</li>
+<li><strong>ReactJS.</strong> <code>Batman.View</code> is an amazing thing, but it makes me appreciate the dead-simple API of a React component. It can only get data from one place, no other objects can mess with it, its lifecycle is <em>very</em> simple (and works as documented), etc etc. I write a lot more code to do a lot less with React, but I think it&rsquo;s going to be a lot more stable, and that&rsquo;s worth it.</li>
+</ul>
+
+
+<p>We held on to Batman.js for a long time because it lended itself to <em>live-updating everything</em>. I think React is going to cover the a few key things there, and just <em>changing pages</em> will do the rest. So far I&rsquo;ve hooked up Pusher to Flux-style stores, then wrapped anything live-updating in a React component that observes that store. It&rsquo;s a lot more hands-on than Batman.js updates, but it has other advantages.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Render Scope in AngularJS and Batman.js]]></title>
@@ -3831,133 +3913,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p><strong>Note</strong>: <code>@prevent</code> and <code>@allowAndFire</code> are provided by <a href="http://batmanjs.org/docs/api/batman.eventemitter.html"><code>Batman.EventEmitter</code></a>, so it will only work with objects which have that mixin. Don&rsquo;t worry &mdash; every object in batman.js is an event emitter! But plain JS objects are not.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Property Caching in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js/"/>
-    <updated>2014-03-31T09:09:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/03/31/property-caching-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> objects (<a href="batmanjs.org/docs/api/batman.object.html"><code>Batman.Object</code></a> instances) have properties defined with <a href="batmanjs.org/docs/api/batman.object_accessors.html"><code>@accessor</code></a>. These properties are cached until one of their sources busts their cache.</p>
-
-<!-- more -->
-
-
-<h1>Batman.Object Properties</h1>
-
-<p> In batman.js, all properties should be declared with <code>@accessor</code>. When I say <em>property</em>, I mean a property declared with <code>@accessor</code>.</p>
-
-<p>When a property&rsquo;s value is retrieved (with <code>get</code>), it tracks calls that it makes to other properties. These internal calls (to <code>get</code>) define the property&rsquo;s <em>sources</em>. The value will be cached. Since it knows what it depends on, they only recalculate themselves when their caches are busted. (Passing the <code>cache: false</code> option makes a property not cached.) When one of the property&rsquo;s sources are changed, its cache is busted and it will recalculate <em>next time</em> you <code>get</code> its value.</p>
-
-<p>After a property recalculates, it checks if its <em>new</em> result doesn&rsquo;t equal its <em>cached</em> result ( <code>!==</code> , CoffeeScript <code>isnt</code>). If it determines a new value, then the property busts its dependents&#8217; caches, too</p>
-
-<p>To sum up the introduction:</p>
-
-<ul>
-<li>Sources are tracked at calculation-time, not load time. They&rsquo;re tracked when a property calculates itself.</li>
-<li>A property isn&rsquo;t caluclated if it&rsquo;s never retrieved.</li>
-<li>A property is cached and isn&rsquo;t recalculated until one of its sources signals a change.</li>
-<li>When a property&rsquo;s source changes, the cache is busted and it will recalcute next time it is retrieved with <code>get</code></li>
-<li>If the result of recalculation is a different value (<code>!==</code>), the property notifies <em>its</em> subscribers (if present) to recalculate.</li>
-</ul>
-
-
-<h1>A Day in the Life of a Batman.js Property</h1>
-
-<p><code>fullName</code> is the quintessential computed property:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;fullName&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s"> </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Let&rsquo;s see how it&rsquo;s used with a <code>Person</code>. You can get metadata for a property with the <code>Batman.Object::property(name)</code> function.</p>
-
-<p>When a person is initialized, the <code>fullName</code> has no value:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">morganFreeman = </span><span class="k">new</span> <span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Morgan&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Freeman&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; null</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It hasn&rsquo;t been requested yet, so it hasn&rsquo;t been calculated. The property also has no sources:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullname&#39;</span><span class="p">).</span><span class="nx">sources</span> <span class="c1"># =&gt; null</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>However, if you <code>get</code> the property, it will be calculated and its sources will be identified.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now let&rsquo;s inspect the underlying <code>Batman.Property</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">fullName = </span><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Its value is cached:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
-</span><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And it knows its sources:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">fullName</span><span class="p">.</span><span class="nx">sources</span><span class="p">.</span><span class="nx">map</span> <span class="nf">(s) -&gt;</span> <span class="k">return</span> <span class="nx">s</span><span class="p">.</span><span class="nx">key</span>
-</span><span class='line'><span class="c1"># =&gt; [&quot;firstName&quot;, &quot;lastName&quot;]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you change one of <code>fullName</code>&rsquo;s sources, it is no longer cached:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;firstName&quot;</span><span class="p">,</span> <span class="s">&quot;Lucius&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&quot;lastName&quot;</span><span class="p">,</span> <span class="s">&quot;Fox&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; false</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And since we haven&rsquo;t asked for its value again, it hasn&rsquo;t been recalculated:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&quot;fullName&quot;</span><span class="p">).</span><span class="nx">value</span> <span class="c1"># =&gt; &quot;Morgan Freeman&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But <code>get</code>ting its value will cause it to be recalculated &amp; cached:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
-</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">value</span>  <span class="c1"># =&gt; &quot;Lucius Fox&quot;</span>
-</span><span class='line'><span class="nx">morganFreeman</span><span class="p">.</span><span class="nx">property</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">cached</span> <span class="c1"># =&gt; true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h1>Another Look</h1>
-
-<p>Here&rsquo;s the same story, in a chart:</p>
-
-<p><a href="http://rmosolgo.github.io/images/batman-properties-large.png"><img src="http://rmosolgo.github.io/images/batman-properties.png" alt="Batman.js property caching" /></a></p>
 ]]></content>
   </entry>
   

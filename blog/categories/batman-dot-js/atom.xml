@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-08-12T13:30:47-07:00</updated>
+  <updated>2014-09-07T20:48:13-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,88 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Why (I Think) We're Leaving Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js/"/>
+    <updated>2014-09-07T20:19:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Sadly, <a href="http://get.planningcenteronline.com">PCO</a> is getting out of the batman.js game.</p>
+
+<!-- more -->
+
+
+<p>From where I sit, I think it boils down to:</p>
+
+<ul>
+<li>The framework never hit critical mass (and lost what it had)</li>
+<li>The framework&rsquo;s magic made some problems impossible to debug</li>
+<li>Client-side apps aren&rsquo;t good for business</li>
+<li>Rails, Turbolinks &amp; React will do just fine</li>
+</ul>
+
+
+<p>After discussing those issues, I&rsquo;ll say where I think I&rsquo;m going next. Batman.js is a great framework with some amazing, well-tested features and I&rsquo;m sorry to see it go this way for us!</p>
+
+<h2>No Critical Mass</h2>
+
+<p>Batman.js was an early entrant to the &ldquo;Framework Wars&rdquo;. It was production-ready by early 2013, which made it appealing at that point. However,</p>
+
+<ul>
+<li>there was very little &ldquo;evangelism&rdquo; by its creators (almost no talks, very little documentation, no &ldquo;media presence&rdquo;)</li>
+<li>early adopters were not &ldquo;invited in&rdquo; (unanswered github issues, for example)</li>
+</ul>
+
+
+<p>When Shopify pulled out (around <a href="https://github.com/batmanjs/batman/graphs/contributors">fall 2013</a>?), a ton of knowledge and resources were removed with no viable replacement.</p>
+
+<h2>Magic Problems</h2>
+
+<p>Batman.js is loaded with awesome APIs that were fun to use and satisfying when they worked. However, when it <em>didn&rsquo;t work</em>, you were up a creek without a paddle. There was:</p>
+
+<ul>
+<li>no helpful error messages</li>
+<li>no support on github, stack overflow or IRC</li>
+<li>no documentation or information of any kind about the inner workings</li>
+<li>no debugging tools</li>
+</ul>
+
+
+<p>I&rsquo;ve seen a lot of batman.js users pull their hair out yelling, &ldquo;Why doesn&rsquo;t this <em>work</em>?!&rdquo; Indeed, that&rsquo;s what drove me to learn it from the source.</p>
+
+<h2>Client-Side Issues</h2>
+
+<p>Making a whole app in JavaScript has a lot of sex appeal, but several things make it bad for real-life business:</p>
+
+<ul>
+<li>Bug-tracking tools (namely Bugsnag for JS) are not as good (especially when you throw CoffeeScript &amp; minification in the mix)</li>
+<li>Browser environments are outside your control (I got a lot of bugsnags for peoples' browser extensions)</li>
+<li>State can get weird &mdash; after having the app open for an hour, data can just get messed up! (Maybe this doesn&rsquo;t happen for better programmers.)</li>
+</ul>
+
+
+<p>You just don&rsquo;t realize the luxury of reliable bugsnags until they&rsquo;re gone! So many Check-Ins bugsnags leave no trace of what actually went wrong.</p>
+
+<h2>Other Options are OK, too</h2>
+
+<p>We have a solid data model, HTML templates and CSS to boot. It stinks to throw away all that code, but I forgot how amazingly fast it is to code Ruby on Rails.</p>
+
+<p>JS MVC types will look down their noses at Turbolinks, but it <em>works</em> and it has a lot of eyes on it. Combined with <code>react-rails</code>, it&rsquo;s a really strong option!</p>
+
+<h2>What Now?</h2>
+
+<p>In short, Rails-rendered HTML, Turbolinks &amp; <code>form_for ... remote: true</code>, and ReactJS for live-updates. There are a few things I am looking forward to:</p>
+
+<ul>
+<li><strong>RUBY BUGSNAGS</strong> with stack traces, request environments and everything!</li>
+<li><strong>Less state.</strong> Fewer things that can randomly affect other things in ways I didn&rsquo;t think about.</li>
+<li><strong>ReactJS.</strong> <code>Batman.View</code> is an amazing thing, but it makes me appreciate the dead-simple API of a React component. It can only get data from one place, no other objects can mess with it, its lifecycle is <em>very</em> simple (and works as documented), etc etc. I write a lot more code to do a lot less with React, but I think it&rsquo;s going to be a lot more stable, and that&rsquo;s worth it.</li>
+</ul>
+
+
+<p>We held on to Batman.js for a long time because it lended itself to <em>live-updating everything</em>. I think React is going to cover the a few key things there, and just <em>changing pages</em> will do the rest. So far I&rsquo;ve hooked up Pusher to Flux-style stores, then wrapped anything live-updating in a React component that observes that store. It&rsquo;s a lot more hands-on than Batman.js updates, but it has other advantages.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Render Scope in AngularJS and Batman.js]]></title>
@@ -288,7 +370,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#x6d;&#x61;&#x69;&#108;&#116;&#x6f;&#x3a;&#x70;&#101;&#111;&#x70;&#x6c;&#101;&#46;&#64;&#101;&#x61;&#99;&#104;&#46;&#102;&#x75;&#108;&#108;&#78;&#x61;&#109;&#101;">&#x70;&#101;&#x6f;&#112;&#108;&#101;&#x2e;&#64;&#101;&#97;&#99;&#104;&#46;&#x66;&#x75;&#108;&#x6c;&#78;&#97;&#x6d;&#101;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#x6d;&#97;&#x69;&#108;&#116;&#111;&#58;&#x70;&#101;&#111;&#x70;&#x6c;&#x65;&#x2e;&#64;&#101;&#97;&#x63;&#x68;&#x2e;&#102;&#117;&#x6c;&#108;&#78;&#97;&#109;&#x65;">&#x70;&#101;&#111;&#112;&#108;&#x65;&#46;&#64;&#x65;&#97;&#x63;&#x68;&#46;&#102;&#x75;&#x6c;&#x6c;&#x4e;&#97;&#109;&#101;</a>&rsquo;)
 });
 ```</p>
 
@@ -823,139 +905,6 @@ class Funzies.SessionsController
 <p>```</p>
 
 <p>That&rsquo;s what I use in <code>signIn</code> and <code>signOut</code> above.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js/"/>
-    <updated>2014-07-19T09:15:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><code>Model::transaction</code> provides a deep-copied, &ldquo;shadow-realm&rdquo; version of a record which is great for rendering into edit forms. Any changes made to it can be saved (which updates the original record too), or just forgotten.</p>
-
-<!-- more -->
-
-
-<p>Here&rsquo;s the problem transactions exist to solve:</p>
-
-<ul>
-<li>You want your user to edit something</li>
-<li>You render a record into an edit form</li>
-<li>User edits the form</li>
-<li>User clicks back button</li>
-<li>User is surprised to see that the record&rsquo;s changes were &ldquo;saved&rdquo; (In fact, only the in-memory record was changed &mdash; the change wasn&rsquo;t sent to the server)</li>
-</ul>
-
-
-<p><code>Model::transaction</code> solves this problem by returning a <em>deep copy</em> of the record at hand which can be:</p>
-
-<ul>
-<li><strong>saved</strong>, just like a normal record, in which case changes are applied to the original</li>
-<li><strong>forgotten</strong>, by simply navigating away</li>
-<li><strong>applied</strong>, which applies changes to the original, but doesn&rsquo;t update the server.</li>
-</ul>
-
-
-<p><em>The name &ldquo;transaction&rdquo; hearkens back to database transactions where changes aren&rsquo;t applied unless they&rsquo;re all successful. In the same way, changes to a <code>Batman.Transaction</code> aren&rsquo;t applied unless you explicitly <code>save</code> or <code>applyChanges</code>.</em></p>
-
-<h2>Setting up a Transaction</h2>
-
-<p>To set up a transaction, call <code>transaction</code> on the record at hand:</p>
-
-<p>```coffeescript
-class MyApp.RaceHorsesController extends MyApp.ApplicationController
-  edit: (params) &ndash;></p>
-
-<pre><code>MyApp.RaceHorse.find params.id, (err, record) -&gt;
-  deepCopy = record.transaction()
-  @set 'raceHorse', deepCopy
-</code></pre>
-
-<p>```</p>
-
-<h2>Transaction&rsquo;s Deep Copy</h2>
-
-<p>A transaction is actually an instance of the original model. It differs in 2 ways:</p>
-
-<ul>
-<li>It isn&rsquo;t added to the <code>loaded</code> set (aka &ldquo;the memory map&rdquo;)</li>
-<li>It has <code>Batman.Transaction</code> mixed in, which defines some new functions and overrides <code>Model::save</code></li>
-</ul>
-
-
-<p><code>Model::transaction</code> peforms a deep copy of a <code>Batman.Model</code> by
- iterating over the model&rsquo;s <code>attributes</code> hash. The <code>attributes</code> hash is where encoded properties are stored (and other properties, unless you define an accessor that says otherwise).</p>
-
-<p>Batman.js copies the attributes hash into the transaction by handling each value:</p>
-
-<ul>
-<li>If the value is a <code>Batman.Model</code>, it&rsquo;s also copied with <code>Model::transaction</code></li>
-<li>If the value is a <code>Batman.AssociationSet</code>, it&rsquo;s cloned into a <code>Batman.TransactionAssociationSet</code> and its members are copied with <code>Model::transaction</code></li>
-<li>Otherwise, the value is set into the transaction&rsquo;s attributes.</li>
-</ul>
-
-
-<p>Under the hood, batman.js tracks which objects it has already cloned. That way, it doesn&rsquo;t get thrown into an infinite loop.</p>
-
-<p>If a mutable object is copied from the original to the transaction, batman.js issues a warning. This is because it can&rsquo;t isolate changes. The transaction and the original are both refering to the <em>same object</em>, so changes to one will also affect the other. Mutable objects include:</p>
-
-<ul>
-<li>Dates (although mutating dates is such a pain in JS, I doubt this will cause a problem)</li>
-<li>Arrays</li>
-<li>Batman.Set, Batman.Hash, etc</li>
-<li>any JavaScript object</li>
-</ul>
-
-
-<h2>Saving a Transaction</h2>
-
-<p>To save a transaction, call <code>save</code> on it. This will:</p>
-
-<ul>
-<li>validate the transaction (with client-side validations)</li>
-<li>apply changes to the original model</li>
-<li>save the transaction (ie, the storage operation will be performed with the transaction, not the original)</li>
-<li>pass the original to the <code>save</code> callback</li>
-</ul>
-
-
-<p>This means a transaction behaves just like a normal model. You can save it like this:</p>
-
-<p>```coffeescript
-  saveRaceHorse: (raceHorse) &ndash;></p>
-
-<pre><code>raceHorse.isTransaction # =&gt; true, just checking
-raceHorse.save (err, record) -&gt;
-  if !err
-    Batman.redirect("/race_horses")
-</code></pre>
-
-<p>```</p>
-
-<p><strong>Note:</strong> at time of writing, transaction <strong>does not account for server-side validations</strong>. There is an open issue for this <a href="https://github.com/batmanjs/batman/issues/1049">on github</a>.</p>
-
-<h2>Forgetting a Transaction</h2>
-
-<p>If you don&rsquo;t want changes on transaction to be applied, just leave it alone.</p>
-
-<ul>
-<li>It&rsquo;s not in the <code>loaded</code> set, so it won&rsquo;t intefere with your app&rsquo;s other data.</li>
-<li>The original record has no references to it.</li>
-<li>It&rsquo;s still set on your controller (probably), but it will get overrided next time your user edits something.</li>
-</ul>
-
-
-<p>Once it&rsquo;s released from the controller, it will probably just be garbage-collected when the browser gets a chance.</p>
-
-<h2>Applying Changes without Saving</h2>
-
-<p>Transactions have an <code>applyChanges</code> function that updates the original record without performing any storage operations.</p>
-
-<p><code>coffeescript
-transaction.applyChanges()
-</code></p>
-
-<p>You might use this if your save operation is really complicated and you need to control it by hand.</p>
 ]]></content>
   </entry>
   
