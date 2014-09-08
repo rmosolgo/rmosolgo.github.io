@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ember.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ember-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-09-07T20:48:13-07:00</updated>
+  <updated>2014-09-07T20:50:03-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -156,7 +156,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#x6d;&#x61;&#105;&#108;&#116;&#x6f;&#58;&#112;&#x65;&#x6f;&#112;&#x6c;&#x65;&#46;&#x40;&#101;&#x61;&#x63;&#104;&#x2e;&#102;&#x75;&#108;&#x6c;&#78;&#x61;&#109;&#x65;">&#x70;&#101;&#x6f;&#x70;&#x6c;&#101;&#x2e;&#x40;&#x65;&#x61;&#99;&#104;&#46;&#102;&#x75;&#108;&#108;&#78;&#97;&#x6d;&#x65;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#109;&#97;&#105;&#108;&#116;&#x6f;&#x3a;&#112;&#101;&#x6f;&#x70;&#x6c;&#101;&#x2e;&#x40;&#x65;&#x61;&#99;&#104;&#x2e;&#102;&#x75;&#108;&#x6c;&#x4e;&#x61;&#x6d;&#101;">&#112;&#x65;&#111;&#112;&#x6c;&#101;&#x2e;&#64;&#x65;&#97;&#99;&#104;&#x2e;&#x66;&#x75;&#x6c;&#x6c;&#78;&#97;&#109;&#x65;</a>&rsquo;)
 });
 ```</p>
 
