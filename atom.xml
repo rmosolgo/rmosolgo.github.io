@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-09-07T20:50:03-07:00</updated>
+  <updated>2014-09-15T09:40:55-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -71,6 +71,10 @@
 <li>State can get weird &mdash; after having the app open for an hour, data can just get messed up! (Maybe this doesn&rsquo;t happen for better programmers.)</li>
 </ul>
 
+
+<p><em>Not my problem:</em></p>
+
+<p><img src="http://rmosolgo.github.io/images/extension_errors.png" width="500"></p>
 
 <p>You just don&rsquo;t realize the luxury of reliable bugsnags until they&rsquo;re gone! So many Check-Ins bugsnags leave no trace of what actually went wrong.</p>
 
