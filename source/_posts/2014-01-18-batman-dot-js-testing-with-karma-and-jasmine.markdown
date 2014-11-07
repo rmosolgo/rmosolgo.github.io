@@ -32,9 +32,12 @@ You'll need [`node`](http://nodejs.org/) and [`npm`](https://npmjs.org/) for thi
   },
   "dependencies": {
     "karma": ">= 0.10",
-    "karma-chrome-launcher", "~0.1",
+    "karma-chrome-launcher": "~0.1",
     "karma-coffee-preprocessor": "~0.1",
-    "karma-jasmine", "~0.2" // Or something else, if you prefer
+    "karma-jasmine": "~0.2"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.7.1"
   }
 }
 ```
@@ -52,7 +55,7 @@ module.exports = (config) ->
       'karma-jasmine'
     ]
     preprocessors: {
-      '../spec/**/*.coffee': ['coffee']
+      'spec/batman/**/*.coffee': ['coffee']
     }
     files: [
       'http://your-app.dev/assets/your-app.js' # point it at the app file on your dev server
