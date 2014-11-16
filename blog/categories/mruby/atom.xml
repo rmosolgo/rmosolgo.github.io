@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: mruby | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/mruby/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2014-11-15T22:04:21-08:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA["Hello World" with mruby]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby/"/>
+    <updated>2014-11-15T19:38:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby</id>
+    <content type="html"><![CDATA[<p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
+
+<!-- more -->
+
+
+<p>&ldquo;Hello World&rdquo; with mruby looks like this:</p>
+
+<ul>
+<li>Set up a new project and include mruby as a submodule</li>
+<li>Write some C code that loads mruby and executes some Ruby code</li>
+<li>Compile the C code &amp; run the resulting binary</li>
+</ul>
+
+
+<p>You can find an example similar to this one <a href="https://github.com/rmosolgo/mruby-examples/tree/master/01_hello_world">on GitHub</a>.</p>
+
+<h2>Start a project</h2>
+
+<p>Make a directory for your new project and enter it:</p>
+
+<p><code>
+$ mkdir ~/hello-mruby
+$ cd ~/hello-mruby
+</code></p>
+
+<p>Clone mruby source and compile mruby:</p>
+
+<p><code>
+$ git clone git@github.com:mruby/mruby.git
+$ cd mruby
+$ make
+$ cd ..
+</code></p>
+
+<p>(You need bison and Ruby to compile mruby, see the <a href="https://github.com/mruby/mruby/blob/master/INSTALL">install guide</a> for more information.)</p>
+
+<p>You can check if compilation was successful by running <code>mirb</code> (interactive mruby):</p>
+
+<p>```
+$ mruby/bin/mirb
+mirb &ndash; Embeddable Interactive Ruby Shell</p>
+
+<blockquote><p>1 + 1
+ => 2
+```</p></blockquote>
+
+<h2>Write the program</h2>
+
+<p>Here&rsquo;s the whole of <code>hello_world.c</code>:</p>
+
+<p>```c
+/<em> include mruby VM &amp; compiler </em>/</p>
+
+<h1>include &ldquo;mruby.h&rdquo;</h1>
+
+<h1>include &ldquo;mruby/compile.h&rdquo;</h1>
+
+<p>int main(void)
+{
+  /<em> make a mruby instance </em>/
+  mrb_state *mrb = mrb_open();</p>
+
+<p>  /<em> write some code </em>/
+  char code[] = &ldquo;p &lsquo;Hello world!&rsquo;&rdquo;;</p>
+
+<p>  /<em> use mruby to execute code from string </em>/
+  mrb_load_string(mrb, code);</p>
+
+<p>  return 0;
+}
+```</p>
+
+<p>Let&rsquo;s break that down:</p>
+
+<ul>
+<li><p><strong>Include mruby &amp; compiler</strong>. The mruby VM takes bytecode instructions. The compiler is used to turn a string of Ruby code into mruby bytecode. <code>mrb_load_string</code> handles both steps: Parse &amp; compile Ruby code, then execute with the mruby VM.</p></li>
+<li><p><strong>Make a mruby instance</strong>. Create an instance of the mruby VM. This object contains the state of the Ruby evnironment. Besides using it to execute code, you can inject values into the Ruby environment or call Ruby code from C.</p></li>
+<li><p><strong>Use mruby to execute code from string</strong>. As described above, in this case, the string will be turned into VM instructions first, then executed by mruby.</p></li>
+</ul>
+
+
+<h2>Compile &amp; run</h2>
+
+<p>Compile your C application, referencing the necessary mruby files:</p>
+
+<p><code>
+$ gcc hello_world.c -o hello_world -Imruby/include  -lmruby  -Lmruby/build/host/lib
+</code></p>
+
+<p>Then, execute the resulting binary:</p>
+
+<p><code>
+$ ./hello_world
+"Hello world!"
+</code></p>
+
+<p>You did it!</p>
+
+<h2>What next?</h2>
+
+<ul>
+<li>Use <code>mrbc</code> to precompile <code>.rb</code> into mruby bytecode.</li>
+<li>Modify <code>mrb_state</code> from C with things like <code>mrb_define_class</code>, <code>mrb_define_method</code> and <code>mrb_define_const</code>.</li>
+<li>Call Ruby methods from C with <code>mrb_funcall</code>.</li>
+</ul>
+
+
+<p>However, I don&rsquo;t know of any English documentation for these things yet!</p>
+]]></content>
+  </entry>
+  
+</feed>

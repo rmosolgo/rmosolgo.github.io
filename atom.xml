@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-09-20T21:40:24-07:00</updated>
+  <updated>2014-11-15T22:04:21-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,148 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA["Hello World" with mruby]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby/"/>
+    <updated>2014-11-15T19:38:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby</id>
+    <content type="html"><![CDATA[<p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
+
+<!-- more -->
+
+
+<p>&ldquo;Hello World&rdquo; with mruby looks like this:</p>
+
+<ul>
+<li>Set up a new project and include mruby as a submodule</li>
+<li>Write some C code that loads mruby and executes some Ruby code</li>
+<li>Compile the C code &amp; run the resulting binary</li>
+</ul>
+
+
+<p>You can find an example similar to this one <a href="https://github.com/rmosolgo/mruby-examples/tree/master/01_hello_world">on GitHub</a>.</p>
+
+<h2>Start a project</h2>
+
+<p>Make a directory for your new project and enter it:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mkdir ~/hello-mruby
+</span><span class='line'>$ cd ~/hello-mruby</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Clone mruby source and compile mruby:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ git clone git@github.com:mruby/mruby.git
+</span><span class='line'>$ cd mruby
+</span><span class='line'>$ make
+</span><span class='line'>$ cd ..</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(You need bison and Ruby to compile mruby, see the <a href="https://github.com/mruby/mruby/blob/master/INSTALL">install guide</a> for more information.)</p>
+
+<p>You can check if compilation was successful by running <code>mirb</code> (interactive mruby):</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mruby/bin/mirb
+</span><span class='line'>mirb - Embeddable Interactive Ruby Shell
+</span><span class='line'>
+</span><span class='line'>&gt; 1 + 1
+</span><span class='line'> =&gt; 2</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Write the program</h2>
+
+<p>Here&rsquo;s the whole of <code>hello_world.c</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/* include mruby VM &amp; compiler */</span>
+</span><span class='line'><span class="cp">#include &quot;mruby.h&quot;</span>
+</span><span class='line'><span class="cp">#include &quot;mruby/compile.h&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="cm">/* make a mruby instance */</span>
+</span><span class='line'>  <span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span> <span class="o">=</span> <span class="n">mrb_open</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* write some code */</span>
+</span><span class='line'>  <span class="kt">char</span> <span class="n">code</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;p &#39;Hello world!&#39;&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* use mruby to execute code from string */</span>
+</span><span class='line'>  <span class="n">mrb_load_string</span><span class="p">(</span><span class="n">mrb</span><span class="p">,</span> <span class="n">code</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s break that down:</p>
+
+<ul>
+<li><p><strong>Include mruby &amp; compiler</strong>. The mruby VM takes bytecode instructions. The compiler is used to turn a string of Ruby code into mruby bytecode. <code>mrb_load_string</code> handles both steps: Parse &amp; compile Ruby code, then execute with the mruby VM.</p></li>
+<li><p><strong>Make a mruby instance</strong>. Create an instance of the mruby VM. This object contains the state of the Ruby evnironment. Besides using it to execute code, you can inject values into the Ruby environment or call Ruby code from C.</p></li>
+<li><p><strong>Use mruby to execute code from string</strong>. As described above, in this case, the string will be turned into VM instructions first, then executed by mruby.</p></li>
+</ul>
+
+
+<h2>Compile &amp; run</h2>
+
+<p>Compile your C application, referencing the necessary mruby files:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="err">$</span> <span class="n">gcc</span> <span class="n">hello_world</span><span class="p">.</span><span class="n">c</span> <span class="o">-</span><span class="n">o</span> <span class="n">hello_world</span> <span class="o">-</span><span class="n">Imruby</span><span class="o">/</span><span class="n">include</span>  <span class="o">-</span><span class="n">lmruby</span>  <span class="o">-</span><span class="n">Lmruby</span><span class="o">/</span><span class="n">build</span><span class="o">/</span><span class="n">host</span><span class="o">/</span><span class="n">lib</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, execute the resulting binary:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">hello_world</span>
+</span><span class='line'><span class="s">&quot;Hello world!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You did it!</p>
+
+<h2>What next?</h2>
+
+<ul>
+<li>Use <code>mrbc</code> to precompile <code>.rb</code> into mruby bytecode.</li>
+<li>Modify <code>mrb_state</code> from C with things like <code>mrb_define_class</code>, <code>mrb_define_method</code> and <code>mrb_define_const</code>.</li>
+<li>Call Ruby methods from C with <code>mrb_funcall</code>.</li>
+</ul>
+
+
+<p>However, I don&rsquo;t know of any English documentation for these things yet!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Why (I Think) We're Leaving Batman.js]]></title>
@@ -3852,75 +3994,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p>Also, there are a few batman.js goodies for Rails devs: the <code>batman.rails</code> CoffeeScript extra and the <code>batman-rails</code> Ruby gem.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Prevent and allowAndFire for asynchronous operations on a Batman.Set]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/04/07/prevent-and-allowandfire-for-asynchronous-operations-on-a-batman-dot-set/"/>
-    <updated>2014-04-07T18:12:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/04/07/prevent-and-allowandfire-for-asynchronous-operations-on-a-batman-dot-set</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a>&rsquo;s <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_prevent"><code>prevent</code></a> and <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_allowandfire"><code>allowAndFire</code></a> make it easy to fire a callback when you&rsquo;re finished working on the members of a <a href="http://batmanjs.org/docs/api/batman.set.html">Batman.Set</a>.</p>
-
-<!-- more -->
-
-
-<h1>The Problem</h1>
-
-<p>Let&rsquo;s say you have <code>Batman.Set</code> (or <code>Batman.AssociationSet</code>, or even a plain JS array) whose members are <code>Batman.Model</code> instances. You have a <code>saveAll</code> function that saves all the members:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">ThingsController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
-</span><span class='line'>  <span class="nv">saveAll: </span><span class="nf">(setOfRecords) -&gt;</span>
-</span><span class='line'>    <span class="nx">setOfRecords</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(record) -&gt;</span> <span class="nx">record</span><span class="p">.</span><span class="nx">save</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But what if you wanted to call a <code>callback</code> when the whole operation was finished?</p>
-
-<h1>The Solution</h1>
-
-<ul>
-<li>Set up a listener on the <code>"finished"</code> event. Use <a href="http://batmanjs.org/docs/api/batman.eventemitter.html#prototype_function_once"><code>once</code></a> to avoid observer bloat.</li>
-<li>Before each save operation, <code>prevent "finished"</code></li>
-<li>When each one finishes, <code>allowAndFire "finished"</code>.</li>
-</ul>
-
-
-<p>That way, it will get prevented <em>n</em> times &mdash; once for each item in the set &mdash; and it will finally be fired when the last operation is finished.</p>
-
-<p>Here it is, all together:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">ThingsController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
-</span><span class='line'>  <span class="nv">saveAll: </span><span class="nf">(setOfRecords, callback) -&gt;</span>
-</span><span class='line'>    <span class="c1"># observer:</span>
-</span><span class='line'>    <span class="nx">@once</span> <span class="s">&#39;finished&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>      <span class="nx">callback</span><span class="p">()</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="nx">setOfRecords</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(record) =&gt;</span> <span class="c1"># mind the fat arrows!</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="nx">@prevent</span><span class="p">(</span><span class="s">&#39;finished&#39;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>      <span class="nx">record</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) =&gt;</span>
-</span><span class='line'>        <span class="nx">@allowAndFire</span><span class="p">(</span><span class="s">&#39;finished&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Note</strong>: <code>@prevent</code> and <code>@allowAndFire</code> are provided by <a href="http://batmanjs.org/docs/api/batman.eventemitter.html"><code>Batman.EventEmitter</code></a>, so it will only work with objects which have that mixin. Don&rsquo;t worry &mdash; every object in batman.js is an event emitter! But plain JS objects are not.</p>
 ]]></content>
   </entry>
   
