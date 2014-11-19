@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-11-18T22:45:07-08:00</updated>
+  <updated>2014-11-18T22:52:57-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -104,7 +104,7 @@ class Funzies.SessionsController extends Funzies.ApplicationController
 
 <p>It turned out looking like this:</p>
 
-<p><img src="/images/sign_in_form.png" width="500"> <img src="/images/sign_up_form.png" width="500"></p>
+<p>{% img /images/sign_in_form.png 500 %} {% img /images/sign_up_form.png 500 %}</p>
 
 <p>Here&rsquo;s the handler for submitting that form. Notice that it handles <em>creating an account</em> and <em>signing up</em>. This might have been stupid of me.</p>
 
