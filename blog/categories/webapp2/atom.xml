@@ -4,7 +4,7 @@
   <title><![CDATA[Category: WebApp2 | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/webapp2/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-11-21T07:39:08-08:00</updated>
+  <updated>2014-11-21T09:40:37-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -25,89 +25,54 @@
 
 <p>The given object could only have one image, so I was using the <a href="https://developers.google.com/appengine/docs/python/ndb/properties">NDB BlobProperty</a>:</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Sensor</span><span class="p">(</span><span class="n">ndb</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="n">ndb</span><span class="o">.</span><span class="n">BlobProperty</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:python %}
+class Sensor(ndb.Model):
+  image = ndb.BlobProperty()
+{% endcodeblock %}</p>
 
 <p>I put the default image in my application root (alongside <code>app.yaml</code>):</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">app_root</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="l-Scalar-Plain">request_handlers:&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;pre&gt;&lt;code&gt;- __init__.py</span>
-</span><span class='line'><span class="p-Indicator">-</span> <span class="l-Scalar-Plain">handlers.py</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;/code&gt;&lt;/pre&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;ul&gt;</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;app.yaml&lt;/li&gt;</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;default_sensor.jpg</span>
-</span><span class='line'><span class="nl">&amp;hellip</span><span class="l-Scalar-Plain">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></li>
+<p>{% codeblock lang:yaml %}
+app_root:
+  request_handlers:</p>
+
+<pre><code>- __init__.py
+- handlers.py
+</code></pre>
+
+<ul>
+<li>app.yaml</li>
+<li>default_sensor.jpg
+&hellip;
+{% endcodeblock %}</li>
 </ul>
 
 
 <p>In my request handler, I checked for the presence of an image, and gave the default image if there wasn&rsquo;t one there:</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">responds</span> <span class="n">to</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="p">(</span>\<span class="n">w</span><span class="o">+</span><span class="p">)</span><span class="o">/</span><span class="n">image</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">class</span> <span class="nc">SensorImage</span><span class="p">(</span><span class="n">webapp2</span><span class="o">.</span><span class="n">RequestHandler</span><span class="p">):</span>
-</span><span class='line'>  <span class="n">DEFAULT_IMAGE</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">default_sensor</span><span class="o">.</span><span class="n">jpg</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">hex</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span>
-</span><span class='line'><span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;image/jpg&quot;</span>
-</span><span class='line'><span class="n">this_sensor</span> <span class="o">=</span> <span class="n">Sensor</span><span class="o">.</span><span class="n">find_by_hex</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span><span class="p">):</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">SensorImage</span><span class="o">.</span><span class="n">DEFAULT_IMAGE</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">image</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="p">)</span>
-</span><span class='line'>  <span class="n">image</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">else</span><span class="p">:</span>
-</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span> <span class="p">)</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:python %}</p>
+
+<h1>responds to &ldquo;/sensors/(\w+)/image&rdquo;</h1>
+
+<p>class SensorImage(webapp2.RequestHandler):
+  DEFAULT_IMAGE = &lsquo;default_sensor.jpg&rsquo;
+  def get(self, hex):</p>
+
+<pre><code>r = self.response
+r.headers['Content-Type'] = "image/jpg"
+this_sensor = Sensor.find_by_hex(hex)
+
+if (not this_sensor) or (not this_sensor.image):
+
+  image = open(SensorImage.DEFAULT_IMAGE, 'rb')
+  r.body_file.write( image.read() )
+  image.close()
+
+else:
+  r.body_file.write( this_sensor.image )
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <p>That way, I had one URL that didn&rsquo;t change whether a user uploaded an image or not.</p>
 ]]></content>
@@ -123,87 +88,53 @@
 <!-- more -->
 
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Sensor</span><span class="p">(</span><span class="n">ndb</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="n">ndb</span><span class="o">.</span><span class="n">BlobProperty</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:python %}
+class Sensor(ndb.Model):
+  image = ndb.BlobProperty()
+{% endcodeblock %}</p>
 
 <p>I put the default image in my application root (alongside <code>app.yaml</code>):</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="l-Scalar-Plain">app_root</span><span class="p-Indicator">:</span>
-</span><span class='line'>  <span class="l-Scalar-Plain">request_handlers:&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;pre&gt;&lt;code&gt;- __init__.py</span>
-</span><span class='line'><span class="p-Indicator">-</span> <span class="l-Scalar-Plain">handlers.py</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;/code&gt;&lt;/pre&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;ul&gt;</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;app.yaml&lt;/li&gt;</span>
-</span><span class='line'><span class="l-Scalar-Plain">&lt;li&gt;default_sensor.jpg</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></li>
+<p>{% codeblock lang:yaml %}
+app_root:
+  request_handlers:</p>
+
+<pre><code>- __init__.py
+- handlers.py
+</code></pre>
+
+<ul>
+<li>app.yaml</li>
+<li>default_sensor.jpg
+{% endcodeblock %}</li>
 </ul>
 
 
 <p>In my request handler, I checked for the presence of an image, and gave the default image if there wasn&rsquo;t one there:</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">responds</span> <span class="n">to</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">/</span><span class="n">sensors</span><span class="o">/</span><span class="p">(</span>\<span class="n">w</span><span class="o">+</span><span class="p">)</span><span class="o">/</span><span class="n">image</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">class</span> <span class="nc">SensorImage</span><span class="p">(</span><span class="n">webapp2</span><span class="o">.</span><span class="n">RequestHandler</span><span class="p">):</span>
-</span><span class='line'>  <span class="n">DEFAULT_IMAGE</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">default_sensor</span><span class="o">.</span><span class="n">jpg</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">hex</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span>
-</span><span class='line'><span class="n">r</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;image/jpg&quot;</span>
-</span><span class='line'><span class="n">this_sensor</span> <span class="o">=</span> <span class="n">Sensor</span><span class="o">.</span><span class="n">find_by_hex</span><span class="p">(</span><span class="nb">hex</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span><span class="p">):</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">image</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">SensorImage</span><span class="o">.</span><span class="n">DEFAULT_IMAGE</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
-</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">image</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="p">)</span>
-</span><span class='line'>  <span class="n">image</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">else</span><span class="p">:</span>
-</span><span class='line'>  <span class="n">r</span><span class="o">.</span><span class="n">body_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span> <span class="n">this_sensor</span><span class="o">.</span><span class="n">image</span> <span class="p">)</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>{% codeblock lang:python %}</p>
+
+<h1>responds to &ldquo;/sensors/(\w+)/image&rdquo;</h1>
+
+<p>class SensorImage(webapp2.RequestHandler):
+  DEFAULT_IMAGE = &lsquo;default_sensor.jpg&rsquo;
+  def get(self, hex):</p>
+
+<pre><code>r = self.response
+r.headers['Content-Type'] = "image/jpg"
+this_sensor = Sensor.find_by_hex(hex)
+
+if (not this_sensor) or (not this_sensor.image):
+
+  image = open(SensorImage.DEFAULT_IMAGE, 'rb')
+  r.body_file.write( image.read() )
+  image.close()
+
+else:
+  r.body_file.write( this_sensor.image )
+</code></pre>
+
+<p>{% endcodeblock %}</p>
 
 <p>That way, I had one URL that didn&rsquo;t change whether a user uploaded an image or not.</p>
 ]]></content>

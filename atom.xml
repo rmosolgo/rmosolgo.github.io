@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-11-21T07:39:08-08:00</updated>
+  <updated>2014-11-21T09:39:40-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,159 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Defining mruby Methods with C]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c/"/>
+    <updated>2014-11-21T10:25:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c</id>
+    <content type="html"><![CDATA[<p>You can use C code to prepare methods for <a href="http://www.mruby.org">mruby</a> scripts.</p>
+
+<!-- more -->
+
+
+<p>The steps are:</p>
+
+<ul>
+<li>Defining a method</li>
+<li>Getting argument values</li>
+<li>Adding the method to the <code>mrb_state</code></li>
+</ul>
+
+
+<h2>Defining a Method</h2>
+
+<p>To define a Ruby function, make a C function that:</p>
+
+<ul>
+<li>accepts two arguments, a <code>mrb_state</code> and a <code>mrb_value</code></li>
+<li>returns a <code>mrb_value</code>.</li>
+</ul>
+
+
+<p>Here&rsquo;s a minimal method definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">mrb_value</span>
+</span><span class='line'><span class="nf">ruby_method</span><span class="p">(</span><span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span><span class="p">,</span> <span class="n">mrb_value</span> <span class="n">self</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">mrb_nil_value</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The <strong>arguments</strong> are:</p>
+
+<ol>
+<li><code>mrb_state</code>, the current mruby VM instance</li>
+<li><code>mrb_value</code>, the current <code>self</code> (caller of this method)</li>
+</ol>
+
+
+<p>Notice that you don&rsquo;t define the Ruby arguments here. You&rsquo;ll handle those later by getting them from the <code>mrb_state</code>.</p>
+
+<p>The <strong>return type</strong> must be <code>mrb_value</code>. If it&rsquo;s not, your program will crash (<code>Segmentation Fault</code> :( ) when the return value is accessed (no compile-time error). If your method shouldn&rsquo;t return anything, use <code>return mrb_nil_value();</code></p>
+
+<p>mruby implements a lot of the built-in classes&#8217; instance methods this way, for example: <code>String#capitalize!</code>(<a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L855">src</a>).</p>
+
+<h2>Getting Arguments</h2>
+
+<p>You might have noticed that your C function definition <em>didn&rsquo;t</em> define any arguments. Instead, you get your arguments by extracting them from <code>mrb_state</code>.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">mrb_value</span>
+</span><span class='line'><span class="nf">ruby_method</span><span class="p">(</span><span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span><span class="p">,</span> <span class="n">mrb_value</span> <span class="n">self</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// Initialize a variable</span>
+</span><span class='line'>  <span class="n">mrb_int</span> <span class="n">some_integer</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// Extract a value</span>
+</span><span class='line'>  <span class="n">mrb_get_args</span><span class="p">(</span><span class="n">mrb</span><span class="p">,</span> <span class="s">&quot;i&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mrb_int</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="n">mrb_nil_value</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>mrb_get_args</code> takes a string whose letters say what kind of arguments and how many arguments to extract. The <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/src/class.c#L437"><code>mrb_get_args</code> source</a> documents the different possibilities.</p>
+
+<p>Notably, anything after a <code>|</code> is <strong>optional</strong>.</p>
+
+<p>For a <strong>default value</strong>, assign a value to the variable and make the argument optional. In this example, <code>inherit</code> defaults to <code>TRUE</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'>  <span class="n">mrb_bool</span> <span class="n">inherit</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">mrb_get_args</span><span class="p">(</span><span class="n">mrb</span><span class="p">,</span> <span class="s">&quot;|b&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">inherit</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&rsquo;s from <a href="https://github.com/mruby/mruby/blob/b28ec1bc88d29d8e7205401a6e323f20581d642f/src/variable.c#L988">C implementation of <code>Module#constants</code></a>. Another nice example is <a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L831">the <code>String#[]</code> source</a>.</p>
+
+<h2>Adding Methods to mruby State</h2>
+
+<p>To add a method to the mruby state, you must attach it to some object. To make a method global, you can define it on <code>Object</code>. Let&rsquo;s do that.</p>
+
+<p>We&rsquo;ll use <code>mrb_define_method</code>, which accepts five arguments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">mrb_define_method</span><span class="p">(</span><span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span><span class="p">,</span> <span class="k">struct</span> <span class="n">RClass</span> <span class="o">*</span><span class="n">c</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">,</span> <span class="n">mrb_func_t</span> <span class="n">func</span><span class="p">,</span> <span class="n">mrb_aspec</span> <span class="n">aspec</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>mrb_state *mrb</code>: the open mruby VM instance</li>
+<li><code>struct RClass *c</code>: the mruby class to attach the method to</li>
+<li><code>const char *name</code>: the Ruby name for this method</li>
+<li><code>mrb_func_t func</code>: the C function to execute for this Ruby method</li>
+<li><code>mrb_aspec aspec</code>: the number &amp; types of arguments for this method</li>
+</ul>
+
+
+<p>In fact, <strong>specifying arguments</strong> is not currently used (<a href="https://github.com/mruby/mruby/issues/791">github issue</a>). To pass some value here, you can use some <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/include/mruby.h#L232-L251">convenient macros from <code>mruby.h</code></a>.</p>
+
+<p>So, let&rsquo;s add a global method, <code>greet!</code>. Here&rsquo;s the method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="n">mrb_value</span>
+</span><span class='line'><span class="nf">mrb_greet</span><span class="p">(</span><span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span><span class="p">,</span> <span class="n">mrb_value</span> <span class="n">self</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello, mruby!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">mrb_nil_value</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, attach it to <code>Object</code>, which will make it global:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">mrb_define_method</span><span class="p">(</span><span class="n">mrb</span><span class="p">,</span> <span class="n">mrb</span><span class="o">-&gt;</span><span class="n">object_class</span><span class="p">,</span> <span class="s">&quot;greet!&quot;</span><span class="p">,</span> <span class="n">mrb_greet</span><span class="p">,</span> <span class="n">MRB_ARGS_NONE</span><span class="p">());</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, you can run in your Ruby script:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">greet!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Response to "Why Kids Sext"]]></title>
@@ -4064,24 +4217,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p>Since every limb will be visited during evaluation, every limb will be added as a source. Whenever one of the <code>limb.fruits.length</code> changes, the property will be reevaluated.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Introducing the Batman.js MVC Cookbook]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/04/19/introducing-the-batman-dot-js-mvc-cookbook/"/>
-    <updated>2014-04-19T13:47:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/04/19/introducing-the-batman-dot-js-mvc-cookbook</id>
-    <content type="html"><![CDATA[<p>The <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">&ldquo;Batman.js MVC Cookbook&rdquo;</a> is a collection of annotated code snippets for getting things done with <a href="http://batmanjs.org">batman.js</a>.</p>
-
-<!-- more -->
-
-
-<p>When I heard that Michael Hartl (of <a href="http://railstutorial.com">Rails Tutorial</a> fame) was releasing a web publishing platform, I was itching to try it out. I thought a glorified FAQ would be a great way to get the feel for it, and the result is now online as the <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">&ldquo;Batman.js MVC Cookbook&rdquo;</a>.</p>
-
-<p>The &ldquo;book&rdquo; is really just a collection of common patterns and best practices in batman.js applications, taken from my own experience. I hope that others will contribute by adding &ldquo;recipes&rdquo; or requesting new ones, so I put the book&rsquo;s <a href="https://github.com/rmosolgo/batmanjs-mvc-cookbook">source code on Github</a>.</p>
-
-<p>It&rsquo;s not quite a batman.js tutorial, although I&rsquo;m really enjoying Softcover, so maybe I&rsquo;ll get one up there soon. It would be a good opportunity to take the <a href="https://github.com/rmosolgo/batfire">batman.js Firebase bindings</a> for a spin, too!</p>
 ]]></content>
   </entry>
   
