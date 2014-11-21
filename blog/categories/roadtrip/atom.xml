@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Roadtrip | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/roadtrip/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-11-18T22:52:57-08:00</updated>
+  <updated>2014-11-21T07:39:08-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -36,7 +36,7 @@
 </ul>
 
 
-<p>{% img /images/roadtrip_mountains_1.jpg 300 300 %}</p>
+<p><img src="/images/roadtrip_mountains_1.jpg" width="300" height="300"></p>
 
 <ul>
 <li><em>1 hour passes&hellip;</em></li>
@@ -44,7 +44,7 @@
 </ul>
 
 
-<p>{% img /images/roadtrip_mountains_2.jpg 300 300 %}</p>
+<p><img src="/images/roadtrip_mountains_2.jpg" width="300" height="300"></p>
 
 <ul>
 <li><em>30 minutes pass&hellip;</em></li>
@@ -52,7 +52,7 @@
 </ul>
 
 
-<p>{% img /images/roadtrip_mountains_3.jpg 300 300 %}</p>
+<p><img src="/images/roadtrip_mountains_3.jpg" width="300" height="300"></p>
 
 <ul>
 <li><em>30 minutes pass&hellip;</em></li>
@@ -60,7 +60,7 @@
 </ul>
 
 
-<p>{% img /images/roadtrip_mountains_1.jpg 300 300 %}</p>
+<p><img src="/images/roadtrip_mountains_1.jpg" width="300" height="300"></p>
 
 <ul>
 <li><em>You can guess where this is going!</em></li>
@@ -69,34 +69,34 @@
 
 <p>Actually, there were several of such basins which were very interesting:</p>
 
-<p>{% img /images/roadtrip_new_mexico_winds_1.jpg 500 500 %}
-{% img /images/roadtrip_new_mexico_winds_2.jpg 500 500 %}
-{% img /images/roadtrip_new_mexico_winds_3.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_new_mexico_winds_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_new_mexico_winds_2.jpg" width="500" height="500">
+<img src="/images/roadtrip_new_mexico_winds_3.jpg" width="500" height="500"></p>
 
 <p>Somewhere in west Texas, we saw this strange blimp:</p>
 
-<p>{% img /images/roadtrip_texas_blimp_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_blimp_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_blimp_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_blimp_2.jpg" width="500" height="500"></p>
 
 <p>Turns out, it&rsquo;s an <a href="http://www.krgv.com/news/west-texas-based-air-force-radar-blimp-crashes">unmanned craft that looks for drug planes</a>.</p>
 
 <p>Anyways, lots of Texas, followed by a little New Mexico,</p>
 
-<p>{% img /images/roadtrip_new_mexico_welcome.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_new_mexico_welcome.jpg" width="500" height="500"></p>
 
 <p>and then a little Arizona.</p>
 
-<p>{% img /images/roadtrip_arizona_welcome.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_arizona_welcome.jpg" width="500" height="500"></p>
 
 <p>Interestingly, we found NM and AZ to be much greener than TX &mdash; lots of irrigated fields. Night fell in Arizona:</p>
 
-<p>{% img /images/roadtrip_arizona_sunset_1.jpg 500 500 %}
-{% img /images/roadtrip_arizona_sunset_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_arizona_sunset_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_arizona_sunset_2.jpg" width="500" height="500"></p>
 
 <p>We didn&rsquo;t have a hotel reservation, but Valerie found a great spot along the way:</p>
 
-<p>{% img /images/roadtrip_arizona_sa_1.jpg 500 500 %}
-{% img /images/roadtrip_arizona_sa_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_arizona_sa_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_arizona_sa_2.jpg" width="500" height="500"></p>
 
 <p>The <strong>Space Age Lodge</strong>. It&rsquo;s a Best Western whose first owners were supporters of NASA in its early days. The motel is decorated accordingly, with lots of space-y photos and art.</p>
 
@@ -106,16 +106,16 @@
 
 <p>We woke up early &mdash; we were both eager to get to our new home. Along the way, we learned that there are mountains in southeastern CA:</p>
 
-<p>{% img /images/roadtrip_california_mountains_1.jpg 500 500 %}
-{% img /images/roadtrip_california_mountains_2.jpg 500 500 %}
-{% img /images/roadtrip_california_mountains_3.jpg 500 500 %}
-{% img /images/roadtrip_california_mountains_4.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_california_mountains_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_california_mountains_2.jpg" width="500" height="500">
+<img src="/images/roadtrip_california_mountains_3.jpg" width="500" height="500">
+<img src="/images/roadtrip_california_mountains_4.jpg" width="500" height="500"></p>
 
 <p>We were tired when we got here. Luckily, our belongings arrived the next day &mdash; we were rested up and excited to move in. We worked quickly &mdash; here are a few pictures of the new place during the process:</p>
 
-<p>{%img /images/roadtrip_california_apt_2.jpg 500 500 %}
-{%img /images/roadtrip_california_apt_3.jpg 500 500 %}
-{%img /images/roadtrip_california_apt_4.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_california_apt_2.jpg" width="500" height="500">
+<img src="/images/roadtrip_california_apt_3.jpg" width="500" height="500">
+<img src="/images/roadtrip_california_apt_4.jpg" width="500" height="500"></p>
 
 <p><em>The weather here is always amazing, so we eat on the porch!</em></p>
 
@@ -144,7 +144,7 @@
 <li>The front door is usually locked, but if a visitor needs to be let in, the door can be unlocked via chat room (&ldquo;<code>pico open door</code>&rdquo;).</li>
 <li><code>PiCO</code> adds flavor to conversation. For example, today was someone&rsquo;s anniversary, so someone said <code>pico gif me happy anniversary</code> and <code>PiCO</code> returned this image:
 <br>
-{% img /images/roadtrip_california_ha.gif 300 300 %}
+<img src="/images/roadtrip_california_ha.gif" width="300" height="300">
 <br>
 Awesome!</li>
 <li>Oh, yeah, and <code>PiCO</code> is hooked up to the web servers and bug trackers, so he can issue reminders and announcements about those :)</li>
@@ -181,47 +181,47 @@ Awesome!</li>
 
 <p>We started our day with a donut from <a href="http://gourdoughs.com">Gourdough&rsquo;s</a> (pronounced like &ldquo;Gordo&rsquo;s&rdquo;). It&rsquo;s a famous food truck in Austin. For some reason, Austin has loads of stationary RVs which have been converted to kitchens and serve customers through a window. Anyways, I had the <a href="http://www.gourdoughs.com/doughnuts/flying-pig/">Flying Pig</a> and Valerie had the <a href="http://www.gourdoughs.com/doughnuts/miss-shortcake/">Miss Shortcake</a>:</p>
 
-<p>{% img /images/roadtrip_texas_gourdoughs_1.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_gourdoughs_1.jpg" width="500" height="500"></p>
 
 <p>After facing the likes of those, we were quite satisfied (/sick?), which prepared us well for our next stop. Whole Foods started in Austin and they still maintain their &ldquo;Flagship Store&rdquo;:</p>
 
-<p>{% img /images/roadtrip_texas_wf_front.jpg 500 500 %}
-{% img /images/roadtrip_texas_wf_cookies.jpg 500 500 %}
-{% img /images/roadtrip_texas_wf_chocolate.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_wf_front.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_wf_cookies.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_wf_chocolate.jpg" width="500" height="500"></p>
 
 <p><em>(You might notice <a href="http://en.wikipedia.org/wiki/Stroopwafel">stroopwafels</a> on the cookie bar!)</em></p>
 
 <p>We wandered through and ate samples, mostly :) Then, we visited 6th Street, which is the heart of Austin&rsquo;s nightlife. It was quite slow in the early afternoon, so we moved on to <a href="http://en.wikipedia.org/wiki/Barton_Springs_Pool">Barton Springs Pool</a>. We had a blast, and the pictures speak for themselves:</p>
 
-<p>{% img /images/roadtrip_texas_pool_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_pool_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_pool_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_pool_2.jpg" width="500" height="500"></p>
 
 <p>As you can see, it&rsquo;s a pool fed by a natural spring. As you can&rsquo;t see, it was incredibly cold. I guess we &ldquo;got used to it.&rdquo; It felt good to get out, then get in, then get out, then get in&hellip;</p>
 
 <p>Parts of the pool floor are covered in underwater grasses. Interestingly, some of the grasses were in bloom:</p>
 
-<p>{% img /images/roadtrip_texas_pool_flower.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_pool_flower.jpg" width="500" height="500"></p>
 
 <p>Valerie raised a good question: &ldquo;Normally, plants make flowers so bugs can <del>pollenate</del> pollinate them. Why would an underwater plant bloom?&rdquo; I dont know!</p>
 
 <p>In the afternoon, we spent time along Austin&rsquo;s South Congress Avenue. We visited some (dangerously hip) thrift stores:</p>
 
-<p>{% img /images/roadtrip_texas_thrift_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_thrift_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_thrift_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_thrift_2.jpg" width="500" height="500"></p>
 
 <p>&hellip;Had a drink at the <a href="https://www.sanjosehotel.com/">Hotel San Jos&eacute;</a>:</p>
 
-<p>{% img /images/roadtrip_texas_hsj_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_hsj_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_hsj_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_hsj_2.jpg" width="500" height="500"></p>
 
 <p>&hellip;And then had dinner at <a href="http://www.luckyrobotrestaurant.com/">Lucky Robot</a>. We loved Lucky Robot &mdash; good food, friendly staff and very cool decor:</p>
 
-<p>{% img /images/roadtrip_texas_lr_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_lr_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_lr_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_lr_2.jpg" width="500" height="500"></p>
 
 <h3>TL;DR:</h3>
 
-<p>{% img /images/roadtrip_texas_austin_sign.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_austin_sign.jpg" width="500" height="500"></p>
 
 <h1>August 13</h1>
 
@@ -240,21 +240,21 @@ Awesome!</li>
 
 <p>Some pictures for you:</p>
 
-<p>{% img /images/roadtrip_texas_west_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_west_2.jpg 500 500 %}
-{% img /images/roadtrip_texas_west_3.jpg 500 500 %}
-{% img /images/roadtrip_texas_west_4.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_west_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_west_2.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_west_3.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_west_4.jpg" width="500" height="500"></p>
 
 <h2>Marfa, TX</h2>
 
 <p>The main appeal of Marfa, TX (at least, for us) was <a href="http://elcosmico.com/">El Cosmico</a>, a hip(pie) hotel which offers many distinctive lodgings.</p>
 
-<p>{% img /images/roadtrip_texas_ec.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_ec.jpg" width="500" height="500"></p>
 
 <p>It&rsquo;s the kind of place that forgoes bar soap, shampoo and conditioner in favor of a single bottle of <a href="http://www.drbronner.com/pdf/drbronner_32oz_Pep.pdf">Dr. Bronner&rsquo;s Peppermint Soap</a>. Our accomodation was the <a href="http://elcosmico.com/stay/shelter/trailers/vagabond">Vagabond</a>:</p>
 
-<p>{% img /images/roadtrip_texas_vagabond_1.jpg 500 500 %}
-{% img /images/roadtrip_texas_vagabond_2.jpg 500 500 %}</p>
+<p><img src="/images/roadtrip_texas_vagabond_1.jpg" width="500" height="500">
+<img src="/images/roadtrip_texas_vagabond_2.jpg" width="500" height="500"></p>
 
 <p>We had dinner in Marfa, strolled the (quiet) streets of town, and enjoyed the hammocks and reading room at El Cosmico. At last, we settled in to the Vagabond for the night. Although it wasn&rsquo;t air conditioned, we were quite comfortable because the desert gets very cold at night. We needed blankets!</p>
 
@@ -280,25 +280,25 @@ Awesome!</li>
 
 <p>For the week of August 3-10, we were on vacation with the Wilders in Panama City Beach, FL. We had a great week of vacation before starting to head west. There were seven of us all together: Bill and Nicolien (Valerie&rsquo;s parents, and that&rsquo;s pronounced &ldquo;nick-o-LEEN&rdquo;), John Wilder, Anna Lena Wilder (that&rsquo;s &ldquo;AH-nah LAY-nah&rdquo;) and Moriah Watson (soon to be Moriah Wilder &mdash; she&rsquo;s Tom&rsquo;s fianc&eacute;e!):</p>
 
-<p>{% img /images/roadtrip_florida_group.jpg 500 %}</p>
+<p><img src="/images/roadtrip_florida_group.jpg" width="500"></p>
 
 <h2>Panama City Beach, FL to New Orleans, LA: The Gulf Coast</h2>
 
 <p>Our first destination was New Orleans, LA. It was about a 5-hour drive on I-10, running parallel to the Gulf Coast. On the way out, we (oh, &ldquo;I&rdquo;) had a very minor fender-bender when traffic suddenly stopped. After assessing the damage, the old man whose car I&rsquo;d hit gave us a box of donuts and wished us well for our trip:</p>
 
-<p>{% img /images/roadtrip_florida_donuts.jpg 500 %}</p>
+<p><img src="/images/roadtrip_florida_donuts.jpg" width="500"></p>
 
 <p><em>(He was taking leftover baked goods to his church, where they would be redistributed to the needy. He said they always have too much!)</em></p>
 
 <p>We passed through Florida, Alabama and Mississippi (<em>&ldquo;Em-aye-ess-ess-aye-ess-ess-aye-pee-pee-aye&rdquo;</em>) before entering Louisiana.</p>
 
-<p>{% img /images/roadtrip_alabama_welcome.jpg 500 %}
-{% img /images/roadtrip_mississippi_welcome.jpg 500 %}
-{% img /images/roadtrip_louisiana_welcome.jpg 500 %}</p>
+<p><img src="/images/roadtrip_alabama_welcome.jpg" width="500">
+<img src="/images/roadtrip_mississippi_welcome.jpg" width="500">
+<img src="/images/roadtrip_louisiana_welcome.jpg" width="500"></p>
 
 <p>We only briefly strayed from the interstate. We followed clues to some seafood restaurants (thanks, Valerie :) but found, one by one, that they had been closed. We (um, again, that&rsquo;s the royal &ldquo;we&rdquo;) also got lost and ended up at an oil refinery:</p>
 
-<p>{% img /images/roadtrip_alabama_refinery.jpg 500 %}</p>
+<p><img src="/images/roadtrip_alabama_refinery.jpg" width="500"></p>
 
 <h2>New Orleans, LA</h2>
 
@@ -314,7 +314,7 @@ Awesome!</li>
 
 <p>Before departing, we hoped to get coffee and beignets from Cafe du Monde. I&rsquo;m sure many of you could have predicted what we found:</p>
 
-<p>{% img /images/roadtrip_louisiana_cafe_du_monde.jpg 500 %}</p>
+<p><img src="/images/roadtrip_louisiana_cafe_du_monde.jpg" width="500"></p>
 
 <p>So instead, we got breakfast elsewhere :)</p>
 
@@ -322,28 +322,28 @@ Awesome!</li>
 
 <p>After breakfast, we got back on the road. Actually, before that, we applied Rain-X, which was absolutely amazing:</p>
 
-<p>{% img /images/roadtrip_louisiana_rainx.jpg 500 %}</p>
+<p><img src="/images/roadtrip_louisiana_rainx.jpg" width="500"></p>
 
 <p>I&rsquo;m a convert.</p>
 
 <p>The highway in eastern Louisiana is essentially hundreds of miles of low bridges over swamps, interspersed with periods of dry land. We stopped in central LA for lunch. Valerie kindly searched for a well-reviewed restaurant which served Cajun food. She doesn&rsquo;t care for seafood, but I enjoyed it a lot. I had crayfish etouff&eacute;, which is essentially spicy crafish stew, served over rice.</p>
 
-<p>{% img /images/roadtrip_louisiana_poches.jpg 500 %}</p>
+<p><img src="/images/roadtrip_louisiana_poches.jpg" width="500"></p>
 
 <p>When we entered Texas, we were immediately awakened to the size of the state: the first interstate exit was <em>Exit 880</em>, which means that there are almost 900 miles of I-10 in the state of Texas. Yikes!</p>
 
 <p>The Texas welcome center was probably our favorite so far. It was built on a swamp, but they took advantage of it by creating a wildlife viewing deck:</p>
 
-<p>{% img /images/roadtrip_texas_gator.jpg 500 %}
-{% img /images/roadtrip_texas_wildlife.jpg 500 %}
-{% img /images/roadtrip_texas_snakes.jpg 500 %}</p>
+<p><img src="/images/roadtrip_texas_gator.jpg" width="500">
+<img src="/images/roadtrip_texas_wildlife.jpg" width="500">
+<img src="/images/roadtrip_texas_snakes.jpg" width="500"></p>
 
 <p>Then, we spent four hours driving on flat, straight, high-speed Texas highway:</p>
 
-<p>{% img /images/roadtrip_texas_highway1.jpg 900 %}
-{% img /images/roadtrip_texas_highway2.jpg 900 %}
-{% img /images/roadtrip_texas_highway3.jpg 900 %}
-{% img /images/roadtrip_texas_highway4.jpg 900 %}</p>
+<p><img src="/images/roadtrip_texas_highway1.jpg" width="900">
+<img src="/images/roadtrip_texas_highway2.jpg" width="900">
+<img src="/images/roadtrip_texas_highway3.jpg" width="900">
+<img src="/images/roadtrip_texas_highway4.jpg" width="900"></p>
 
 <p>And at last, we checked into our hotel in Austin, TX.</p>
 
