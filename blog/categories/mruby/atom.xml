@@ -4,7 +4,7 @@
   <title><![CDATA[Category: mruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/mruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2014-11-21T09:40:37-08:00</updated>
+  <updated>2014-11-21T09:40:48-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,134 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Defining mruby Methods with C]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c/"/>
+    <updated>2014-11-21T10:25:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c</id>
+    <content type="html"><![CDATA[<p>You can use C code to prepare methods for <a href="http://www.mruby.org">mruby</a> scripts.</p>
+
+<!-- more -->
+
+
+<p>The steps are:</p>
+
+<ul>
+<li>Defining a method</li>
+<li>Getting argument values</li>
+<li>Adding the method to the <code>mrb_state</code></li>
+</ul>
+
+
+<h2>Defining a Method</h2>
+
+<p>To define a Ruby function, make a C function that:</p>
+
+<ul>
+<li>accepts two arguments, a <code>mrb_state</code> and a <code>mrb_value</code></li>
+<li>returns a <code>mrb_value</code>.</li>
+</ul>
+
+
+<p>Here&rsquo;s a minimal method definition:</p>
+
+<p><code>c
+mrb_value
+ruby_method(mrb_state *mrb, mrb_value self)
+{
+  return mrb_nil_value();
+}
+</code></p>
+
+<p>The <strong>arguments</strong> are:</p>
+
+<ol>
+<li><code>mrb_state</code>, the current mruby VM instance</li>
+<li><code>mrb_value</code>, the current <code>self</code> (caller of this method)</li>
+</ol>
+
+
+<p>Notice that you don&rsquo;t define the Ruby arguments here. You&rsquo;ll handle those later by getting them from the <code>mrb_state</code>.</p>
+
+<p>The <strong>return type</strong> must be <code>mrb_value</code>. If it&rsquo;s not, your program will crash (<code>Segmentation Fault</code> :( ) when the return value is accessed (no compile-time error). If your method shouldn&rsquo;t return anything, use <code>return mrb_nil_value();</code></p>
+
+<p>mruby implements a lot of the built-in classes' instance methods this way, for example: <code>String#capitalize!</code>(<a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L855">src</a>).</p>
+
+<h2>Getting Arguments</h2>
+
+<p>You might have noticed that your C function definition <em>didn&rsquo;t</em> define any arguments. Instead, you get your arguments by extracting them from <code>mrb_state</code>.</p>
+
+<p>```c
+mrb_value
+ruby_method(mrb_state *mrb, mrb_value self)
+{
+  // Initialize a variable
+  mrb_int some_integer;
+  // Extract a value
+  mrb_get_args(mrb, &ldquo;i&rdquo;, &amp;mrb_int);</p>
+
+<p>  return mrb_nil_value();
+}
+```</p>
+
+<p><code>mrb_get_args</code> takes a string whose letters say what kind of arguments and how many arguments to extract. The <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/src/class.c#L437"><code>mrb_get_args</code> source</a> documents the different possibilities.</p>
+
+<p>Notably, anything after a <code>|</code> is <strong>optional</strong>.</p>
+
+<p>For a <strong>default value</strong>, assign a value to the variable and make the argument optional. In this example, <code>inherit</code> defaults to <code>TRUE</code>:</p>
+
+<p><code>c
+  mrb_bool inherit = TRUE;
+  mrb_get_args(mrb, "|b", &amp;inherit);
+</code></p>
+
+<p>That&rsquo;s from <a href="https://github.com/mruby/mruby/blob/b28ec1bc88d29d8e7205401a6e323f20581d642f/src/variable.c#L988">C implementation of <code>Module#constants</code></a>. Another nice example is <a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L831">the <code>String#[]</code> source</a>.</p>
+
+<h2>Adding Methods to mruby State</h2>
+
+<p>To add a method to the mruby state, you must attach it to some object. To make a method global, you can define it on <code>Object</code>. Let&rsquo;s do that.</p>
+
+<p>We&rsquo;ll use <code>mrb_define_method</code>, which accepts five arguments:</p>
+
+<p><code>c
+mrb_define_method(mrb_state *mrb, struct RClass *c, const char *name, mrb_func_t func, mrb_aspec aspec)
+</code></p>
+
+<ul>
+<li><code>mrb_state *mrb</code>: the open mruby VM instance</li>
+<li><code>struct RClass *c</code>: the mruby class to attach the method to</li>
+<li><code>const char *name</code>: the Ruby name for this method</li>
+<li><code>mrb_func_t func</code>: the C function to execute for this Ruby method</li>
+<li><code>mrb_aspec aspec</code>: the number &amp; types of arguments for this method</li>
+</ul>
+
+
+<p>In fact, <strong>specifying arguments</strong> is not currently used (<a href="https://github.com/mruby/mruby/issues/791">github issue</a>). To pass some value here, you can use some <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/include/mruby.h#L232-L251">convenient macros from <code>mruby.h</code></a>.</p>
+
+<p>So, let&rsquo;s add a global method, <code>greet!</code>. Here&rsquo;s the method:</p>
+
+<p><code>c
+static mrb_value
+mrb_greet(mrb_state *mrb, mrb_value self) {
+  printf("Hello, mruby!\n");
+  return mrb_nil_value();
+}
+</code></p>
+
+<p>Then, attach it to <code>Object</code>, which will make it global:</p>
+
+<p><code>c
+mrb_define_method(mrb, mrb-&gt;object_class, "greet!", mrb_greet, MRB_ARGS_NONE());
+</code></p>
+
+<p>Now, you can run in your Ruby script:</p>
+
+<p><code>ruby
+greet!
+</code></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA["Hello World" with mruby]]></title>
