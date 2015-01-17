@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Happy Refactoring by Keeping ApplicationController to a Minimum - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Extending ActionController::Base once, in ApplicationController, is a great Ruby on Rails practice. However, if ApplicationController is your only &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Happy Refactoring by Keeping ApplicationController to a Minimum</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-01-17T10:24:00-08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Extending <code>ActionController::Base</code> <em>once</em>, in <code>ApplicationController</code>, is a great Ruby on Rails practice. However, if <code>ApplicationController</code> is your only abstract controller, it&rsquo;s likely to become a maintenance nightmare. To avoid this, you should extend <code>ApplicationController</code> as needed and move as much code as possible into its subclasses.</p>
+
+<!-- more -->
+
+
+<h2>Feeling ApplicationController Pain</h2>
+
+<p>So, our app is live. We&rsquo;ve dutily extended <code>ApplicationController</code> in all our other controllers, giving us an inheritance tree like this:</p>
+
+<p><img src="/images/controller_inheritance_bad.png" width="500" height="500"></p>
+
+<p>Fortunately, our app is a success and our customers want us to open an API. Let&rsquo;s use <code>API::BaseController</code> as the superclass of all our API controllers:</p>
+
+<p><img src="/images/controller_inheritance_bad_with_api.png" width="500" height="500"></p>
+
+<p>As our user base grows, we need a more robust permissions system. We tighten up restrictions:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ApplicationController</span> <span class="o">&lt;</span> <span class="ss">ActionController</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">before_action</span> <span class="ss">:authenticate!</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since some actions are public, we skip the restrictions:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ReportsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="n">skip_before_action</span> <span class="ss">:authenticate!</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="c1"># ...</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">ProfilesController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="n">skip_before_action</span> <span class="ss">:authenticate!</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We&rsquo;ve forgotten about our API, and when we deploy, we&rsquo;ll be quickly reminded that <code>ApplicationController</code> is involved in those requests too. Since <code>ApplicationController</code> touches <em>every request</em> it&rsquo;s hard to be sure about exactly what will be affected by changes there.</p>
+
+<h2>ApplicationController Gains Weight</h2>
+
+<p>Left alone, <code>ApplicationController</code> can bloat for many reasons:</p>
+
+<ul>
+<li><strong>Authentication logic</strong>, perhaps with complex branching based on what the users is accessing, builds up little-by-little as the application is extended.</li>
+<li><strong>Before-actions &amp; helpers</strong> which are used <em>often</em> but <em>not always</em> tend to accrue in <code>ApplicationController</code>, since it&rsquo;s &ldquo;used more than once.&rdquo;</li>
+<li><strong>Oddball routes</strong> might be implemented in <code>ApplicationController</code> because no other existing controller seems like the right place.</li>
+</ul>
+
+
+<p>This bloat is a problem because <code>ApplicationController</code> is so central to our application: <em>every</em> request involves code in <code>ApplicationController</code>. Given the huge number of possible interactions that <code>ApplicationController</code> might handle, it&rsquo;s  impossible to predict <em>exactly</em> how changes to it will affect the application.</p>
+
+<p>When we add to &amp; remove from <code>ApplicationController</code>, we&rsquo;re potentially altering <em>every</em> request that our application serves; how can we be sure we aren&rsquo;t breaking something?</p>
+
+<h2>Isolating &ldquo;Parts&rdquo; of the App</h2>
+
+<p>Returning to the example above, I think this inheritance tree is better:</p>
+
+<p><img src="/images/controller_inheritance_good.png" width="500" height="500"></p>
+
+<p>We&rsquo;ve introduced abstract classes for each &ldquo;part&rdquo; of the app. (I use quotes because I don&rsquo;t know a technical term for it!) Now, logged-in authentication would be handled by a subclass of <code>ApplicationController</code>, perhaps named <code>BaseController</code>. A logged-in controller would extend <code>BaseController</code>. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ItemsController</span> <span class="o">&lt;</span> <span class="no">BaseController</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Similarly, public controllers would be in a namespace of their own, with their own base controller. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Public</span><span class="o">::</span><span class="no">ProfilesController</span> <span class="o">&lt;</span> <span class="ss">Public</span><span class="p">:</span><span class="ss">:BaseController</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is good because:</p>
+
+<ul>
+<li>You can refactor with more confidence, since you only have to load <em>part</em> of the app into memory when working on abstract controllers.</li>
+<li>Stable parts of the app are more likely to remain stable (since they won&rsquo;t be affected by other parts).</li>
+</ul>
+
+
+<p>The corresponding file structure looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>controllers/
+</span><span class='line'>  api/
+</span><span class='line'>    base_controller.rb
+</span><span class='line'>    items_controller.rb
+</span><span class='line'>    profiles_controller.rb
+</span><span class='line'>
+</span><span class='line'>  public/
+</span><span class='line'>    base_controller.rb
+</span><span class='line'>    reports_controller.rb
+</span><span class='line'>    profiles_controller.rb
+</span><span class='line'>
+</span><span class='line'>  staff/
+</span><span class='line'>    base_controller.rb
+</span><span class='line'>    stats_controller.rb
+</span><span class='line'>
+</span><span class='line'>  application_controller.rb
+</span><span class='line'>  base_controller.rb
+</span><span class='line'>  items_controller.rb
+</span><span class='line'>  profiles_controller.rb
+</span><span class='line'>  reports_controller.rb
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><em>(I&rsquo;ve left some controllers in the root namespace. If you like, you could put logged-in actions in a namespace too!)</em></p>
+
+<p>And the routes might look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">namespace</span> <span class="ss">:api</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">resources</span> <span class="ss">:items</span><span class="p">,</span> <span class="ss">:profiles</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">namespace</span> <span class="ss">:public</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">resources</span> <span class="ss">:profiles</span><span class="p">,</span> <span class="ss">:reports</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">namespace</span> <span class="ss">:staff</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">resources</span> <span class="ss">:stats</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">resources</span> <span class="ss">:items</span><span class="p">,</span> <span class="ss">:profiles</span><span class="p">,</span> <span class="ss">:reports</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>When should we extend ApplicationController?</h2>
+
+<p>I&rsquo;d say it&rsquo;s good to extend <code>ApplicationController</code> for each &ldquo;part&rdquo; of the app. It&rsquo;s a bit subjective, but here are some clues:</p>
+
+<ul>
+<li>Actions rendered with a <strong>different layout</strong> (or lack thereof). Your webservice, administration and public views are distinct parts of your app.</li>
+<li>Actions using <strong>different authentication</strong> strategies. Keep API endpoints, public pages, and staff-only actions in separate sections. If a staff member goes rogue, you&rsquo;ll be able to tighten up that part of the app confidently :)</li>
+<li>Actions with <strong>different frequently-used helpers or before-actions</strong>. If there&rsquo;s a before-action that&rsquo;s often skipped, Rails wants to tell you something: these controllers are different! Similarly, if you have controller-level helper methods, perhaps the controllers who depend on that helper should be in a &ldquo;part&rdquo; of their own.</li>
+</ul>
+
+
+<p>I hope a pattern like this will give you more freedom &amp; confidence when refactoring important parts of the request-response cycle!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-01-17T10:24:00-08:00" pubdate data-updated="true">Jan 17<span>th</span>, 2015</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/rails/'>Rails</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/11/21/defining-mruby-methods-with-c/" title="Previous Post: Defining mruby Methods with C">&laquo; Defining mruby Methods with C</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
