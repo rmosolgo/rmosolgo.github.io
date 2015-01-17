@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-01-17T14:36:21-08:00</updated>
+  <updated>2015-01-17T14:38:24-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -63,7 +63,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>We&rsquo;ve forgotten about our API, and when we deploy, we&rsquo;ll be quickly reminded that <code>ApplicationController</code> is involved in those requests too. Since <code>ApplicationController</code> touches <em>every request</em> it&rsquo;s hard to be sure about exactly what will be affected by changes there.</p>
+<p>We&rsquo;ve forgotten about our API, and when we deploy, we&rsquo;ll be quickly reminded that <code>ApplicationController</code> is involved in those requests too. Since <code>ApplicationController</code> touches <em>every request</em>, it&rsquo;s hard to be sure about exactly what will be affected by changes there.</p>
 
 <h2>ApplicationController Gains Weight</h2>
 

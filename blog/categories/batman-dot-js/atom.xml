@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-01-17T14:36:21-08:00</updated>
+  <updated>2015-01-17T14:38:24-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -378,7 +378,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#x6d;&#97;&#105;&#108;&#116;&#x6f;&#58;&#x70;&#x65;&#x6f;&#x70;&#x6c;&#101;&#46;&#64;&#101;&#x61;&#99;&#104;&#46;&#102;&#117;&#108;&#x6c;&#x4e;&#x61;&#x6d;&#x65;">&#x70;&#101;&#x6f;&#112;&#108;&#x65;&#46;&#64;&#x65;&#x61;&#99;&#104;&#46;&#x66;&#x75;&#x6c;&#x6c;&#x4e;&#x61;&#x6d;&#101;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#x6d;&#x61;&#105;&#108;&#116;&#x6f;&#x3a;&#x70;&#101;&#111;&#112;&#108;&#x65;&#46;&#x40;&#x65;&#97;&#x63;&#104;&#46;&#102;&#x75;&#108;&#x6c;&#78;&#x61;&#x6d;&#x65;">&#x70;&#x65;&#x6f;&#112;&#108;&#x65;&#46;&#x40;&#x65;&#97;&#99;&#x68;&#46;&#102;&#117;&#x6c;&#108;&#x4e;&#97;&#109;&#101;</a>&rsquo;)
 });
 ```</p>
 
