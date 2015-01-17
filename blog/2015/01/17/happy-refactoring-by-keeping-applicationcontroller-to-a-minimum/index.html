@@ -154,15 +154,13 @@
 <p>Left alone, <code>ApplicationController</code> can bloat for many reasons:</p>
 
 <ul>
-<li><strong>Authentication logic</strong>, perhaps with complex branching based on what the users is accessing, builds up little-by-little as the application is extended.</li>
-<li><strong>Before-actions &amp; helpers</strong> which are used <em>often</em> but <em>not always</em> tend to accrue in <code>ApplicationController</code>, since it&rsquo;s &ldquo;used more than once.&rdquo;</li>
+<li><strong>Authentication logic</strong>, perhaps with complex branching based on what the user is accessing, builds up little-by-little as the application is extended.</li>
+<li><strong>Before-actions &amp; helpers</strong> which are used <em>often</em> but <em>not always</em> tend to accrue in <code>ApplicationController</code>, since they&rsquo;re &ldquo;used more than once.&rdquo;</li>
 <li><strong>Oddball routes</strong> might be implemented in <code>ApplicationController</code> because no other existing controller seems like the right place.</li>
 </ul>
 
 
-<p>This bloat is a problem because <code>ApplicationController</code> is so central to our application: <em>every</em> request involves code in <code>ApplicationController</code>. Given the huge number of possible interactions that <code>ApplicationController</code> might handle, it&rsquo;s  impossible to predict <em>exactly</em> how changes to it will affect the application.</p>
-
-<p>When we add to &amp; remove from <code>ApplicationController</code>, we&rsquo;re potentially altering <em>every</em> request that our application serves; how can we be sure we aren&rsquo;t breaking something?</p>
+<p>In JavaScript development, filling the global namespace with application code is a no-no. <code>ApplicationController</code> is a near-global namespace, so each addition to it should be considered very carefully. When we add to (and remove from) <code>ApplicationController</code>, we&rsquo;re potentially altering <em>every</em> request that our application serves; how can we be sure we aren&rsquo;t breaking something?</p>
 
 <h2>Isolating &ldquo;Parts&rdquo; of the App</h2>
 
