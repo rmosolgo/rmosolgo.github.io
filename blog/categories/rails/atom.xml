@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-01-17T14:12:26-08:00</updated>
+  <updated>2015-01-17T14:36:21-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -18,7 +18,7 @@
     <link href="http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/"/>
     <updated>2015-01-17T10:24:00-08:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum</id>
-    <content type="html"><![CDATA[<p>Extending <code>ActionController::Base</code> <em>once</em>, in <code>ApplicationController</code>, is a great Ruby on Rails practice. However, if <code>ApplicationController</code> is your only abstract controller, it&rsquo;s likely to become a maintenance nightmare. To avoid this, you should extend <code>ApplicationController</code> as needed and move as much code as possible into its subclasses.</p>
+    <content type="html"><![CDATA[<p>Extending <code>ActionController::Base</code> <em>once</em>, in <code>ApplicationController</code>, is a great Ruby on Rails practice. However, if <code>ApplicationController</code> is your only abstract controller, it&rsquo;s likely to become a maintenance challenge. To avoid this, you should extend <code>ApplicationController</code> as needed and move as much code as possible into its subclasses.</p>
 
 <!-- more -->
 
