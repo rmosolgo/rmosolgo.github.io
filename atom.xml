@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-01-17T14:41:01-08:00</updated>
+  <updated>2015-01-17T14:42:16-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -76,7 +76,7 @@
 </ul>
 
 
-<p>In JavaScript development, filling the global namespace with application code is a no-no. <code>ApplicationController</code> is a near-global namespace, so each addition to it should be considered very carefully. When we add to (and remove from) <code>ApplicationController</code>, we&rsquo;re potentially altering <em>every</em> request that our application serves; how can we be sure we aren&rsquo;t breaking something?</p>
+<p>In JavaScript development, filling the global namespace with application code is a no-no. Similarly, <code>ApplicationController</code> is a near-global namespace, so each addition to it should be considered very carefully. When we add to (and remove from) <code>ApplicationController</code>, we&rsquo;re potentially altering <em>every</em> request that our application serves; how can we be sure we aren&rsquo;t breaking something?</p>
 
 <h2>Isolating &ldquo;Parts&rdquo; of the App</h2>
 
