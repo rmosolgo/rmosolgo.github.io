@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Life | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/life/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-01-17T14:42:16-08:00</updated>
+  <updated>2015-03-01T17:23:44-08:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,75 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging: Behavior &amp; Purpose]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/01/debugging-behavior-and-purpose/"/>
+    <updated>2015-03-01T15:53:00-08:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/01/debugging-behavior-and-purpose</id>
+    <content type="html"><![CDATA[<p>To resolve a bug, a developer must know the <em>behavior</em> and the <em>purpose</em> of the program at hand. I&rsquo;ve been reading <a href="http://en.wikipedia.org/wiki/Lesslie_Newbigin">Lesslie Newbingin</a> and it made me think of this.</p>
+
+<!-- more -->
+
+
+<p>There are at least two kinds of bugs:</p>
+
+<ul>
+<li>The program crashes</li>
+<li>The program does not crash, but it does not accomplish the desired result</li>
+</ul>
+
+
+<p>In either case, the developer must draw on two important facts in order to fix the bug:</p>
+
+<ul>
+<li>What is the <em>current behavior</em> of the program? How does it work?</li>
+<li>What is the <em>purpose</em> of the program? Why does it exist?</li>
+</ul>
+
+
+<h3>Debugging: Behavior</h3>
+
+<p>In some cases, a bug expresses itself by causing the program to crash. The fix  may be purely technical:</p>
+
+<ul>
+<li>don&rsquo;t enter an infinite loop</li>
+<li>rectify an off-by-one error</li>
+<li>fix a typo in the source code</li>
+</ul>
+
+
+<h3>Debugging: Purpose</h3>
+
+<p>In other cases, a bug does <em>not</em> cause the program to crash. In fact, the program runs fine, but there is still a bug. Here, <em>purpose</em> is essential.</p>
+
+<p>I often ask the product manager, &ldquo;How should this program behave?&rdquo; His response is dictated by the <em>design</em> of the application: why does it exist? What was it made for? What should it accomplish?</p>
+
+<p>No amount of technical information can answer that question.</p>
+
+<h3>Software without Purpose?</h3>
+
+<p>Imagine error handling without purpose. Suppose an external web service returns <code>404 Not Found</code>. How should that be handled by our application? In a program whose design is unknown, the developer has no option but to hide the crash:</p>
+
+<p><code>ruby
+begin
+  # do something
+rescue
+  nil # who knows?
+end
+</code></p>
+
+<p>Sometimes, this is the norm for American culture. Bugs in society aren&rsquo;t <em>treated</em> as much as <em>suppressed</em>. How could they be treated? We insist that discussions regarding the <em>purpose</em> of humanity are a private matter and not to be addressed in a public way. &ldquo;What&rsquo;s true for you might not be true for me.&rdquo;</p>
+
+<h3>Product Manager of Product Managers</h3>
+
+<p>A key tenet of Christianity is that, in the life of Jesus of Nazareth, God communicated to humans their purpose. It has traditionally been summarized as  &ldquo;The chief end of man is to worship God and enjoy him forever.&rdquo; This means we ought to live (individually and together) in light of God&rsquo;s supremacy and our togetherness as his children.</p>
+
+<p>This opens the door to much more effective troubleshooting. When the system (human life, human society) fails, we can do more than apply technical bandages; we can refashion the system to better serve the purpose for which it was designed.</p>
+
+<p>Nobody operates under a truly purposeless mindset. Indeed, even when we state a purpose, we find ourselves seeking to fulfill a different one. But we ought to ask: what design <em>should</em> we try to fulfill?</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Response to "Why Kids Sext"]]></title>
