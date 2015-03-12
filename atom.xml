@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-12T09:11:32-07:00</updated>
+  <updated>2015-03-12T09:14:25-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -63,7 +63,7 @@
 <p>For me, refactoring often means finding related methods &amp; values that deserve their own class, then moving code out of the model and into the new class. For example:</p>
 
 <ul>
-<li>moving complex validations into validator classes</li>
+<li>moving complex validations into <a href="http://api.rubyonrails.org/classes/ActiveModel/Validator.html">validator classes</a></li>
 <li>moving complex serialization into serializer classes (I do this with serialization to <em>English</em>, too, not just JSON)</li>
 <li>moving complex calculations into value classes.</li>
 </ul>
@@ -79,13 +79,13 @@
 
 <p>I found that the <code>body</code> passed to <code>ActiveRecord::Base.scope</code> just has to <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping/named.rb#L149">respond to <code>:call</code></a>. I guess that&rsquo;s why lambdas are a shoo-in for that purpose: they respond to <code>:call</code> and aren&rsquo;t picky about arguments.</p>
 
-<p>The other thing I found (I always wondered about this) is that the lambdas you usually pass to <code>scope</code> <em>aren&rsquo;t magical</em>. I always assumed that they were <code>instance_eval</code>&rsquo;d against other objects at whatever other times, but as far as I can tell, they aren&rsquo;t magical. <code>self</code> is always the model class (from lexical scope), just like any other lambda.</p>
+<p>The other thing I found is that the lambdas you usually pass to <code>scope</code> <em>aren&rsquo;t magical</em>. I always assumed that they were <code>instance_eval</code>&rsquo;d against other objects at whatever other times, but as far as I can tell, they aren&rsquo;t magical. <code>self</code> is always the model class (from lexical scope), just like any other lambda.</p>
 
 <p>Instead, the magic is a combination of Rails&#8217; <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping.rb#L57">thread-aware <code>ScopeRegistry</code></a> which tracks the scope for a given class, combined with <a href="https://github.com/rails/rails/blob/ce32ff462f3ba89c87f337f9150b3976d23220e8/activerecord/lib/active_record/relation.rb#L319"><code>Association#scoping</code></a>, which I don&rsquo;t understand. :)</p>
 
 <h2>Moving Scopes from Lambda to Class</h2>
 
-<p>You can make a class that complies to the required API:</p>
+<p>You can make a class that complies to the required API. Make calls on the model class (<code>CheckIn</code>, in my case), which is usually <code>self</code> in a <code>scope</code> lambda.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -142,7 +142,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>You can also initialize it with some data:</p>
+<p>You can also <strong>initialize it</strong> with some data:</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -164,16 +164,16 @@
 <p><strong>Pros:</strong></p>
 
 <ul>
-<li>Less visual noise</li>
-<li>Your model still reads like a table of contents</li>
-<li>Theoretically, you could test the scope in isolation (but I&rsquo;m to lazy, if the existing tests still pass, that&rsquo;s good enough for me :P).</li>
+<li>Less visual noise.</li>
+<li>Your model still reads like a table of contents.</li>
+<li>Theoretically, you could test the scope in isolation (but I&rsquo;m too lazy, if the existing tests still pass, that&rsquo;s good enough for me :P).</li>
 </ul>
 
 
 <p><strong>Cons:</strong></p>
 
 <ul>
-<li>If the scope takes arguments, you can&rsquo;t tell right away</li>
+<li>If the scope takes arguments, you can&rsquo;t tell right away.</li>
 <li>It doesn&rsquo;t <em>actually</em> shrink the class&rsquo;s API: it&rsquo;s still a big ol&#8217; model.</li>
 <li>It&rsquo;s not a known Rails practice.</li>
 </ul>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-12T09:11:56-07:00</updated>
+  <updated>2015-03-12T09:14:25-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -74,11 +74,11 @@
 
 <p><em>Not my problem:</em></p>
 
-<p>{% img /images/extension_errors.png 500 %}</p>
+<p><img src="/images/extension_errors.png" width="500"></p>
 
 <p><em>No es mi problema:</em></p>
 
-<p>{% img /images/extension_errors2.png 900 %}</p>
+<p><img src="/images/extension_errors2.png" width="900"></p>
 
 <p>You just don&rsquo;t realize the luxury of reliable bugsnags until they&rsquo;re gone! So many Check-Ins bugsnags leave no trace of what actually went wrong.</p>
 
@@ -378,7 +378,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#x6d;&#97;&#105;&#108;&#116;&#x6f;&#58;&#112;&#101;&#x6f;&#x70;&#x6c;&#101;&#46;&#64;&#101;&#x61;&#99;&#104;&#46;&#102;&#117;&#108;&#108;&#x4e;&#x61;&#109;&#x65;">&#112;&#101;&#111;&#x70;&#108;&#101;&#x2e;&#x40;&#101;&#x61;&#x63;&#104;&#46;&#102;&#x75;&#x6c;&#x6c;&#x4e;&#x61;&#109;&#101;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#109;&#97;&#x69;&#x6c;&#x74;&#x6f;&#58;&#x70;&#x65;&#x6f;&#112;&#108;&#x65;&#x2e;&#x40;&#x65;&#x61;&#x63;&#x68;&#46;&#102;&#x75;&#x6c;&#108;&#78;&#x61;&#x6d;&#x65;">&#112;&#x65;&#111;&#112;&#x6c;&#x65;&#x2e;&#64;&#x65;&#x61;&#x63;&#104;&#x2e;&#102;&#117;&#108;&#x6c;&#x4e;&#x61;&#x6d;&#101;</a>&rsquo;)
 });
 ```</p>
 
@@ -786,7 +786,7 @@ class Funzies.SessionsController extends Funzies.ApplicationController
 
 <p>It turned out looking like this:</p>
 
-<p>{% img /images/sign_in_form.png 500 %} {% img /images/sign_up_form.png 500 %}</p>
+<p><img src="/images/sign_in_form.png" width="500"> <img src="/images/sign_up_form.png" width="500"></p>
 
 <p>Here&rsquo;s the handler for submitting that form. Notice that it handles <em>creating an account</em> and <em>signing up</em>. This might have been stupid of me.</p>
 
