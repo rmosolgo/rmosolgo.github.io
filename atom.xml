@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-11T17:06:50-07:00</updated>
+  <updated>2015-03-11T17:07:29-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -18,7 +18,7 @@
     <link href="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/"/>
     <updated>2015-03-11T13:27:00-07:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity</id>
-    <content type="html"><![CDATA[<p>While adding a big feature to <a href="">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
+    <content type="html"><![CDATA[<p>While adding a big feature to <a href="http://get.planningcenteronline.com/check-ins">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
 
 <!-- more -->
 
