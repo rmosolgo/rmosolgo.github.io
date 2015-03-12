@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-01T17:45:08-08:00</updated>
+  <updated>2015-03-11T17:06:50-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,85 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA["Vertical" Complexity vs. "Horizontal" Complexity]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/"/>
+    <updated>2015-03-11T13:27:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity</id>
+    <content type="html"><![CDATA[<p>While adding a big feature to <a href="">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
+
+<!-- more -->
+
+
+<p>Suppose you&rsquo;re given the task: &ldquo;Our system only handles data of type <em>X</em>, it also needs to handle data of type <em>Y</em>. Everywhere.&rdquo; All over the program, you need to check what kind of data you have, then choose to handle it the old way or handle it the new way.</p>
+
+<p>Your program has one entry point and renders views outputs:</p>
+
+<p><code>
+     +     
+     |     
+     |     
++----+----+
+|    |    |
+|    |    |
++    +    +
+A    B    C
+</code></p>
+
+<h2>Vertical Complexity</h2>
+
+<p>One way to address this problem is to find everywhere you handle data type <em>X</em>, then extend it to handle type <em>Y</em>:</p>
+
+<p><code>ruby
+if data.type_X?
+  # handle data type X
+else
+  # handle data type Y
+end
+</code></p>
+
+<p>Your code paths now look like this:</p>
+
+<p><code>
+         +     
+         |     
+         | 
+  +------+------+
+  |      |      |
+  |      |      |
++-+-+  +-+-+  +-+-+  &lt;- check for type X or type Y
+|   |  |   |  |   |
++   +  +   +  +   +
+A1  A2 B1  B2 C1  C2
+</code></p>
+
+<p>Your program has grown &ldquo;vertically&rdquo;: the tree is &ldquo;deeper&rdquo; than it was.</p>
+
+<h2>Horizontal Complexity</h2>
+
+<p>Another approach would be to implement a parallel set of views for rendering the new data. Your existing views don&rsquo;t change. Instead you add three new views:</p>
+
+<p><code>
+         +
+         |
+         |
++--+--+--+--+--+--+
+|  |  |     |  |  |
+|  |  |     |  |  |
++  +  +     +  +  +
+A  B  C     D  E  F
+</code></p>
+
+<p>Your program has grown &ldquo;horizontally&rdquo;. It has more objects, but each one is doing a small job.</p>
+
+<p>This way, your existing views stay simple. The new views can be equally simple. Hopefully, recycled code can be shared between views!</p>
+
+<h2>In Rails</h2>
+
+<p>Rather than adding <code>if</code>s in controller actions, add a new controller. Maybe it renders the same kind of objects as the existing controller &mdash; that&rsquo;s OK! It&rsquo;s worth it to add the extra controllers &amp; actions to keep the code paths simple.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Christian Life as a Lazy Enumerable]]></title>

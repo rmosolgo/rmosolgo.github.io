@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-01T17:45:08-08:00</updated>
+  <updated>2015-03-11T17:06:50-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,115 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA["Vertical" Complexity vs. "Horizontal" Complexity]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/"/>
+    <updated>2015-03-11T13:27:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity</id>
+    <content type="html"><![CDATA[<p>While adding a big feature to <a href="">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
+
+<!-- more -->
+
+
+<p>Suppose you&rsquo;re given the task: &ldquo;Our system only handles data of type <em>X</em>, it also needs to handle data of type <em>Y</em>. Everywhere.&rdquo; All over the program, you need to check what kind of data you have, then choose to handle it the old way or handle it the new way.</p>
+
+<p>Your program has one entry point and renders views outputs:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>     +     
+</span><span class='line'>     |     
+</span><span class='line'>     |     
+</span><span class='line'>+----+----+
+</span><span class='line'>|    |    |
+</span><span class='line'>|    |    |
+</span><span class='line'>+    +    +
+</span><span class='line'>A    B    C</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Vertical Complexity</h2>
+
+<p>One way to address this problem is to find everywhere you handle data type <em>X</em>, then extend it to handle type <em>Y</em>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">type_X?</span>
+</span><span class='line'>  <span class="c1"># handle data type X</span>
+</span><span class='line'><span class="k">else</span>
+</span><span class='line'>  <span class="c1"># handle data type Y</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Your code paths now look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="err">         </span><span class="o">+</span><span class="err">     </span>
+</span><span class='line'><span class="err">         </span><span class="o">|</span><span class="err">     </span>
+</span><span class='line'><span class="err">         </span><span class="o">|</span><span class="err"> </span>
+</span><span class='line'><span class="err">  </span><span class="o">+------+------+</span>
+</span><span class='line'><span class="err">  </span><span class="o">|</span>      <span class="o">|</span>      <span class="o">|</span>
+</span><span class='line'><span class="err">  </span><span class="o">|</span>      <span class="o">|</span>      <span class="o">|</span>
+</span><span class='line'><span class="o">+-+-+</span>  <span class="o">+-+-+</span>  <span class="o">+-+-+</span>  <span class="o">&lt;-</span> <span class="n">check</span> <span class="k">for</span> <span class="n">type</span> <span class="n">X</span> <span class="ow">or</span> <span class="n">type</span> <span class="n">Y</span>
+</span><span class='line'><span class="o">|</span>   <span class="o">|</span>  <span class="o">|</span>   <span class="o">|</span>  <span class="o">|</span>   <span class="o">|</span>
+</span><span class='line'><span class="o">+</span>   <span class="o">+</span>  <span class="o">+</span>   <span class="o">+</span>  <span class="o">+</span>   <span class="o">+</span>
+</span><span class='line'><span class="no">A1</span>  <span class="no">A2</span> <span class="no">B1</span>  <span class="no">B2</span> <span class="no">C1</span>  <span class="no">C2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Your program has grown &ldquo;vertically&rdquo;: the tree is &ldquo;deeper&rdquo; than it was.</p>
+
+<h2>Horizontal Complexity</h2>
+
+<p>Another approach would be to implement a parallel set of views for rendering the new data. Your existing views don&rsquo;t change. Instead you add three new views:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="err">         </span><span class="o">+</span>
+</span><span class='line'><span class="err">         </span><span class="o">|</span>
+</span><span class='line'><span class="err">         </span><span class="o">|</span>
+</span><span class='line'><span class="o">+--+--+--+--+--+--+</span>
+</span><span class='line'><span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>     <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>
+</span><span class='line'><span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>     <span class="o">|</span>  <span class="o">|</span>  <span class="o">|</span>
+</span><span class='line'><span class="o">+</span>  <span class="o">+</span>  <span class="o">+</span>     <span class="o">+</span>  <span class="o">+</span>  <span class="o">+</span>
+</span><span class='line'><span class="n">A</span>  <span class="n">B</span>  <span class="n">C</span>     <span class="n">D</span>  <span class="n">E</span>  <span class="n">F</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Your program has grown &ldquo;horizontally&rdquo;. It has more objects, but each one is doing a small job.</p>
+
+<p>This way, your existing views stay simple. The new views can be equally simple. Hopefully, recycled code can be shared between views!</p>
+
+<h2>In Rails</h2>
+
+<p>Rather than adding <code>if</code>s in controller actions, add a new controller. Maybe it renders the same kind of objects as the existing controller &mdash; that&rsquo;s OK! It&rsquo;s worth it to add the extra controllers &amp; actions to keep the code paths simple.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Debugging: Behavior &amp; Purpose]]></title>
@@ -3876,31 +3985,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p>Take note: constructors for binary set operations will fail if either argument is <code>null</code>, so be sure to check for that when you&rsquo;re building them!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Sending JSON Instead of Form Data with Batman.RestStorage]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage/"/>
-    <updated>2014-04-25T13:02:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/04/25/sending-json-instead-of-form-data-with-batman-dot-reststorage</id>
-    <content type="html"><![CDATA[<p>By default, <code>Batman.Request</code> sends data as HTTP form data. However, you can override this with <code>Batman.RestStorage</code>.</p>
-
-<!-- more -->
-
-
-<p>Simply pass <code>serializeAsForm: false</code> to <code>@persist</code> in your model definition:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">Model</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@persist</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">RestStorage</span><span class="p">,</span> <span class="nv">serializeAsForm: </span><span class="kc">false</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now, it will work with any JSON endpoint!</p>
-
-<p>In my case, I was trying out batman.js and Martini, and I was surprised to find that RestStorage sends form data. I guess you never notice with Rails, since it puts everything into the <code>params</code> hash.</p>
 ]]></content>
   </entry>
   
