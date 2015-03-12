@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-11T17:07:29-07:00</updated>
+  <updated>2015-03-12T09:11:56-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,151 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Move ActiveRecord Scopes into Separate Files]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/"/>
+    <updated>2015-03-12T08:14:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files</id>
+    <content type="html"><![CDATA[<p>Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you <em>can</em> move them into their own classes.</p>
+
+<!-- more -->
+
+
+<h2>The Problem</h2>
+
+<p>Rails models can get out of hand. Over time they get more associations, more methods, more everything. The resulting huge API and visual clutter makes those classes hard to maintain.</p>
+
+<p>Consider these scopes:</p>
+
+<p>```ruby
+class CheckIn &lt; ActiveRecord::Base
+  scope :normal, &ndash;> { where(kind: &ldquo;Regular&rdquo;) }
+  scope :guest, &ndash;> { where(kind: &ldquo;Guest&rdquo;) }
+  scope :volunteer, &ndash;> { where(kind: &ldquo;Volunteer&rdquo;) }
+  scope :first_time, &ndash;> {</p>
+
+<pre><code>joins(%{
+  INNER JOIN person_events
+    ON  person_events.person_id =         check_ins.person_id
+    AND person_events.event_id =          check_ins.event_id
+    AND person_events.first_check_in_id = check_ins.id
+    })
+</code></pre>
+
+<p>  }
+end
+```</p>
+
+<h2>How do we usually address this?</h2>
+
+<p>For me, refactoring often means finding related methods &amp; values that deserve their own class, then moving code out of the model and into the new class. For example:</p>
+
+<ul>
+<li>moving complex validations into validator classes</li>
+<li>moving complex serialization into serializer classes (I do this with serialization to <em>English</em>, too, not just JSON)</li>
+<li>moving complex calculations into value classes.</li>
+</ul>
+
+
+<p>Whenever I&rsquo;m trying to move code out of a model, I visit Code Climate&rsquo;s <a href="http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/">great post on the topic</a>.</p>
+
+<p>However, <em>scopes</em> are never on the list. What can we do with those?</p>
+
+<h2>Digging In</h2>
+
+<p>I poked around Rails source a bit to see if there were any other options available to me.</p>
+
+<p>I found that the <code>body</code> passed to <code>ActiveRecord::Base.scope</code> just has to <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping/named.rb#L149">respond to <code>:call</code></a>. I guess that&rsquo;s why lambdas are a shoo-in for that purpose: they respond to <code>:call</code> and aren&rsquo;t picky about arguments.</p>
+
+<p>The other thing I found (I always wondered about this) is that the lambdas you usually pass to <code>scope</code> <em>aren&rsquo;t magical</em>. I always assumed that they were <code>instance_eval</code>&rsquo;d against other objects at whatever other times, but as far as I can tell, they aren&rsquo;t magical. <code>self</code> is always the model class (from lexical scope), just like any other lambda.</p>
+
+<p>Instead, the magic is a combination of Rails' <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping.rb#L57">thread-aware <code>ScopeRegistry</code></a> which tracks the scope for a given class, combined with <a href="https://github.com/rails/rails/blob/ce32ff462f3ba89c87f337f9150b3976d23220e8/activerecord/lib/active_record/relation.rb#L319"><code>Association#scoping</code></a>, which I don&rsquo;t understand. :)</p>
+
+<h2>Moving Scopes from Lambda to Class</h2>
+
+<p>You can make a class that complies to the required API:</p>
+
+<p>```ruby</p>
+
+<h1>app/models/check_in/scopes/latest.rb</h1>
+
+<p>class CheckIn::Scopes::Latest
+  def call</p>
+
+<pre><code>CheckIn.where("check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)")
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Then, hook up the scope in the model definition:</p>
+
+<p><code>ruby
+class CheckIn &lt; ActiveRecord::Base
+  scope :latest, Scopes::Latest.new
+end
+</code></p>
+
+<p>Since it&rsquo;s just a plain ol' class, you can give it <strong>other methods</strong> too:</p>
+
+<p>```ruby</p>
+
+<h1>app/models/check_in/scopes/latest.rb</h1>
+
+<p>class CheckIn::Scopes::Latest
+  def call</p>
+
+<pre><code>CheckIn.where(query_string)
+</code></pre>
+
+<p>  end</p>
+
+<p>  private</p>
+
+<p>  def query_string</p>
+
+<pre><code>"check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)"
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>You can also initialize it with some data:</p>
+
+<p><code>ruby
+class CheckIn &lt; ActiveRecord::Base
+  scope :normal,          Scopes::KindScope.new("Regular")
+  scope :guest,           Scopes::KindScope.new("Guest")
+  scope :volunteer,       Scopes::KindScope.new("Volunteer")
+end
+</code></p>
+
+<h2>Any Benefit?</h2>
+
+<p>Here&rsquo;s what I think:</p>
+
+<p><strong>Pros:</strong></p>
+
+<ul>
+<li>Less visual noise</li>
+<li>Your model still reads like a table of contents</li>
+<li>Theoretically, you could test the scope in isolation (but I&rsquo;m to lazy, if the existing tests still pass, that&rsquo;s good enough for me :P).</li>
+</ul>
+
+
+<p><strong>Cons:</strong></p>
+
+<ul>
+<li>If the scope takes arguments, you can&rsquo;t tell right away</li>
+<li>It doesn&rsquo;t <em>actually</em> shrink the class&rsquo;s API: it&rsquo;s still a big ol' model.</li>
+<li>It&rsquo;s not a known Rails practice.</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Happy Refactoring by Keeping ApplicationController to a Minimum]]></title>
@@ -27,11 +172,11 @@
 
 <p>So, our app is live. We&rsquo;ve dutily extended <code>ApplicationController</code> in all our other controllers, giving us an inheritance tree like this:</p>
 
-<p><img src="/images/controller_inheritance_bad.png" width="500" height="500"></p>
+<p>{% img /images/controller_inheritance_bad.png 500 500 %}</p>
 
 <p>Fortunately, our app is a success and our customers want us to open an API. Let&rsquo;s use <code>API::BaseController</code> as the superclass of all our API controllers:</p>
 
-<p><img src="/images/controller_inheritance_bad_with_api.png" width="500" height="500"></p>
+<p>{% img /images/controller_inheritance_bad_with_api.png 500 500 %}</p>
 
 <p>As our user base grows, we need a more robust permissions system. We tighten up restrictions:</p>
 
@@ -74,7 +219,7 @@ end
 
 <p>Returning to the example above, I think this inheritance tree is better:</p>
 
-<p><img src="/images/controller_inheritance_good.png" width="500" height="500"></p>
+<p>{% img /images/controller_inheritance_good.png 500 500 %}</p>
 
 <p>We&rsquo;ve introduced abstract classes for each &ldquo;part&rdquo; of the app. (I use quotes because I don&rsquo;t know a technical term for it!) Now, logged-in authentication would be handled by a subclass of <code>ApplicationController</code>, perhaps named <code>BaseController</code>. A logged-in controller would extend <code>BaseController</code>. For example:</p>
 
@@ -466,118 +611,6 @@ end
 ```</p>
 
 <p>When this is done, any files ending in <code>.html.slim</code> in <code>assets</code> will be served as rendered HTML in response to XHR (Ajax) requests. Note that <em>all non-XHR</em> requests will still receive the <code>batman</code> layout (but then Batman will respond to the request, so you&rsquo;re all good).</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Adding Batman.js to an Existing Rails App]]></title>
-    <link href="http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/"/>
-    <updated>2013-10-19T22:08:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app</id>
-    <content type="html"><![CDATA[<p>I had an existing app, but I wanted to take the front end to the next level. <a href="http://batmanjs.org/">Batman.js</a> is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful <a href="https://github.com/batmanjs/batman-rails">Rails integration</a>.</p>
-
-<!-- more -->
-
-
-<h3>Installing Batman.js</h3>
-
-<p>I was already using <a href="https://github.com/rails-api/active_model_serializers">ActiveModel::Serializer</a> to serve JSON from my app. To get Batman on the scene, I included
-<code>batman-rails</code> in my Gemfile and installed it:</p>
-
-<p>```ruby Gemfile.rb</p>
-
-<pre><code>require 'batman-rails', '~&gt; 0.15'
-</code></pre>
-
-<p>```</p>
-
-<p><code>bash
-  $ bundle install
-</code></p>
-
-<p>The <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> comes with a generator to get everything in order.
-I ran it and restarted my Rails server:</p>
-
-<p><code>bash
-  $ rails g batman:app # that's not _your_ app name, it's just "app"
-  $ powder restart # restart your Rails server one way or another
-</code></p>
-
-<p>I visited my app&rsquo;s <code>root_url</code> and found Batman-rails landing page. How&rsquo;d it get there!? Sure enough, the Batman generator had added a punchy line to the top of my routes file:</p>
-
-<p><code>ruby config/routes.rb
-  get "(*redirect_path)", to: "batman#index", constraints: lambda { |request| request.format == "text/html" }
-</code></p>
-
-<p>It captures all <code>text/html</code> requests and passes them to <code>BatmanController</code>, which was also created by the generator:</p>
-
-<p>```ruby app/controllers/batman_controller
-  class BatmanController &lt; ApplicationController</p>
-
-<pre><code>def index
-  render nothing: true, layout: 'batman'
-end
-</code></pre>
-
-<p>  end
-```</p>
-
-<p>Along with that, there was a new file in my <code>app/views/layouts</code> folder, and then of course, <code>app/assets/batman</code>.</p>
-
-<h3>My first view</h3>
-
-<p>I didn&rsquo;t want the Batman landing page at my <code>root_url</code>, I wanted a list of sounds! So, I ran a Batman generator, beefed up the model and controller, created the index html, and redefined the route:</p>
-
-<p><code>
-  $ rails g batman:scaffold Sounds
-</code></p>
-
-<p>```coffeescript app/assets/batman/models/sound.js.coffee</p>
-
-<pre><code>class Lang.Sound extends Batman.Model
-  @resourceName: 'sounds'
-  @storageKey: 'sounds'
-
-  @persist Batman.RailsStorage
-
-  # Use @encode to tell batman.js which properties Rails will send back with its JSON.
-  @encode 'letter'
-  @encodeTimestamps()
-</code></pre>
-
-<p>```</p>
-
-<p>```coffeescript app/assets/batman/controllers/sounds_controller.js.coffee</p>
-
-<pre><code>class Lang.SoundsController extends Lang.ApplicationController
-  routingKey: 'sounds'
-  index: (params) -&gt;
-    @set("sounds", Lang.Sound.get('all'))
-</code></pre>
-
-<p>```</p>
-
-<p>```haml app/assets/batman/html/sounds/index.html</p>
-
-<pre><code>&lt;ul&gt;
-  &lt;li data-foreach-sound="sounds"&gt;
-    &lt;span data-bind="sound.letter" /&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-</code></pre>
-
-<p>```</p>
-
-<p><em>your filename will be your app name:</em>
-```coffeescript app/assets/batman/lang.js.coffee</p>
-
-<pre><code>class Lang extends Batman.App
-  @root "sounds#index"
-</code></pre>
-
-<p>```</p>
-
-<p>And now I had my own landing page!</p>
 ]]></content>
   </entry>
   

@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Move ActiveRecord Scopes into Separate Files - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you can move them into their own classes. The Problem Rails models &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Move ActiveRecord Scopes Into Separate Files</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-12T08:14:00-07:00" pubdate data-updated="true">Mar 12<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you <em>can</em> move them into their own classes.</p>
+
+<!-- more -->
+
+
+<h2>The Problem</h2>
+
+<p>Rails models can get out of hand. Over time they get more associations, more methods, more everything. The resulting huge API and visual clutter makes those classes hard to maintain.</p>
+
+<p>Consider these scopes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:normal</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Regular&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:guest</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Guest&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:volunteer</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Volunteer&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:first_time</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">joins</span><span class="p">(</span><span class="sx">%{</span>
+</span><span class='line'><span class="sx">      INNER JOIN person_events</span>
+</span><span class='line'><span class="sx">        ON  person_events.person_id =         check_ins.person_id</span>
+</span><span class='line'><span class="sx">        AND person_events.event_id =          check_ins.event_id</span>
+</span><span class='line'><span class="sx">        AND person_events.first_check_in_id = check_ins.id</span>
+</span><span class='line'><span class="sx">        }</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>How do we usually address this?</h2>
+
+<p>For me, refactoring often means finding related methods &amp; values that deserve their own class, then moving code out of the model and into the new class. For example:</p>
+
+<ul>
+<li>moving complex validations into validator classes</li>
+<li>moving complex serialization into serializer classes (I do this with serialization to <em>English</em>, too, not just JSON)</li>
+<li>moving complex calculations into value classes.</li>
+</ul>
+
+
+<p>Whenever I&rsquo;m trying to move code out of a model, I visit Code Climate&rsquo;s <a href="http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/">great post on the topic</a>.</p>
+
+<p>However, <em>scopes</em> are never on the list. What can we do with those?</p>
+
+<h2>Digging In</h2>
+
+<p>I poked around Rails source a bit to see if there were any other options available to me.</p>
+
+<p>I found that the <code>body</code> passed to <code>ActiveRecord::Base.scope</code> just has to <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping/named.rb#L149">respond to <code>:call</code></a>. I guess that&rsquo;s why lambdas are a shoo-in for that purpose: they respond to <code>:call</code> and aren&rsquo;t picky about arguments.</p>
+
+<p>The other thing I found (I always wondered about this) is that the lambdas you usually pass to <code>scope</code> <em>aren&rsquo;t magical</em>. I always assumed that they were <code>instance_eval</code>&rsquo;d against other objects at whatever other times, but as far as I can tell, they aren&rsquo;t magical. <code>self</code> is always the model class (from lexical scope), just like any other lambda.</p>
+
+<p>Instead, the magic is a combination of Rails&#8217; <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping.rb#L57">thread-aware <code>ScopeRegistry</code></a> which tracks the scope for a given class, combined with <a href="https://github.com/rails/rails/blob/ce32ff462f3ba89c87f337f9150b3976d23220e8/activerecord/lib/active_record/relation.rb#L319"><code>Association#scoping</code></a>, which I don&rsquo;t understand. :)</p>
+
+<h2>Moving Scopes from Lambda to Class</h2>
+
+<p>You can make a class that complies to the required API:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># app/models/check_in/scopes/latest.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span><span class="o">::</span><span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span>
+</span><span class='line'>    <span class="no">CheckIn</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, hook up the scope in the model definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:latest</span><span class="p">,</span> <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since it&rsquo;s just a plain ol&#8217; class, you can give it <strong>other methods</strong> too:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># app/models/check_in/scopes/latest.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span><span class="o">::</span><span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span>
+</span><span class='line'>    <span class="no">CheckIn</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">query_string</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">query_string</span>
+</span><span class='line'>    <span class="s2">&quot;check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also initialize it with some data:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:normal</span><span class="p">,</span>          <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Regular&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:guest</span><span class="p">,</span>           <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Guest&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:volunteer</span><span class="p">,</span>       <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Volunteer&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Any Benefit?</h2>
+
+<p>Here&rsquo;s what I think:</p>
+
+<p><strong>Pros:</strong></p>
+
+<ul>
+<li>Less visual noise</li>
+<li>Your model still reads like a table of contents</li>
+<li>Theoretically, you could test the scope in isolation (but I&rsquo;m to lazy, if the existing tests still pass, that&rsquo;s good enough for me :P).</li>
+</ul>
+
+
+<p><strong>Cons:</strong></p>
+
+<ul>
+<li>If the scope takes arguments, you can&rsquo;t tell right away</li>
+<li>It doesn&rsquo;t <em>actually</em> shrink the class&rsquo;s API: it&rsquo;s still a big ol&#8217; model.</li>
+<li>It&rsquo;s not a known Rails practice.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-12T08:14:00-07:00" pubdate data-updated="true">Mar 12<span>th</span>, 2015</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/programming/'>Programming</a>, <a class='category' href='/blog/categories/rails/'>Rails</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/" title="Previous Post: "Vertical" Complexity vs. "Horizontal" Complexity">&laquo; "Vertical" Complexity vs. "Horizontal" Complexity</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

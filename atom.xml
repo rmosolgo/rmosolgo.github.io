@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-11T17:07:29-07:00</updated>
+  <updated>2015-03-12T09:11:32-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,174 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Move ActiveRecord Scopes into Separate Files]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/"/>
+    <updated>2015-03-12T08:14:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files</id>
+    <content type="html"><![CDATA[<p>Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you <em>can</em> move them into their own classes.</p>
+
+<!-- more -->
+
+
+<h2>The Problem</h2>
+
+<p>Rails models can get out of hand. Over time they get more associations, more methods, more everything. The resulting huge API and visual clutter makes those classes hard to maintain.</p>
+
+<p>Consider these scopes:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:normal</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Regular&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:guest</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Guest&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:volunteer</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="n">where</span><span class="p">(</span><span class="ss">kind</span><span class="p">:</span> <span class="s2">&quot;Volunteer&quot;</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:first_time</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">joins</span><span class="p">(</span><span class="sx">%{</span>
+</span><span class='line'><span class="sx">      INNER JOIN person_events</span>
+</span><span class='line'><span class="sx">        ON  person_events.person_id =         check_ins.person_id</span>
+</span><span class='line'><span class="sx">        AND person_events.event_id =          check_ins.event_id</span>
+</span><span class='line'><span class="sx">        AND person_events.first_check_in_id = check_ins.id</span>
+</span><span class='line'><span class="sx">        }</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>How do we usually address this?</h2>
+
+<p>For me, refactoring often means finding related methods &amp; values that deserve their own class, then moving code out of the model and into the new class. For example:</p>
+
+<ul>
+<li>moving complex validations into validator classes</li>
+<li>moving complex serialization into serializer classes (I do this with serialization to <em>English</em>, too, not just JSON)</li>
+<li>moving complex calculations into value classes.</li>
+</ul>
+
+
+<p>Whenever I&rsquo;m trying to move code out of a model, I visit Code Climate&rsquo;s <a href="http://blog.codeclimate.com/blog/2012/10/17/7-ways-to-decompose-fat-activerecord-models/">great post on the topic</a>.</p>
+
+<p>However, <em>scopes</em> are never on the list. What can we do with those?</p>
+
+<h2>Digging In</h2>
+
+<p>I poked around Rails source a bit to see if there were any other options available to me.</p>
+
+<p>I found that the <code>body</code> passed to <code>ActiveRecord::Base.scope</code> just has to <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping/named.rb#L149">respond to <code>:call</code></a>. I guess that&rsquo;s why lambdas are a shoo-in for that purpose: they respond to <code>:call</code> and aren&rsquo;t picky about arguments.</p>
+
+<p>The other thing I found (I always wondered about this) is that the lambdas you usually pass to <code>scope</code> <em>aren&rsquo;t magical</em>. I always assumed that they were <code>instance_eval</code>&rsquo;d against other objects at whatever other times, but as far as I can tell, they aren&rsquo;t magical. <code>self</code> is always the model class (from lexical scope), just like any other lambda.</p>
+
+<p>Instead, the magic is a combination of Rails&#8217; <a href="https://github.com/rails/rails/blob/5e0b555b453ea2ca36986c111512627d806101e7/activerecord/lib/active_record/scoping.rb#L57">thread-aware <code>ScopeRegistry</code></a> which tracks the scope for a given class, combined with <a href="https://github.com/rails/rails/blob/ce32ff462f3ba89c87f337f9150b3976d23220e8/activerecord/lib/active_record/relation.rb#L319"><code>Association#scoping</code></a>, which I don&rsquo;t understand. :)</p>
+
+<h2>Moving Scopes from Lambda to Class</h2>
+
+<p>You can make a class that complies to the required API:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># app/models/check_in/scopes/latest.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span><span class="o">::</span><span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span>
+</span><span class='line'>    <span class="no">CheckIn</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s2">&quot;check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, hook up the scope in the model definition:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:latest</span><span class="p">,</span> <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since it&rsquo;s just a plain ol&#8217; class, you can give it <strong>other methods</strong> too:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># app/models/check_in/scopes/latest.rb</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span><span class="o">::</span><span class="ss">Scopes</span><span class="p">:</span><span class="ss">:Latest</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span>
+</span><span class='line'>    <span class="no">CheckIn</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">query_string</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kp">private</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">query_string</span>
+</span><span class='line'>    <span class="s2">&quot;check_ins.id IN (SELECT max(id) FROM check_ins GROUP BY check_ins.person_id)&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also initialize it with some data:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">CheckIn</span> <span class="o">&lt;</span> <span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:normal</span><span class="p">,</span>          <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Regular&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:guest</span><span class="p">,</span>           <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Guest&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">scope</span> <span class="ss">:volunteer</span><span class="p">,</span>       <span class="ss">Scopes</span><span class="p">:</span><span class="ss">:KindScope</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Volunteer&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Any Benefit?</h2>
+
+<p>Here&rsquo;s what I think:</p>
+
+<p><strong>Pros:</strong></p>
+
+<ul>
+<li>Less visual noise</li>
+<li>Your model still reads like a table of contents</li>
+<li>Theoretically, you could test the scope in isolation (but I&rsquo;m to lazy, if the existing tests still pass, that&rsquo;s good enough for me :P).</li>
+</ul>
+
+
+<p><strong>Cons:</strong></p>
+
+<ul>
+<li>If the scope takes arguments, you can&rsquo;t tell right away</li>
+<li>It doesn&rsquo;t <em>actually</em> shrink the class&rsquo;s API: it&rsquo;s still a big ol&#8217; model.</li>
+<li>It&rsquo;s not a known Rails practice.</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA["Vertical" Complexity vs. "Horizontal" Complexity]]></title>
@@ -3628,363 +3796,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 
 
 <p><code>App.LeafletCollectionPointView</code> uses <a href="http://batmanjs.org/docs/api/batman.setobserver.html"><code>Batman.SetObserver</code></a> to <a href="https://github.com/rmosolgo/batmanjs-leaflet-example/blob/master/coffee/leaflet_view.coffee#L174">track adding, removing and modifying items</a> (just like <code>Batman.SetSort</code>).</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Getting to Know Batman.Set]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/"/>
-    <updated>2014-04-30T07:54:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/docs/api/batman.set.html"><code>Batman.Set</code></a> is the array-like enumerable of <a href="http://batmanjs.org">batman.js</a>. It offers observable properties (which are automatically tracked by <code>@accessor</code>) and useful change events.</p>
-
-<!-- more -->
-
-
-<p>In batman.js, you need observable data structures everywhere. <code>Batman.Set</code> is the observable, array-like enumerable that the framework uses internally, and you can use it too! Besides <code>Batman.Set</code>, batman.js provides some other classes to help you get things done:</p>
-
-<ul>
-<li><code>Batman.SetIndex</code> (created with <code>indexedBy</code>) groups a Set&rsquo;s items by a property value</li>
-<li><code>Batman.UniqueSetIndex</code> (created with <code>indexedByUnique</code>) looks up items by unique value</li>
-<li><code>Batman.SetSort</code> (created with <code>sortedBy</code>) returns a sorted proxy of the Set</li>
-<li>Binary set operations create unions, intersections and complements of sets.</li>
-</ul>
-
-
-<h2>Batman.Set</h2>
-
-<p><code>Batman.Set</code> implements the <a href="http://en.wikipedia.org/wiki/Mathematical_set">set</a> pattern. It is a <em>collection of distinct objects</em>, meaning that there can be no duplicates (unlike an array). Features of <code>Batman.Set</code> include:</p>
-
-<ul>
-<li>Enumeration (<code>Batman.Set</code> mixes in <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumerable</code></a>)</li>
-<li>Guaranteed unique contents (a <code>Batman.Set</code> won&rsquo;t allow duplicates, even if you call <code>add</code> twice.)</li>
-<li>Observable</li>
-<li>Sorting and searching, with internal caching</li>
-<li>Extensible with CoffeeScript <code>extend</code> for making custom sets</li>
-</ul>
-
-
-<p>You can <strong>create</strong> a <code>Batman.Set</code> by passing <em>n</em> items to the constructor:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">set = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
-</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 4</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can <strong>add</strong> and <strong>remove</strong> with the <code>add</code> and <code>remove</code> functions, which also take any number of items:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-</span><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you try to add the same (<code>===</code>) item twice, it won&rsquo;t be added:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">addedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
-</span><span class='line'><span class="nx">addedItems</span>        <span class="c1"># =&gt; []</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you try to remove an item that isn&rsquo;t in the set, nothing will happen:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">removedItems = </span><span class="nx">set</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 5</span>
-</span><span class='line'><span class="nx">removedItems</span>      <span class="c1"># =&gt; []</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Observing Batman.Set</h3>
-
-<p>Calling these functions inside an accessor function will cause the accessor to track the <code>Batman.Set</code>:</p>
-
-<ul>
-<li><code>at</code></li>
-<li><code>find</code></li>
-<li><code>merge</code></li>
-<li><code>forEach</code> (and any other <a href="http://batmanjs.org/docs/api/batman.enumerable.html"><code>Batman.Enumable</code> function</a>, since they call <code>forEach</code> under the hood)</li>
-<li><code>toArray</code></li>
-<li><code>isEmpty</code></li>
-<li><code>has</code></li>
-</ul>
-
-
-<p>So will <code>get</code>ting these accessors:</p>
-
-<ul>
-<li><code>first</code></li>
-<li><code>last</code></li>
-<li><code>isEmpty</code></li>
-<li><code>toArray</code></li>
-<li><code>length</code></li>
-</ul>
-
-
-<p>For example, all these accessors will be recalculated when <code>students</code> changes:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Classroom</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;students&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.length&#39;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students.isEmpty&#39;</span><span class="p">)</span> <span class="c1"># or @get(&#39;students&#39;).isEmpty()</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;numberOfPassingStudents&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="c1"># ::count calls forEach in Batman.Enumerable:</span>
-</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;students&#39;</span><span class="p">).</span><span class="nx">count</span> <span class="nf">(s) -&gt;</span> <span class="nx">s</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;grade&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>size</code>, <code>hasStudents</code>, and <code>numberOfPassingStudents</code> all register <code>students</code> as a source. (See <a href="http://rmosolgo.github.io/docs/api/batman.object_accessors.html#accessors_as_computed_properties">the docs</a> or <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">this blog post</a> for more information about batman.js automatic source tracking.)</p>
-
-<p>Besides automatic source tracking in accessors, you can observe these properties with <code>observe</code>.</p>
-
-<h2><code>itemsWereAdded</code>/<code>itemsWereRemoved</code></h2>
-
-<p>A set notifies its subscribers by firing:</p>
-
-<ul>
-<li><code>itemsWereAdded</code> when items are added to the set</li>
-<li><code>itemsWereRemoved</code> when items are removed from the set</li>
-</ul>
-
-
-<p>Each event is fired with the <em>items</em> that were added and removed.</p>
-
-<p>You can handle these events with <code>on</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereAdded&#39;</span><span class="p">,</span> <span class="nf">(addedItems) -&gt;</span>
-</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;There were </span><span class="si">#{</span><span class="nx">addedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> new items!&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">set</span><span class="p">.</span><span class="nx">on</span> <span class="s">&#39;itemsWereRemoved&#39;</span><span class="p">,</span> <span class="nf">(removedItems) -&gt;</span>
-</span><span class='line'>  <span class="nx">alert</span> <span class="s">&quot;Say goodbye to </span><span class="si">#{</span><span class="nx">removedItems</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> items!&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><em>The event </em>may be<em> fired with the internally-determined indexes of the items. This is used internally by batman.js but isn&rsquo;t implemented in all cases.</em></p>
-
-<p>These functions cause items to be added or removed:</p>
-
-<ul>
-<li><code>add</code></li>
-<li><code>remove</code></li>
-<li><code>replace</code></li>
-<li><code>clear</code></li>
-<li><code>insert</code></li>
-</ul>
-
-
-<p>Under the hood, batman.js depends on these events to keep <code>data-foreach</code> bindings up to date.</p>
-
-<h2>Set Indexes</h2>
-
-<p>Set indexes are batman.js&rsquo;s way of searching sets. Batman.js caches these indexes and updates them whenever items are added or removed from the base <code>Batman.Set</code>. This way, you can be sure than any indexes you use will be automatically updated when the set is changed.</p>
-
-<p>Consider the <code>vegetables</code> set:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Batman.SetIndex</h3>
-
-<p>A <code>Batman.SetIndex</code> groups the base <code>Batman.Set</code> by a property of its members. For example, we can group <code>vegetables</code> by <code>color</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetablesByColor = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedBy</span><span class="p">(</span><span class="s">&#39;color&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then, to get vegetables of a certain color, you <code>get</code> the color from the set index:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">redVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;red&#39;</span><span class="p">)</span> <span class="c1"># returns a Batman.Set</span>
-</span><span class='line'><span class="nx">redVegtables</span><span class="p">.</span><span class="nx">toArray</span><span class="p">()</span>
-</span><span class='line'><span class="c1"># =&gt; [{name: &quot;Tomato&quot;, color: &quot;red&quot;}, {name: &quot;Radish&quot;, color: &quot;red&quot;}]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><em>(<code>Batman.SetIndex::get</code> is an example of the &ldquo;default accessor as <code>method_missing</code>&rdquo; pattern.)</em></p>
-
-<p>The resulting set is just like any other <code>Batman.Set</code>, so you can observe it, pass it to view bindings, etc.</p>
-
-<p>If you <code>get</code> a value that doesn&rsquo;t exist, you get an empty <code>Batman.Set</code>. However, if a matching item is added to the <em>base</em> set, the index will be updated and the derived set will have the matching item added to it. For example, the <code>yellow</code> vegetables set is empty at first:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">yellowVegetables = </span><span class="nx">vegetablesByColor</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;yellow&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;length&#39;</span><span class="p">)</span> <span class="c1"># =&gt; 0</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>But if you add a vegetable with <code>color: "yellow"</code>,</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Butternut Squash&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">})</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>it will be immediately added to the derived set:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">yellowVegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;first&#39;</span><span class="p">)</span> <span class="c1"># =&gt; {name: &quot;Butternut Squash&quot;, color: &quot;yellow&quot;}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Batman.UniqueSetIndex</h3>
-
-<p>A <code>Batman.UniqueSetIndex</code> doesn&rsquo;t return a <em>set</em> of matching items, it returns the <em>first</em> matching item. This is useful when you know that the values of a property will be unique (For example, batman.js uses <code>MyModel.get('loaded.indexedBy.id')</code> to update records from JSON by ID).</p>
-
-<p>For example, our <code>vegetables</code> all have unique names:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">tomato = </span><span class="nx">vegetables</span><span class="p">.</span><span class="nx">indexedByUnique</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Using <code>indexedByUnique</code> in an accessor makes the <code>Batman.UniqueSetIndex</code> a source for that accessor. So when the unique set index&rsquo;s value changes, the accessor will be recalculated.</p>
-
-<p>This can be demonstrated by extending our <code>vegetables</code> example a little bit. Imagine a garden which should know what vegetables are growing in it. Since it&rsquo;s essentially a group of vegetables, let&rsquo;s extend <code>Batman.Set</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In our app, we want to display red/green for which vegetables are in a garden. For example, <code>hasTomato</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Garden</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;hasTomato&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nx">@indexedByUnique</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s">&quot;Tomato&quot;</span><span class="p">)</span><span class="o">?</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Now, a Garden will return <code>true</code> for <code>hasTomato</code> as soon as a tomato is added:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">myGarden = </span><span class="k">new</span> <span class="nx">Garden</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Spinach&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Corn&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;yellow&quot;</span><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; false</span>
-</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">add</span><span class="p">({</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span> <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">})</span>
-</span><span class='line'><span class="nx">myGarden</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;hasTomato&#39;</span><span class="p">)</span> <span class="c1"># =&gt; true</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>SetSort</h2>
-
-<p>A <code>Batman.SetSort</code> behaves just like a <code>Batman.Set</code>, except that its members are ordered by a given property. If an item is added to the base set, it is also added to the set sort (in its proper place, of course).</p>
-
-<p>Given these vegetables:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">vegetables = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Tomato&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Cucumber&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;green&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Radish&quot;</span><span class="p">,</span>    <span class="nv">color: </span><span class="s">&quot;red&quot;</span><span class="p">}</span>
-</span><span class='line'>  <span class="p">{</span><span class="nv">name: </span><span class="s">&quot;Eggplant&quot;</span><span class="p">,</span>  <span class="nv">color: </span><span class="s">&quot;aubergine&quot;</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>We can easily sort them by name:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span> <span class="c1"># =&gt; Batman.SetSort</span>
-</span><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># =&gt; [&quot;Cucumber&quot;, &quot;Eggplant&quot;, &quot;Tomato&quot;, &quot;Radish&quot;]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>They can also be sorted in reverse order:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">sortedBy</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">,</span> <span class="s">&quot;desc&quot;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Or, to sort descending by an accessor:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">vegetables</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;sortedByDescending.name&#39;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># =&gt; [&quot;Radish&quot;, &quot;Tomato&quot;, &quot;Eggplant&quot;, &quot;Cucumber&quot;]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Set Caching</h2>
-
-<p>You don&rsquo;t have to worry about calling <code>indexedBy</code> or <code>sortedBy</code> repeatedly. Under the hood, batman.js caches them on their base sets, so it doesn&rsquo;t recalculate the indexes and sorts every time.</p>
-
-<h2>Union, Intersection, Complement</h2>
-
-<p><code>Batman.BinarySetOperation</code>s are objects that track <em>two</em> sets and contain the resulting elements from their operations. There are three implemented subclasses of <code>Batman.BinarySetOperation</code>:</p>
-
-<ul>
-<li><a href="http://batmanjs.org/docs/api/batman.setunion.html"><code>Batman.SetUnion</code></a> contains all members from both sets, without duplicates.</li>
-<li><a href="http://batmanjs.org/docs/api/batman.setintersection.html"><code>Batman.SetIntersection</code></a> contains members which are present in the first set <em>and</em> present in the second set.</li>
-<li><a href="http://batmanjs.org/docs/api/batman.setcomplement.html"><code>Batman.SetComplement</code></a> contains members which are in the first set <em>but not</em> present in the second set.</li>
-</ul>
-
-
-<p>Take note: constructors for binary set operations will fail if either argument is <code>null</code>, so be sure to check for that when you&rsquo;re building them!</p>
 ]]></content>
   </entry>
   
