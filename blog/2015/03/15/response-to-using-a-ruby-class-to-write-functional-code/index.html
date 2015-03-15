@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Response to "Using a Ruby Class to Write Functional Code" - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Pat Shaughnessy&rsquo;s &ldquo;Using a Ruby Class to Write Functional Code&rdquo; gives an example of bringing functional programming principles into &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Response to "Using a Ruby Class to Write Functional Code"</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-15T14:29:00-07:00" pubdate data-updated="true">Mar 15<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Pat Shaughnessy&rsquo;s <a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code">&ldquo;Using a Ruby Class to Write Functional Code&rdquo;</a> gives an example of bringing functional programming principles into object-oriented design. I like it.</p>
+
+<!-- more -->
+
+
+<p>It Pat&rsquo;s example, he turns a group of pure functions into a class whose state is <em>immutable-ish</em> (they technically could be changed, but they aren&rsquo;t) &amp; whose methods are <em>pure-ish</em> (they read from internal state, too). He says:</p>
+
+<blockquote><p>You’ve broken the rules and rewritten your pure, functional program in a more idiomatic, Ruby manner. However, you haven’t lost the spirit of functional programming. Your code is just as easy to understand, maintain and test.</p></blockquote>
+
+<p><a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code#comment-1331596525">One commenter</a> goes further:</p>
+
+<blockquote><p>I think you do not break the rules of FP by relying on <code>@line</code> and <code>@values</code>. <code>@line</code> is just partially applying a parameter to the &ldquo;functions&rdquo; of Line and currification is a usual techique in FP. <code>@values</code> is memoizing the result of a function which also comes from FP.</p></blockquote>
+
+<p>There were a few ideas that jumped out at me.</p>
+
+<h2>&ldquo;No Side-effects&rdquo; = Clarity at the Call Site</h2>
+
+<p>Functions that don&rsquo;t modify their arguments are often easier to use. Their usage <em>reveals intent</em>.</p>
+
+<p>Which do you prefer:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">exclaim_1</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># modify the argument</span>
+</span><span class='line'>  <span class="n">statement</span> <span class="o">&lt;&lt;</span> <span class="s2">&quot;!!!&quot;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="kp">nil</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">wow</span> <span class="o">=</span> <span class="s2">&quot;Wow&quot;</span>
+</span><span class='line'><span class="n">exclaim_1</span><span class="p">(</span><span class="n">wow</span><span class="p">)</span>  <span class="c1"># =&gt; nil</span>
+</span><span class='line'><span class="n">wow</span>             <span class="c1"># =&gt; &quot;Wow!!!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>or:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">exclaim_2</span><span class="p">(</span><span class="n">statement</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1"># make a new string</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">statement</span> <span class="o">+</span> <span class="s2">&quot;!!!&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">wow</span> <span class="o">=</span> <span class="s2">&quot;Wow&quot;</span>
+</span><span class='line'><span class="n">such_wow</span> <span class="o">=</span> <span class="n">exclaim_2</span><span class="p">(</span><span class="n">wow</span><span class="p">)</span> <span class="c1"># =&gt; &quot;Wow!!!&quot;</span>
+</span><span class='line'><span class="n">wow</span>                       <span class="c1"># =&gt; &quot;Wow&quot;</span>
+</span><span class='line'><span class="n">such_wow</span>                  <span class="c1"># =&gt; &quot;Wow!!!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the first case, if you didn&rsquo;t have the output in front of you, you wouldn&rsquo;t know what <code>exclaim_1</code> did. You&rsquo;d have to find the file and read the method body to know its purpose.</p>
+
+<p>In the second case, it&rsquo;s obvious at the call site that the function returns a new, significant value. (Otherwise, why would the developer have captured in a new variable?)</p>
+
+<h2>Think of <code>self</code> as an Argument</h2>
+
+<p>You can extend the benefit of call site clarity to an object&rsquo;s internal state, too.</p>
+
+<p>The commenter mentions that &ldquo;<code>@line</code> is like a parameter&rdquo; to the class&rsquo;s methods. Although it <em>isn&rsquo;t</em> part of the method signature, it has some parameter-like properties. It is:</p>
+
+<ul>
+<li>A value which affects the output</li>
+<li>Unchanged by the function</li>
+</ul>
+
+
+<p>What if you <em>always</em> treated <code>self</code> like that? I mean, you didn&rsquo;t modify it inside method bodies, you treated it as read-only (as often as possible).</p>
+
+<p>Python really invites you to think of <code>self</code> as a parameter of the function. It&rsquo;s actually part of the method signature:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">Something</span><span class="p">():</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">some_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg_1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">):</span>
+</span><span class='line'>    <span class="bp">self</span> <span class="c"># =&gt; the instance</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&quot;whatever&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In fact, PyCharm will even complain if you modify <code>self</code> during a method:</p>
+
+<p><img src="/images/pycharm_ivar.png" width="500"></p>
+
+<p>(In reality, <code>self</code> <em>is</em> an argument in any language runtime that I ever heard of &hellip; we just tend not to think of it that way!)</p>
+
+<h2>What Gives?</h2>
+
+<p>I spend most of my time <em>maintaining</em> software and FP pays off big time in that regard:</p>
+
+<ul>
+<li><strong>Tests are more reliable</strong> for pure functions: if the function yields the correct output with those inputs today, it will <em>always</em> yield the correct output with those inputs.</li>
+<li>Pure functions are <strong>easy to understand</strong>: the only factors are the inputs and there&rsquo;s no muddling from outside universe. Knowledge of the function body is sufficent to understand the function.</li>
+<li>Pure functions must be <strong>decoupled</strong>. The only touch the world via <em>inputs</em> and <em>outputs</em> so they can&rsquo;t depend on anything else.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-03-15T14:29:00-07:00" pubdate data-updated="true">Mar 15<span>th</span>, 2015</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/programming/'>Programming</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/03/12/move-activerecord-scopes-into-separate-files/" title="Previous Post: Move ActiveRecord Scopes into Separate Files">&laquo; Move ActiveRecord Scopes into Separate Files</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

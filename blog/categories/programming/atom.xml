@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-12T09:14:25-07:00</updated>
+  <updated>2015-03-15T15:05:42-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,107 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Response to "Using a Ruby Class to Write Functional Code"]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/"/>
+    <updated>2015-03-15T14:29:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code</id>
+    <content type="html"><![CDATA[<p>Pat Shaughnessy&rsquo;s <a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code">&ldquo;Using a Ruby Class to Write Functional Code&rdquo;</a> gives an example of bringing functional programming principles into object-oriented design. I like it.</p>
+
+<!-- more -->
+
+
+<p>It Pat&rsquo;s example, he turns a group of pure functions into a class whose state is <em>immutable-ish</em> (they technically could be changed, but they aren&rsquo;t) &amp; whose methods are <em>pure-ish</em> (they read from internal state, too). He says:</p>
+
+<blockquote><p>You’ve broken the rules and rewritten your pure, functional program in a more idiomatic, Ruby manner. However, you haven’t lost the spirit of functional programming. Your code is just as easy to understand, maintain and test.</p></blockquote>
+
+<p><a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code#comment-1331596525">One commenter</a> goes further:</p>
+
+<blockquote><p>I think you do not break the rules of FP by relying on <code>@line</code> and <code>@values</code>. <code>@line</code> is just partially applying a parameter to the &ldquo;functions&rdquo; of Line and currification is a usual techique in FP. <code>@values</code> is memoizing the result of a function which also comes from FP.</p></blockquote>
+
+<p>There were a few ideas that jumped out at me.</p>
+
+<h2>&ldquo;No Side-effects&rdquo; = Clarity at the Call Site</h2>
+
+<p>Functions that don&rsquo;t modify their arguments are often easier to use. Their usage <em>reveals intent</em>.</p>
+
+<p>Which do you prefer:</p>
+
+<p>```ruby
+def exclaim_1(statement)
+  # modify the argument
+  statement &lt;&lt; &ldquo;!!!&rdquo;
+  return nil
+end</p>
+
+<p>wow = &ldquo;Wow&rdquo;
+exclaim_1(wow)  # => nil
+wow             # => &ldquo;Wow!!!&rdquo;
+```</p>
+
+<p>or:</p>
+
+<p>```ruby
+def exclaim_2(statement)
+  # make a new string
+  return statement + &ldquo;!!!&rdquo;
+end</p>
+
+<p>wow = &ldquo;Wow&rdquo;
+such_wow = exclaim_2(wow) # => &ldquo;Wow!!!&rdquo;
+wow                       # => &ldquo;Wow&rdquo;
+such_wow                  # => &ldquo;Wow!!!&rdquo;
+```</p>
+
+<p>In the first case, if you didn&rsquo;t have the output in front of you, you wouldn&rsquo;t know what <code>exclaim_1</code> did. You&rsquo;d have to find the file and read the method body to know its purpose.</p>
+
+<p>In the second case, it&rsquo;s obvious at the call site that the function returns a new, significant value. (Otherwise, why would the developer have captured in a new variable?)</p>
+
+<h2>Think of <code>self</code> as an Argument</h2>
+
+<p>You can extend the benefit of call site clarity to an object&rsquo;s internal state, too.</p>
+
+<p>The commenter mentions that &ldquo;<code>@line</code> is like a parameter&rdquo; to the class&rsquo;s methods. Although it <em>isn&rsquo;t</em> part of the method signature, it has some parameter-like properties. It is:</p>
+
+<ul>
+<li>A value which affects the output</li>
+<li>Unchanged by the function</li>
+</ul>
+
+
+<p>What if you <em>always</em> treated <code>self</code> like that? I mean, you didn&rsquo;t modify it inside method bodies, you treated it as read-only (as often as possible).</p>
+
+<p>Python really invites you to think of <code>self</code> as a parameter of the function. It&rsquo;s actually part of the method signature:</p>
+
+<p>```python
+class Something():
+  def some_method(self, arg_1, arg2):</p>
+
+<pre><code>self # =&gt; the instance
+return "whatever"
+</code></pre>
+
+<p>```</p>
+
+<p>In fact, PyCharm will even complain if you modify <code>self</code> during a method:</p>
+
+<p><img src="/images/pycharm_ivar.png" width="500"></p>
+
+<p>(In reality, <code>self</code> <em>is</em> an argument in any language runtime that I ever heard of &hellip; we just tend not to think of it that way!)</p>
+
+<h2>What Gives?</h2>
+
+<p>I spend most of my time <em>maintaining</em> software and FP pays off big time in that regard:</p>
+
+<ul>
+<li><strong>Tests are more reliable</strong> for pure functions: if the function yields the correct output with those inputs today, it will <em>always</em> yield the correct output with those inputs.</li>
+<li>Pure functions are <strong>easy to understand</strong>: the only factors are the inputs and there&rsquo;s no muddling from outside universe. Knowledge of the function body is sufficent to understand the function.</li>
+<li>Pure functions must be <strong>decoupled</strong>. The only touch the world via <em>inputs</em> and <em>outputs</em> so they can&rsquo;t depend on anything else.</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Move ActiveRecord Scopes into Separate Files]]></title>
