@@ -1,0 +1,41 @@
+---
+layout: page
+title: "Talks"
+date: 2015-03-20 17:24
+comments: true
+sharing: true
+footer: true
+talks:
+  - title: "Flux: React Goes Big"
+    tagline: "Flux as a macrocosm of React's one-way data flow."
+    synopsis: "One thing I love about React.js is how its one-way data flow provides simplicity and clarity to components. Flux has the same advantage: it brings one-way data flow to your application architecture. I describe key concepts in Flux in terms of analogous concepts in React."
+    image_name: talks_flux.png
+    slides_url: http://slides.com/robertmosolgo/flux
+  - title: "Ruby"
+    tagline: "A conceptual introduction to the Ruby language."
+    synopsis: "Ruby is fun and powerful because it puts you in charge. You can inspect and modify your program at runtime. Also, we explore mruby (a Ruby implementation with a small footprint) and how we can connect C code and Ruby code."
+    image_name: talks_ruby.png
+    slides_url: http://slides.com/robertmosolgo/ruby
+---
+
+<div class='talks-page'>
+  <ul>
+  {% for talk in page.talks %}
+    <li>
+      <div class='talk'>
+        <div class='talk-image'>
+          <a href="{{ talk.slides_url }}" target="_blank">
+            <img src='/images/{{ talk.image_name }}' />
+          </a>
+        </div>
+        <div class='talk-description'>
+          <h2>{{ talk.title }}</h2>
+          <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
+          <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
+        </div>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+

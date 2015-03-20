@@ -1,6 +1,6 @@
 ---
 layout: post
-title: '"Vertical" Complexity vs. "Horizontal" Complexity'
+title: 'Building up vs Building out'
 date: 2015-03-11 13:27
 comments: true
 categories:
@@ -26,7 +26,7 @@ Your program has one entry point and renders views outputs:
 A    B    C
 ```
 
-## Vertical Complexity
+## Building Up
 
 One way to address this problem is to find everywhere you handle data type _X_, then extend it to handle type _Y_:
 
@@ -53,9 +53,9 @@ Your code paths now look like this:
 A1  A2 B1  B2 C1  C2
 ```
 
-Your program has grown "vertically": the tree is "deeper" than it was.
+Your tree is deeper than it was. You slapped some complexity "on top" of the existing code.
 
-## Horizontal Complexity
+## Building Out
 
 Another approach would be to implement a parallel set of views for rendering the new data. Your existing views don't change. Instead you add three new views:
 
@@ -70,7 +70,7 @@ Another approach would be to implement a parallel set of views for rendering the
 A  B  C     D  E  F
 ```
 
-Your program has grown "horizontally". It has more objects, but each one is doing a small job.
+Your program has grown "out". It has more objects, but each one is doing a small job.
 
 This way, your existing views stay simple. The new views can be equally simple. Hopefully, recycled code can be shared between views!
 
