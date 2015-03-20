@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>"Vertical" Complexity vs. "Horizontal" Complexity - Robert Mosolgo</title>
+  <title>Building up vs Building out - Robert Mosolgo</title>
   <meta name="author" content="Robert Mosolgo">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity">
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
@@ -81,7 +81,7 @@
   
   <header>
     
-      <h1 class="entry-title">"Vertical" Complexity vs. "Horizontal" Complexity</h1>
+      <h1 class="entry-title">Building Up vs Building Out</h1>
     
     
       <p class="meta">
@@ -131,7 +131,7 @@
 </span><span class='line'>A    B    C</span></code></pre></td></tr></table></div></figure>
 
 
-<h2>Vertical Complexity</h2>
+<h2>Building Up</h2>
 
 <p>One way to address this problem is to find everywhere you handle data type <em>X</em>, then extend it to handle type <em>Y</em>:</p>
 
@@ -173,9 +173,9 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Your program has grown &ldquo;vertically&rdquo;: the tree is &ldquo;deeper&rdquo; than it was.</p>
+<p>Your tree is deeper than it was. You slapped some complexity &ldquo;on top&rdquo; of the existing code.</p>
 
-<h2>Horizontal Complexity</h2>
+<h2>Building Out</h2>
 
 <p>Another approach would be to implement a parallel set of views for rendering the new data. Your existing views don&rsquo;t change. Instead you add three new views:</p>
 
@@ -198,7 +198,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Your program has grown &ldquo;horizontally&rdquo;. It has more objects, but each one is doing a small job.</p>
+<p>Your program has grown &ldquo;out&rdquo;. It has more objects, but each one is doing a small job.</p>
 
 <p>This way, your existing views stay simple. The new views can be equally simple. Hopefully, recycled code can be shared between views!</p>
 
@@ -241,7 +241,7 @@
     
       <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/" >Tweet</a>
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/" >Tweet</a>
   
   
   
@@ -283,8 +283,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/';
-        var disqus_url = 'http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/';
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/';
         var disqus_script = 'embed.js';
       
     (function () {

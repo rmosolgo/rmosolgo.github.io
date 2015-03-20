@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-03-15T15:05:42-07:00</updated>
+  <updated>2015-03-19T19:27:38-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -260,10 +260,10 @@ end
   </entry>
   
   <entry>
-    <title type="html"><![CDATA["Vertical" Complexity vs. "Horizontal" Complexity]]></title>
-    <link href="http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity/"/>
+    <title type="html"><![CDATA[Building up vs Building out]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/"/>
     <updated>2015-03-11T13:27:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2015/03/11/vertical-complexity-vs-horizontal-complexity</id>
+    <id>http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out</id>
     <content type="html"><![CDATA[<p>While adding a big feature to <a href="http://get.planningcenteronline.com/check-ins">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
 
 <!-- more -->
@@ -284,7 +284,7 @@ end
 A    B    C
 </code></p>
 
-<h2>Vertical Complexity</h2>
+<h2>Building Up</h2>
 
 <p>One way to address this problem is to find everywhere you handle data type <em>X</em>, then extend it to handle type <em>Y</em>:</p>
 
@@ -311,9 +311,9 @@ end
 A1  A2 B1  B2 C1  C2
 </code></p>
 
-<p>Your program has grown &ldquo;vertically&rdquo;: the tree is &ldquo;deeper&rdquo; than it was.</p>
+<p>Your tree is deeper than it was. You slapped some complexity &ldquo;on top&rdquo; of the existing code.</p>
 
-<h2>Horizontal Complexity</h2>
+<h2>Building Out</h2>
 
 <p>Another approach would be to implement a parallel set of views for rendering the new data. Your existing views don&rsquo;t change. Instead you add three new views:</p>
 
@@ -328,7 +328,7 @@ A1  A2 B1  B2 C1  C2
 A  B  C     D  E  F
 </code></p>
 
-<p>Your program has grown &ldquo;horizontally&rdquo;. It has more objects, but each one is doing a small job.</p>
+<p>Your program has grown &ldquo;out&rdquo;. It has more objects, but each one is doing a small job.</p>
 
 <p>This way, your existing views stay simple. The new views can be equally simple. Hopefully, recycled code can be shared between views!</p>
 
