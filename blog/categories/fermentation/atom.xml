@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Fermentation | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/fermentation/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2015-04-27T08:32:38-07:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Making Yogurt]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/04/27/making-yogurt/"/>
+    <updated>2015-04-27T07:37:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/04/27/making-yogurt</id>
+    <content type="html"><![CDATA[<p>This weekend I tried making yogurt. It worked!</p>
+
+<!-- more -->
+
+
+<p>I based it on this great recipe: <a href="http://biology.clc.uc.edu/Fankhauser/Cheese/yogurt_making/YOGURT2000.htm">Dr. David Fankhauser&rsquo;s Yogurt</a>. Dr. Fankhauser has a <a href="http://biology.clc.uc.edu/Fankhauser/Cheese/CHEESE.html">ton of illustrated, detailed recipes</a> for other dairy and make-at home foods (eg, <a href="http://biology.clc.uc.edu/fankhauser/Cheese/Blue_Cheese/Blue_Cheese.htm">blue cheese</a>, <a href="http://biology.clc.uc.edu/fankhauser/Buds_and_Bark/tapping_sugar_maple_index.html">maple syrup</a>, <a href="http://biology.clc.uc.edu/fankhauser/homesteading/popcorn_index.html">microwave popcorn</a>.</p>
+
+<p>Some overall notes:</p>
+
+<ul>
+<li>The recipe called for a small cup of plain yogurt for a starter. In fact, my grocery store <em>doesn&rsquo;t carry</em> plain yogurt, so I used greek yogurt as starter. It worked just fine (as far as I can tell, the same stuff, just strained).</li>
+<li>The recipe called for 3 hours of culturing time, but I found longer (12-16 hours) was better.</li>
+<li>I really fretted over the incubation temperature. I don&rsquo;t think that was necessary. I think set-it-and-forget-it would have been OK!</li>
+<li>The resulting yogurt is as good as you can get at the store!</li>
+<li>I&rsquo;m also looking forward to using the whey for other uses (pickles, ginger ale, ricotta cheese).</li>
+</ul>
+
+
+<h2>The Setup</h2>
+
+<p>First, scald the milk to remove any unwanted cultures that may have survived pasteurization:</p>
+
+<p><img src="/images/yogurt/scalding-milk.jpg" width="500"></p>
+
+<p>Sterilize equipment in boiling water (unwanted cultures could give it a bad taste):</p>
+
+<p><img src="/images/yogurt/sterilize-equipment.jpg" width="500"></p>
+
+<h2>Incubation</h2>
+
+<p>After mixing a cup of store-bought yogurt into the milk, put it in a cooler with 50C water:</p>
+
+<p><img src="/images/yogurt/incubation-jars.jpg" width="500"></p>
+
+<p>And let it sit:</p>
+
+<p><img src="/images/yogurt/incubation.jpg" width="500"></p>
+
+<p>(I was really fretting about the temperature: I occassionally scooped some water out, boiled it, then added it back. I think this was overkill!)</p>
+
+<h2>Result</h2>
+
+<p>In the jar, the curds and whey separate:</p>
+
+<p><img src="/images/yogurt/yogurt-in-jar.jpg" width="500"></p>
+
+<p>The whey can be decanted:</p>
+
+<p><img src="/images/yogurt/jar-of-whey.jpg" width="500"></p>
+
+<p>(This is whey from a few jars of yogurt.)</p>
+
+<p>Leaving only the yogurt curd:</p>
+
+<p><img src="/images/yogurt/yogurt-curd-in-jar.jpg" width="500"></p>
+
+<p>Yum! Smooth and creamy (after stirring), but unsweetened, so I add <a href="http://stuffdutchpeoplelike.com/2011/03/06/hagelslag/">hagelslag</a>:</p>
+
+<p><img src="/images/yogurt/yogurt-in-bowl.jpg" width="500"></p>
+
+<h2>Next</h2>
+
+<p>I&rsquo;m looking forward to using the &ldquo;leftover&rdquo; whey to make:</p>
+
+<ul>
+<li><a href="http://immigrantstable.com/2013/11/17/whey-pickles/">whey pickles</a></li>
+<li><a href="http://www.instructables.com/id/Lacto-fermented-Ginger-Ale/">ginger ale</a></li>
+<li><a href="http://biology.clc.uc.edu/fankhauser/Cheese/Ricotta/ricotta_00.htm">ricotta</a> (also from Dr. Fankhauser)</li>
+</ul>
+
+
+<p>Also, in a few weeks I&rsquo;ll try to step up my game and try <a href="http://biology.clc.uc.edu/Fankhauser/Cheese/neufchatel/neufchatel.htm">Dr. Fankhauser&rsquo;s neufchatel</a>, which adds rennet to the mix.</p>
+]]></content>
+  </entry>
+  
+</feed>
