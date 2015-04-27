@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Food | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/food/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-04-27T08:32:38-07:00</updated>
+  <updated>2015-04-27T08:40:45-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -28,55 +28,61 @@
 <p>Some overall notes:</p>
 
 <ul>
-<li>The recipe called for a small cup of plain yogurt for a starter. In fact, my grocery store <em>doesn&rsquo;t carry</em> plain yogurt, so I used greek yogurt as starter. It worked just fine (as far as I can tell, the same stuff, just strained).</li>
-<li>The recipe called for 3 hours of culturing time, but I found longer (12-16 hours) was better.</li>
-<li>I really fretted over the incubation temperature. I don&rsquo;t think that was necessary. I think set-it-and-forget-it would have been OK!</li>
-<li>The resulting yogurt is as good as you can get at the store!</li>
-<li>I&rsquo;m also looking forward to using the whey for other uses (pickles, ginger ale, ricotta cheese).</li>
+<li>My grocery store <em>doesn&rsquo;t carry</em> plain yogurt (except in giant containers), so I used <strong>greek yogurt as starter</strong>. It worked just fine.</li>
+<li>The recipe called for 3 hours of culturing time, but I found <strong>longer (12-16 hours) was better</strong>.</li>
+<li>I really fretted over the incubation temperature. I don&rsquo;t think that was necessary. I think <strong>set-it-and-forget-it would have been OK</strong>!</li>
+<li>The resulting yogurt is as <strong>good</strong> as you can get at the store!</li>
+<li>I&rsquo;m also looking forward to using the <strong>whey</strong> (pickles, ginger ale, ricotta cheese).</li>
 </ul>
 
 
 <h2>The Setup</h2>
 
-<p>First, scald the milk to remove any unwanted cultures that may have survived pasteurization:</p>
+<p>First, scald the milk to kill any unwanted cultures that may have survived pasteurization:</p>
 
-<p><img src="/images/yogurt/scalding-milk.jpg" width="500"></p>
+<p>{% img /images/yogurt/scalding-milk.jpg 500 %}</p>
 
-<p>Sterilize equipment in boiling water (unwanted cultures could give it a bad taste):</p>
+<p>Sterilize equipment in boiling water:</p>
 
-<p><img src="/images/yogurt/sterilize-equipment.jpg" width="500"></p>
+<p>{% img /images/yogurt/sterilize-equipment.jpg 500 %}</p>
+
+<p>Unwanted cultures could give the yogurt a bad taste.</p>
 
 <h2>Incubation</h2>
 
-<p>After mixing a cup of store-bought yogurt into the milk, put it in a cooler with 50C water:</p>
+<p>Mix a cup of store-bought yogurt into the milk, then distribute it into jars.</p>
 
-<p><img src="/images/yogurt/incubation-jars.jpg" width="500"></p>
+<p>Put the jars in a cooler with 50°C water:</p>
+
+<p>{% img /images/yogurt/incubation-jars.jpg 500 %}</p>
 
 <p>And let it sit:</p>
 
-<p><img src="/images/yogurt/incubation.jpg" width="500"></p>
+<p>{% img /images/yogurt/incubation.jpg 500 %}</p>
 
-<p>(I was really fretting about the temperature: I occassionally scooped some water out, boiled it, then added it back. I think this was overkill!)</p>
+<p>I found longer was better. My longest was 16 hours and looked thick and good!</p>
+
+<p>I was really fretting about the temperature: I occassionally scooped some water out, boiled it, then added it back. I think this was overkill!</p>
 
 <h2>Result</h2>
 
 <p>In the jar, the curds and whey separate:</p>
 
-<p><img src="/images/yogurt/yogurt-in-jar.jpg" width="500"></p>
+<p>{% img /images/yogurt/yogurt-in-jar.jpg 500 %}</p>
 
 <p>The whey can be decanted:</p>
 
-<p><img src="/images/yogurt/jar-of-whey.jpg" width="500"></p>
+<p>{% img /images/yogurt/jar-of-whey.jpg 500 %}</p>
 
 <p>(This is whey from a few jars of yogurt.)</p>
 
 <p>Leaving only the yogurt curd:</p>
 
-<p><img src="/images/yogurt/yogurt-curd-in-jar.jpg" width="500"></p>
+<p>{% img /images/yogurt/yogurt-curd-in-jar.jpg 500 %}</p>
 
 <p>Yum! Smooth and creamy (after stirring), but unsweetened, so I add <a href="http://stuffdutchpeoplelike.com/2011/03/06/hagelslag/">hagelslag</a>:</p>
 
-<p><img src="/images/yogurt/yogurt-in-bowl.jpg" width="500"></p>
+<p>{% img /images/yogurt/yogurt-in-bowl.jpg 500 %}</p>
 
 <h2>Next</h2>
 
