@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Devise | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/devise/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-04-27T08:40:45-07:00</updated>
+  <updated>2015-04-27T08:40:57-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -104,7 +104,7 @@ class Funzies.SessionsController extends Funzies.ApplicationController
 
 <p>It turned out looking like this:</p>
 
-<p>{% img /images/sign_in_form.png 500 %} {% img /images/sign_up_form.png 500 %}</p>
+<p><img src="/images/sign_in_form.png" width="500"> <img src="/images/sign_up_form.png" width="500"></p>
 
 <p>Here&rsquo;s the handler for submitting that form. Notice that it handles <em>creating an account</em> and <em>signing up</em>. This might have been stupid of me.</p>
 

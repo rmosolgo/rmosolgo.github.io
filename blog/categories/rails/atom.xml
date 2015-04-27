@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-04-27T08:40:45-07:00</updated>
+  <updated>2015-04-27T08:40:57-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -172,11 +172,11 @@ end
 
 <p>So, our app is live. We&rsquo;ve dutily extended <code>ApplicationController</code> in all our other controllers, giving us an inheritance tree like this:</p>
 
-<p>{% img /images/controller_inheritance_bad.png 500 500 %}</p>
+<p><img src="/images/controller_inheritance_bad.png" width="500" height="500"></p>
 
 <p>Fortunately, our app is a success and our customers want us to open an API. Let&rsquo;s use <code>API::BaseController</code> as the superclass of all our API controllers:</p>
 
-<p>{% img /images/controller_inheritance_bad_with_api.png 500 500 %}</p>
+<p><img src="/images/controller_inheritance_bad_with_api.png" width="500" height="500"></p>
 
 <p>As our user base grows, we need a more robust permissions system. We tighten up restrictions:</p>
 
@@ -219,7 +219,7 @@ end
 
 <p>Returning to the example above, I think this inheritance tree is better:</p>
 
-<p>{% img /images/controller_inheritance_good.png 500 500 %}</p>
+<p><img src="/images/controller_inheritance_good.png" width="500" height="500"></p>
 
 <p>We&rsquo;ve introduced abstract classes for each &ldquo;part&rdquo; of the app. (I use quotes because I don&rsquo;t know a technical term for it!) Now, logged-in authentication would be handled by a subclass of <code>ApplicationController</code>, perhaps named <code>BaseController</code>. A logged-in controller would extend <code>BaseController</code>. For example:</p>
 
