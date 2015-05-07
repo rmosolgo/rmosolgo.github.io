@@ -268,7 +268,11 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/2015/04/27/making-yogurt/</loc>
-        <lastmod>2015-04-27T08:40:46-07:00</lastmod>
+        <lastmod>2015-05-06T18:07:37-07:00</lastmod>
+    </url>
+    <url>
+        <loc>http://rmosolgo.github.io/blog/2015/05/06/making-ginger-ale/</loc>
+        <lastmod>2015-05-06T18:09:47-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/about/</loc>
@@ -276,11 +280,11 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/archives/</loc>
-        <lastmod>2015-04-27T08:40:46-07:00</lastmod>
+        <lastmod>2015-05-06T18:09:47-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/</loc>
-        <lastmod>2015-04-27T08:40:46-07:00</lastmod>
+        <lastmod>2015-05-06T18:09:47-07:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/robots.txt</loc>
@@ -288,6 +292,6 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/talks/</loc>
-        <lastmod>2015-04-27T08:40:46-07:00</lastmod>
+        <lastmod>2015-05-06T18:09:47-07:00</lastmod>
     </url>
 </urlset>
