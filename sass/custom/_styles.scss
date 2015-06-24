@@ -4,8 +4,7 @@
 $rm-logo: image-url("/images/hood-ornament-image2.png");
 $phone: "(max-width: 800px)";
 html {
-  background-image: image-url("/images/background_teal.png");
-
+  background-color: $page-bg;
   body {
     padding: 10px;
   }
@@ -115,6 +114,7 @@ ul.subscription {
       width: 20%;
       a {
         text-decoration: none;
+        white-space: normal;
       }
       img {
         max-width: 100%;
@@ -131,6 +131,13 @@ ul.subscription {
       @media #{$phone} {
         width: 100%;
         float: none;
+      }
+      .talk-title {
+        margin-bottom: 5px;
+      }
+      .talk-given-at {
+        color: #999;
+        margin-bottom: 5px;
       }
     }
   }

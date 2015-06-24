@@ -7,11 +7,13 @@ sharing: true
 footer: true
 talks:
   - title: "Flux: React Goes Big"
+    given_at: "Full Stack North County, March 12, 2015"
     tagline: "Flux as a macrocosm of React's one-way data flow."
     synopsis: "One thing I love about React.js is how its one-way data flow provides simplicity and clarity to components. Flux has the same advantage: it brings one-way data flow to your application architecture. I describe key concepts in Flux in terms of analogous concepts in React."
     image_name: talks_flux.png
     slides_url: http://slides.com/robertmosolgo/flux
   - title: "Ruby"
+    given_at: "Full Stack North County, November 13, 2014"
     tagline: "A conceptual introduction to the Ruby language."
     synopsis: "Ruby is fun and powerful because it puts you in charge. You can inspect and modify your program at runtime. Also, we explore mruby (a Ruby implementation with a small footprint) and how we can connect C code and Ruby code."
     image_name: talks_ruby.png
@@ -29,7 +31,8 @@ talks:
           </a>
         </div>
         <div class='talk-description'>
-          <h2>{{ talk.title }}</h2>
+          <h2 class='talk-title'>{{ talk.title }}</h2>
+          <p class='talk-given-at'>{{ talk.given_at }}</p>
           <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
           <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
         </div>

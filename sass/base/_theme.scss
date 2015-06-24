@@ -78,10 +78,10 @@ body {
   // border-radius: 5px;
   > div {
     background: $sidebar-bg;
-    border-bottom: 1px solid $page-border-bottom;
+    // border-bottom: 1px solid $page-border-bottom;
     > div {
       background: $main-bg;
-      border-right: 1px solid $sidebar-border;
+      // border-right: 1px solid $sidebar-border;
     }
   }
 }

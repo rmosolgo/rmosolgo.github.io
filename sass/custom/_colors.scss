@@ -4,7 +4,7 @@
 
 $noise-bg: "";
 //$main-bg: red;
-$page-bg: rbga(61,183,183,1);
+$page-bg: rgba(61,183,183,1);
 $header-bg: rgba(0,0,0,0) ; //#639F23;
 $subtitle-color: lighten($header-bg, 58);
 $link-color: #1A6C75;
@@ -23,7 +23,7 @@ $footer-color: black;
 
 
 /* To use the light Solarized highlighting theme uncomment the following line */
-//$solarized: light;
+// $solarized: light;
 
 /* If you want to tweak the Solarized colors you can do that here */
 //$base03:          #002b36; //darkest blue

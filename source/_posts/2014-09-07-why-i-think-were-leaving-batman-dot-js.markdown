@@ -5,6 +5,7 @@ date: 2014-09-07 20:19
 comments: true
 categories:
   - Batman.js
+  - React.js
 ---
 
 Sadly, [PCO](http://get.planningcenteronline.com) is getting out of the batman.js game.
