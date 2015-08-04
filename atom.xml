@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-06-23T21:14:57-07:00</updated>
+  <updated>2015-08-04T10:46:12-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,137 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Authorization in GraphQL]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql/"/>
+    <updated>2015-08-04T10:19:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql</id>
+    <content type="html"><![CDATA[<p>A <a href="http://facebook.github.io/graphql/">GraphQL</a> system works differently from a &ldquo;traditional&rdquo; RESTful JSON API. Instead of authenticating during controller actions, you can authenticate users with &ldquo;query context.&rdquo;</p>
+
+<!-- more -->
+
+
+<h2>Query Context</h2>
+
+<p>GraphQL execution systems should allow the consumer to pass some arbitrary data &ldquo;through&rdquo; the query, so it is accessible at any time during execution. For example, you could take some information from an HTTP request, pass it into the query, then use that information during field resolution.</p>
+
+<p>You can see this idea at work in <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/">graphql-js 0.2.4</a>:</p>
+
+<ul>
+<li>An arbitrary value enters the <code>execute</code> function <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L108">as <code>rootValue</code></a> and is <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L119">built into <code>context</code></a></li>
+<li>Execution context is <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L203-L206">passed to <code>executeFields</code></a></li>
+<li><code>rootValue</code> is <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L489">drawn back out and passed</a> to fields&#8217; resolve functions, where it is the <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L663">third argument</a></li>
+</ul>
+
+
+<p>This way, any value that you pass to <code>execute</code> is passed along to any field resolution.</p>
+
+<p><a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a> also implements this idea:</p>
+
+<ul>
+<li><code>Query#new</code> accepts <a href="https://github.com/rmosolgo/graphql-ruby/blob/adcf3c8ee83ba06232d71df1a2360bc985caf4d3/lib/graph_ql/query.rb#L15">a <code>context:</code> keyword</a></li>
+<li>That value is <a href="https://github.com/rmosolgo/graphql-ruby/blob/adcf3c8ee83ba06232d71df1a2360bc985caf4d3/lib/graph_ql/query.rb#L74">accessible through <code>Query::Context</code></a>,
+which is <a href="https://github.com/rmosolgo/graphql-ruby/blob/adcf3c8ee83ba06232d71df1a2360bc985caf4d3/lib/graph_ql/field.rb#L54">passed to field resolution methods</a></li>
+</ul>
+
+
+<h2>Using Query Context for Authorization</h2>
+
+<p>To implement authorization in GraphQL, you could use query context.
+There are roughly two approaches:</p>
+
+<h4>Pass a permission indicator into the query.</h4>
+
+<p>Before executing the query, determine the permission level of the current user, then pass that into the query as context. That way, each field can test the permission level to determine how to resolve.</p>
+
+<p>For example, in Ruby:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># pass the permission level in the context hash</span>
+</span><span class='line'><span class="n">permission</span> <span class="o">=</span> <span class="n">current_user</span><span class="o">.</span><span class="n">permission</span>
+</span><span class='line'><span class="n">query</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Query</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="no">MySchema</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="ss">context</span><span class="p">:</span> <span class="p">{</span><span class="ss">permission</span><span class="p">:</span> <span class="n">permission</span><span class="p">})</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">result</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Inside a field, you could access <code>context[:permission]</code>, for example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Field</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="n">f</span><span class="o">.</span><span class="n">resolve</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>    <span class="c1"># Check the permission level which was passed as context</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">context</span><span class="o">[</span><span class="ss">:permission</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;admin&quot;</span>
+</span><span class='line'>      <span class="n">object</span><span class="o">.</span><span class="n">secret_info</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="kp">nil</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This allows you to access permission information without abusing the global scope.</p>
+
+<h4>Pass the user object into the query.</h4>
+
+<p>If your authentication scheme is more complex, you can pass the user object in to the query context.</p>
+
+<p>For example, in Ruby:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Pass `current_user` in the context hash</span>
+</span><span class='line'><span class="n">query</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Query</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="no">MySchema</span><span class="p">,</span> <span class="n">query_string</span><span class="p">,</span> <span class="ss">context</span><span class="p">:</span> <span class="p">{</span><span class="ss">user</span><span class="p">:</span> <span class="n">current_user</span><span class="p">})</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">result</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That way, fields can access the user object at resolve-time:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Field</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="n">f</span><span class="o">.</span><span class="n">resolve</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1"># Check the user which was passed as context</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">context</span><span class="o">[</span><span class="ss">:user</span><span class="o">].</span><span class="n">can?</span><span class="p">(</span><span class="ss">:read</span><span class="p">,</span> <span class="n">object</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">objects</span><span class="o">.</span><span class="n">secret_info</span>
+</span><span class='line'>    <span class="k">else</span>
+</span><span class='line'>      <span class="kp">nil</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you pass the user object into query context, you can use fine-grained authentication when resolving fields.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Making Ginger Ale]]></title>
@@ -3712,77 +3843,6 @@ You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/ht
 <li>leave a comment here or open an issue on the <a href="http://github.com/batmanjs/batman">github repo</a></li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
-    <updated>2014-06-05T07:26:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
-    <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
-
-<!-- more -->
-
-
-<p><strong>The goal</strong> is to have a user add an image to a file input and <em>immediately</em> preview that image. To accomplish this, we&rsquo;ll turn the uploaded file into a data URI, then set that to the <code>src</code> of our <code>&lt;img/&gt;</code>.</p>
-
-<p>First, set up the observer in the model:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">ModelWithImage</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
-</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;imageDataURI&#39;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nv">constructor: </span><span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="k">super</span>
-</span><span class='line'>    <span class="nx">@observe</span> <span class="s">&#39;imageFile&#39;</span><span class="p">,</span> <span class="nf">(newVal, oldVal) -&gt;</span>
-</span><span class='line'>      <span class="k">if</span> <span class="nx">newVal</span><span class="o">?</span>
-</span><span class='line'>        <span class="nx">@_setImageDataURIFromFile</span><span class="p">()</span>
-</span><span class='line'>      <span class="k">else</span>
-</span><span class='line'>        <span class="nx">@set</span> <span class="s">&#39;imageDataURI&#39;</span><span class="p">,</span> <span class="s">&quot;&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This says: &ldquo;whenever <code>imageFile</code> changes, if there is a new value, use it to set the data URI, otherwise, set the data URI to <code>""</code>.&rdquo;</p>
-
-<p>Now, implement <code>_setImageDataURIFromFile</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">_setImageDataURIFromFile: </span><span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nv">file = </span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;imageFile&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="nv">reader = </span><span class="k">new</span> <span class="nx">FileReader</span>
-</span><span class='line'>    <span class="nv">reader.onload = </span><span class="nf">(e) =&gt;</span>
-</span><span class='line'>      <span class="nv">dataURI = </span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">result</span>
-</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;imageDataURI&#39;</span><span class="p">,</span> <span class="nx">dataURI</span>
-</span><span class='line'>    <span class="nx">reader</span><span class="p">.</span><span class="nx">readAsDataURL</span><span class="p">(</span><span class="nx">file</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can use it in a template like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'>  <span class="nt">&lt;img</span> <span class="na">data-bind-src=</span><span class="s">&#39;component.imageDataURI&#39;</span> <span class="nt">/&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;file&#39;</span> <span class="na">data-bind=</span><span class="s">&#39;component.imageFile&#39;</span> <span class="nt">/&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>When a user uploads a file, the <code>&lt;img&gt;</code> will be automatically updated!</p>
 ]]></content>
   </entry>
   
