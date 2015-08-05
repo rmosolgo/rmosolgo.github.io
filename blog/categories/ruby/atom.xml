@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-08-04T10:46:12-07:00</updated>
+  <updated>2015-08-04T22:27:36-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -27,7 +27,7 @@
 
 <p>GraphQL execution systems should allow the consumer to pass some arbitrary data &ldquo;through&rdquo; the query, so it is accessible at any time during execution. For example, you could take some information from an HTTP request, pass it into the query, then use that information during field resolution.</p>
 
-<p>You can see this idea at work in <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/">graphql-js 0.2.4</a>:</p>
+<p>You can see this idea at work in <a href="https://github.com/graphql/graphql-js/tree/v0.2.4">graphql-js 0.2.4</a>:</p>
 
 <ul>
 <li>An arbitrary value enters the <code>execute</code> function <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L108">as <code>rootValue</code></a> and is <a href="https://github.com/graphql/graphql-js/blob/v0.2.4/src/execution/execute.js#L119">built into <code>context</code></a></li>
