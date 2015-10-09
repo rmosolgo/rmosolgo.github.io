@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-09-27T22:37:31-07:00</updated>
+  <updated>2015-10-08T21:56:41-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,112 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How many assertions per test case?]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case/"/>
+    <updated>2015-10-08T21:12:00-07:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case</id>
+    <content type="html"><![CDATA[<p>This question is too hard. Instead, ask, &ldquo;how many behaviors per test case?&rdquo; and answer, &ldquo;one.&rdquo;</p>
+
+<!-- more -->
+
+
+<p>I presented at Full Stack about unit testing but what I really like is behavior-driven development.</p>
+
+<h2>A Behavior</h2>
+
+<p>You can think of a code base as a collection of behaviors: given some inputs (data, events), it makes some outputs (more data, more events). In this perspective, the code itself is an implementation detail. As long as it takes the inputs and creates the outputs, it makes little difference what classes, methods, functions etc, implement that behavior.</p>
+
+<p>This kind of thinking is recursive: each behavior is composed of smaller behaviors. For example, in a web application:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Behavior:
+</span><span class='line'>  - A request with a valid username & password is allowed to take Action X
+</span><span class='line'>
+</span><span class='line'>    Is composed of:
+</span><span class='line'>      - The user info is stored in the session
+</span><span class='line'>      - The user's `last_logged_in_at` is updated
+</span><span class='line'>      - Value Y is written to the database</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Each subsequent level of behavior may have an implementation of its own.</p>
+
+<h2>Testing a behavior</h2>
+
+<p>In a web application, unauthorized requests:</p>
+
+<ul>
+<li>Return meaningful HTTP responses, including a status and a body; and</li>
+<li>do not execute the requested action</li>
+</ul>
+
+
+<p>I would specify that as two <em>behaviors</em>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="s2">&quot;an unauthorized request&quot;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;responds as not authorized&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">http_response</span> <span class="o">=</span> <span class="n">make_create_request</span> <span class="c1"># makes a unauthorized_request</span>
+</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="mi">403</span><span class="p">,</span> <span class="n">http_response</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="s2">&quot;Not Authorized&quot;</span><span class="p">,</span> <span class="n">http_response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;doesn&#39;t write to the database&quot;</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">http_response</span> <span class="o">=</span> <span class="n">make_create_request</span> <span class="c1"># makes a unauthorized_request</span>
+</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="no">Posts</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(using <a href="https://github.com/seattlerb/minitest#specs">minitest/spec</a>)</p>
+
+<p>Notice that the first test made <em>two</em> assertions. You could split that into three test cases but I don&rsquo;t think it&rsquo;s worth the trouble. What&rsquo;s the case where <code>403</code> and <code>"Not Authorized"</code> are not part of the same behavior?</p>
+
+<h2>Multiple Assertions as a Smell</h2>
+
+<p>If your test case has many assertions, your code may be telling you that you&rsquo;re specifying multiple behaviors at once. Ask yourself:</p>
+
+<ul>
+<li>Is there a smaller unit of work to extract?</li>
+<li>Can I make this a two-step process, where step one&rsquo;s result is passed to step two?</li>
+<li>Can I break each test case (and its corresponding code) into a distinct <a href="http://c2.com/cgi/wiki?StrategyPattern">strategy</a>?</li>
+<li>Am I testing business logic <em>and</em> interaction with an external service (eg, your database or an HTTP service)? Can I separate the two actions?</li>
+<li>Am I transforming data, then acting based on the result? Can I separate those two?</li>
+<li>Are there assertions that are shared between multiple test cases? Is there an underlying behavior there?</li>
+</ul>
+
+
+<h2>Other People on The Internet</h2>
+
+<p>Here&rsquo;s some more dignified reading on the topic:</p>
+
+<ul>
+<li><strong><a href="http://dannorth.net/introducing-bdd/">&ldquo;Introducing BDD,&rdquo; Dan North</a></strong>. I especially agree with his point that behavior-driving thinking helps you focus your design and implementation.</li>
+<li><strong><a href="http://blog.jayfields.com/2007/06/testing-one-assertion-per-test.html">&ldquo;Testing One Assertion Per Test,&rdquo; Jay Fields</a></strong>. I basically agree with him: &ldquo;Tests that focus on one behavior of the system are almost always easier to write and to comprehend at a later date.&rdquo; But I disagree with his assumption that one behavior equals one assertion.</li>
+<li><strong><a href="http://programmers.stackexchange.com/a/7829">&ldquo;Is it OK to have multiple asserts in a single unit test?&rdquo;, random Stack Overflow people</a></strong>. &ldquo;Yeah, but try not to.&rdquo;</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Crystal First Impressions]]></title>
@@ -2672,144 +2778,6 @@ There are roughly two approaches:</p>
 
 
 <p>That&rsquo;s what I use in <code>signIn</code> and <code>signOut</code> above.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Model Transactions in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js/"/>
-    <updated>2014-07-19T09:15:00-07:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/07/19/model-transactions-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><code>Model::transaction</code> provides a deep-copied, &ldquo;shadow-realm&rdquo; version of a record which is great for rendering into edit forms. Any changes made to it can be saved (which updates the original record too), or just forgotten.</p>
-
-<!-- more -->
-
-
-<p>Here&rsquo;s the problem transactions exist to solve:</p>
-
-<ul>
-<li>You want your user to edit something</li>
-<li>You render a record into an edit form</li>
-<li>User edits the form</li>
-<li>User clicks back button</li>
-<li>User is surprised to see that the record&rsquo;s changes were &ldquo;saved&rdquo; (In fact, only the in-memory record was changed &mdash; the change wasn&rsquo;t sent to the server)</li>
-</ul>
-
-
-<p><code>Model::transaction</code> solves this problem by returning a <em>deep copy</em> of the record at hand which can be:</p>
-
-<ul>
-<li><strong>saved</strong>, just like a normal record, in which case changes are applied to the original</li>
-<li><strong>forgotten</strong>, by simply navigating away</li>
-<li><strong>applied</strong>, which applies changes to the original, but doesn&rsquo;t update the server.</li>
-</ul>
-
-
-<p><em>The name &ldquo;transaction&rdquo; hearkens back to database transactions where changes aren&rsquo;t applied unless they&rsquo;re all successful. In the same way, changes to a <code>Batman.Transaction</code> aren&rsquo;t applied unless you explicitly <code>save</code> or <code>applyChanges</code>.</em></p>
-
-<h2>Setting up a Transaction</h2>
-
-<p>To set up a transaction, call <code>transaction</code> on the record at hand:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">RaceHorsesController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationController</span>
-</span><span class='line'>  <span class="nv">edit: </span><span class="nf">(params) -&gt;</span>
-</span><span class='line'>    <span class="nx">MyApp</span><span class="p">.</span><span class="nx">RaceHorse</span><span class="p">.</span><span class="nx">find</span> <span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nf">(err, record) -&gt;</span>
-</span><span class='line'>      <span class="nv">deepCopy = </span><span class="nx">record</span><span class="p">.</span><span class="nx">transaction</span><span class="p">()</span>
-</span><span class='line'>      <span class="nx">@set</span> <span class="s">&#39;raceHorse&#39;</span><span class="p">,</span> <span class="nx">deepCopy</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Transaction&rsquo;s Deep Copy</h2>
-
-<p>A transaction is actually an instance of the original model. It differs in 2 ways:</p>
-
-<ul>
-<li>It isn&rsquo;t added to the <code>loaded</code> set (aka &ldquo;the memory map&rdquo;)</li>
-<li>It has <code>Batman.Transaction</code> mixed in, which defines some new functions and overrides <code>Model::save</code></li>
-</ul>
-
-
-<p><code>Model::transaction</code> peforms a deep copy of a <code>Batman.Model</code> by
- iterating over the model&rsquo;s <code>attributes</code> hash. The <code>attributes</code> hash is where encoded properties are stored (and other properties, unless you define an accessor that says otherwise).</p>
-
-<p>Batman.js copies the attributes hash into the transaction by handling each value:</p>
-
-<ul>
-<li>If the value is a <code>Batman.Model</code>, it&rsquo;s also copied with <code>Model::transaction</code></li>
-<li>If the value is a <code>Batman.AssociationSet</code>, it&rsquo;s cloned into a <code>Batman.TransactionAssociationSet</code> and its members are copied with <code>Model::transaction</code></li>
-<li>Otherwise, the value is set into the transaction&rsquo;s attributes.</li>
-</ul>
-
-
-<p>Under the hood, batman.js tracks which objects it has already cloned. That way, it doesn&rsquo;t get thrown into an infinite loop.</p>
-
-<p>If a mutable object is copied from the original to the transaction, batman.js issues a warning. This is because it can&rsquo;t isolate changes. The transaction and the original are both refering to the <em>same object</em>, so changes to one will also affect the other. Mutable objects include:</p>
-
-<ul>
-<li>Dates (although mutating dates is such a pain in JS, I doubt this will cause a problem)</li>
-<li>Arrays</li>
-<li>Batman.Set, Batman.Hash, etc</li>
-<li>any JavaScript object</li>
-</ul>
-
-
-<h2>Saving a Transaction</h2>
-
-<p>To save a transaction, call <code>save</code> on it. This will:</p>
-
-<ul>
-<li>validate the transaction (with client-side validations)</li>
-<li>apply changes to the original model</li>
-<li>save the transaction (ie, the storage operation will be performed with the transaction, not the original)</li>
-<li>pass the original to the <code>save</code> callback</li>
-</ul>
-
-
-<p>This means a transaction behaves just like a normal model. You can save it like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>  <span class="nv">saveRaceHorse: </span><span class="nf">(raceHorse) -&gt;</span>
-</span><span class='line'>    <span class="nx">raceHorse</span><span class="p">.</span><span class="nx">isTransaction</span> <span class="c1"># =&gt; true, just checking</span>
-</span><span class='line'>    <span class="nx">raceHorse</span><span class="p">.</span><span class="nx">save</span> <span class="nf">(err, record) -&gt;</span>
-</span><span class='line'>      <span class="k">if</span> <span class="o">!</span><span class="nx">err</span>
-</span><span class='line'>        <span class="nx">Batman</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s">&quot;/race_horses&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Note:</strong> at time of writing, transaction <strong>does not account for server-side validations</strong>. There is an open issue for this <a href="https://github.com/batmanjs/batman/issues/1049">on github</a>.</p>
-
-<h2>Forgetting a Transaction</h2>
-
-<p>If you don&rsquo;t want changes on transaction to be applied, just leave it alone.</p>
-
-<ul>
-<li>It&rsquo;s not in the <code>loaded</code> set, so it won&rsquo;t intefere with your app&rsquo;s other data.</li>
-<li>The original record has no references to it.</li>
-<li>It&rsquo;s still set on your controller (probably), but it will get overrided next time your user edits something.</li>
-</ul>
-
-
-<p>Once it&rsquo;s released from the controller, it will probably just be garbage-collected when the browser gets a chance.</p>
-
-<h2>Applying Changes without Saving</h2>
-
-<p>Transactions have an <code>applyChanges</code> function that updates the original record without performing any storage operations.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nx">transaction</span><span class="p">.</span><span class="nx">applyChanges</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You might use this if your save operation is really complicated and you need to control it by hand.</p>
 ]]></content>
   </entry>
   
