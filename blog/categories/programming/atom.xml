@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T21:56:41-07:00</updated>
+  <updated>2015-10-08T22:00:49-07:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -82,7 +82,7 @@ end
 
 <p>Notice that the first test made <em>two</em> assertions. You could split that into three test cases but I don&rsquo;t think it&rsquo;s worth the trouble. What&rsquo;s the case where <code>403</code> and <code>"Not Authorized"</code> are not part of the same behavior?</p>
 
-<h2>Multiple Assertions as a Smell</h2>
+<h2>Multiple Assertions is a Code Smell</h2>
 
 <p>If your test case has many assertions, your code may be telling you that you&rsquo;re specifying multiple behaviors at once. Ask yourself:</p>
 
