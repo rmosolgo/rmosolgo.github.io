@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rspec | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rspec/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Rspec should_receive stubs methods]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/09/28/rspec-should-receive-stubs-methods/"/>
-    <updated>2013-09-28T20:59:00-07:00</updated>
+    <updated>2013-09-28T20:59:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/09/28/rspec-should-receive-stubs-methods</id>
     <content type="html"><![CDATA[<p>I learned this the hard way, so I thought I&rsquo;d share.</p>
 

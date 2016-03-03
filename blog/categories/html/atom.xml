@@ -4,7 +4,7 @@
   <title><![CDATA[Category: HTML | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/html/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Serving static files in WebApp2 reponses]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses/"/>
-    <updated>2013-08-04T19:22:00-07:00</updated>
+    <updated>2013-08-04T19:22:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses</id>
     <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image.</p>
 
@@ -116,7 +116,7 @@
   <entry>
     <title type="html"><![CDATA[Handling Files in WebApp2 and Google App Engine]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine/"/>
-    <updated>2013-08-04T19:22:00-07:00</updated>
+    <updated>2013-08-04T19:22:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine</id>
     <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image. The given object could only have on image, so I was using the <a href="https://developers.google.com/appengine/docs/python/ndb/properties">NDB BlobProperty</a>:</p>
 

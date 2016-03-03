@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Batman.js | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/batman-dot-js/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Why (I Think) We're Leaving Batman.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js/"/>
-    <updated>2014-09-07T20:19:00-07:00</updated>
+    <updated>2014-09-07T20:19:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js</id>
     <content type="html"><![CDATA[<p>Sadly, <a href="http://get.planningcenteronline.com">PCO</a> is getting out of the batman.js game.</p>
 
@@ -106,7 +106,7 @@
   <entry>
     <title type="html"><![CDATA[Render Scope in AngularJS and Batman.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/"/>
-    <updated>2014-08-10T18:45:00-07:00</updated>
+    <updated>2014-08-10T18:45:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js</id>
     <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> and <a href="http://angularjs.org">AngularJS</a> both create hierarchical view scopes, but their implementations are very different.</p>
 
@@ -238,7 +238,7 @@
   <entry>
     <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/"/>
-    <updated>2014-08-02T09:38:00-07:00</updated>
+    <updated>2014-08-02T09:38:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js</id>
     <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a front-end MVC framework with an unrivaled implementation of key-value observing. I will explore computed properties in batman.js by contrasting them with Ember.js&rsquo;s computed properties.</p>
 
@@ -378,7 +378,7 @@ App.Person.create({firstName: "Yehuda", lastName: "Katz"})
 return people.mapBy('fullName').join(', ');
 </code></pre>
 
-<p>  }.property(&lsquo;<a href="&#109;&#97;&#x69;&#x6c;&#x74;&#x6f;&#58;&#x70;&#101;&#111;&#112;&#x6c;&#x65;&#x2e;&#x40;&#x65;&#97;&#x63;&#x68;&#x2e;&#102;&#x75;&#x6c;&#x6c;&#78;&#97;&#109;&#101;">&#112;&#101;&#111;&#112;&#108;&#101;&#x2e;&#x40;&#x65;&#x61;&#x63;&#104;&#x2e;&#x66;&#x75;&#108;&#108;&#78;&#97;&#109;&#x65;</a>&rsquo;)
+<p>  }.property(&lsquo;<a href="&#109;&#x61;&#105;&#x6c;&#116;&#111;&#x3a;&#112;&#101;&#x6f;&#112;&#108;&#x65;&#46;&#64;&#x65;&#97;&#99;&#104;&#x2e;&#102;&#117;&#x6c;&#x6c;&#x4e;&#97;&#109;&#x65;">&#x70;&#x65;&#111;&#x70;&#x6c;&#101;&#46;&#x40;&#x65;&#x61;&#x63;&#x68;&#46;&#x66;&#117;&#108;&#x6c;&#78;&#x61;&#x6d;&#101;</a>&rsquo;)
 });
 ```</p>
 
@@ -470,7 +470,7 @@ class App.PeopleController extends Batman.Controller
   <entry>
     <title type="html"><![CDATA[Event Handlers in Batman.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js/"/>
-    <updated>2014-07-28T13:23:00-07:00</updated>
+    <updated>2014-07-28T13:23:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js</id>
     <content type="html"><![CDATA[<p>In <a href="http://batmanjs.org">batman.js</a>, event handlers respond to user interactions like &ldquo;click&rdquo; and &ldquo;submit&rdquo;. You can use them to modify application state in response to those interactions.</p>
 
@@ -698,7 +698,7 @@ ItemsController {redirect: function, handleError: function, errorHandler: functi
   <entry>
     <title type="html"><![CDATA[Batman.js and Devise]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise/"/>
-    <updated>2014-07-21T09:08:00-07:00</updated>
+    <updated>2014-07-21T09:08:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise</id>
     <content type="html"><![CDATA[<p>Using <a href="http://batmanjs.org">batman.js</a> with <a href="https://github.com/plataformatec/devise">Devise</a> is pretty straightforward.</p>
 

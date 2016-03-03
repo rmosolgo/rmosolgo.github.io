@@ -4,7 +4,7 @@
   <title><![CDATA[Category: GraphQL | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/graphql/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -14,9 +14,125 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Using GraphQL without Relay]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/03/03/using-graphql-without-relay/"/>
+    <updated>2016-03-03T10:01:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/03/03/using-graphql-without-relay</id>
+    <content type="html"><![CDATA[<p>Although <a href="http://facebook.github.io/relay/">Relay</a> made <a href="facebook.github.io/graphql">GraphQL</a> famous, GraphQL was in use at Facebook for years before Relay took the scene. You can use plain AJAX requests to interact with a GraphQL server, too.</p>
+
+<!-- more -->
+
+
+<p>GraphQL servers like <a href="https://github.com/graphql/express-graphql"><code>express-graphql</code></a> or <a href="https://github.com/rmosolgo/graphql-ruby-demo"><code>graphql-ruby</code> on Rails</a> expose a single endpoint which responds to queries.</p>
+
+<p>The endpoint accepts a few parameters:</p>
+
+<ul>
+<li><code>query</code>: The GraphQL query string to execute</li>
+<li><code>variables</code>: Runtime values for variables in the GraphQL query</li>
+<li><code>operationName</code>: if <code>query</code> contains multiple operations, you must tell the server which <em>one</em> to execute</li>
+</ul>
+
+
+<p>Given this interface, you can even use jQuery as a GraphQL client! Here&rsquo;s how you would use <code>$.post</code> to interact with the server.</p>
+
+<h2>1. Build and send query strings</h2>
+
+<p>In your JavaScript, you could dynamically build a GraphQL query, then post it to the server.</p>
+
+<p>For example, if you were searching users by name, you might use this function to build a query string:</p>
+
+<p>```javascript
+function usersByNameQuery(searchTerm) {
+  // GraphQL requires double-quoted strings in the query:
+  return &lsquo;{ users(search: &ldquo;&rsquo; + searchTerm + &lsquo;&rdquo;) { name, id }  }&rsquo;
+}</p>
+
+<p>usersByNameQuery(&ldquo;bob&rdquo;)
+// &ldquo;{ users(search: "bob&rdquo;) { name, id }  }&ldquo;
+```</p>
+
+<p>Then, you can post the query with <code>$.post</code>:</p>
+
+<p>```javascript
+var query = usersByNameQuery(&ldquo;bob&rdquo;)
+$.post(&ldquo;/graphql&rdquo;, {query: query}, function(response) {
+  if (response.errors) {</p>
+
+<pre><code>// handle errors
+</code></pre>
+
+<p>  } else {</p>
+
+<pre><code>// use response.data
+</code></pre>
+
+<p>  }
+})
+```</p>
+
+<p>In the callback, you can check for errors and use the response&rsquo;s <code>data</code>.</p>
+
+<h2>2. Send query <em>and</em> variables</h2>
+
+<p>Often, we know our data requirements ahead of time. That is, we know what values we need to render our UI. In this case, we can <em>separate</em> the query structure and runtime values into <code>query</code> and <code>variables</code>.</p>
+
+<p>Here&rsquo;s how we could adapt our previous example to separate the query from its values:</p>
+
+<p><code>``javascript
+// ES6 backtick-quoted string
+var searchByNameQuery =</code>
+query searchByName($searchTerm: String!) {
+  users(search: $searchTerm) {</p>
+
+<pre><code>name
+id
+</code></pre>
+
+<p>  }
+}`</p>
+
+<p>function fetchUsersByName(searchTerm) {
+  var payload = {</p>
+
+<pre><code>query: searchByNameQuery,
+variables: {
+  // This will be used as `$searchTerm` by the server:
+  searchTerm: searchTerm,
+}
+</code></pre>
+
+<p>  }</p>
+
+<p>  $.post(&ldquo;/graphql&rdquo;, payload, function(response) {</p>
+
+<pre><code>if (response.errors) {
+  // handle errors ...
+} else {
+  // use response.data
+}
+</code></pre>
+
+<p>  })
+}
+```</p>
+
+<p>In this case, we always send the <em>same</em> query string, but we change the <code>variables</code> for each request.</p>
+
+<p>This setup is easier to maintain because the query string is so easy to read. Any changes to it will be easy to see in a pull request.</p>
+
+<h1>3. (future) Store query strings on the server</h1>
+
+<p>Maybe you noticed an optimization waiting to happen: since we always send the same query string, why send it at all? We could store it on the server ahead of time, then call it by name at runtime.</p>
+
+<p>I heard that Facebook&rsquo;s GraphQL server had this behavior, but I don&rsquo;t know that any of the open implementations have it yet. I&rsquo;m <a href="https://github.com/rmosolgo/graphql-ruby/pull/76">considering it for <code>graphql-ruby</code></a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Authorization in GraphQL]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql/"/>
-    <updated>2015-08-04T10:19:00-07:00</updated>
+    <updated>2015-08-04T10:19:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql</id>
     <content type="html"><![CDATA[<p>A <a href="http://facebook.github.io/graphql/">GraphQL</a> system works differently from a &ldquo;traditional&rdquo; RESTful JSON API. Instead of authenticating during controller actions, you can authenticate users with &ldquo;query context.&rdquo;</p>
 

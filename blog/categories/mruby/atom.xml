@@ -4,7 +4,7 @@
   <title><![CDATA[Category: mruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/mruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Defining mruby Methods with C]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c/"/>
-    <updated>2014-11-21T10:25:00-08:00</updated>
+    <updated>2014-11-21T10:25:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c</id>
     <content type="html"><![CDATA[<p>You can use C code to prepare methods for <a href="http://www.mruby.org">mruby</a> scripts.</p>
 
@@ -144,7 +144,7 @@ greet!
   <entry>
     <title type="html"><![CDATA["Hello World" with mruby]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby/"/>
-    <updated>2014-11-15T19:38:00-08:00</updated>
+    <updated>2014-11-15T19:38:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby</id>
     <content type="html"><![CDATA[<p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
 

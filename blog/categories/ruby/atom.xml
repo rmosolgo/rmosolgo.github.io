@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Authorization in GraphQL]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql/"/>
-    <updated>2015-08-04T10:19:00-07:00</updated>
+    <updated>2015-08-04T10:19:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/08/04/authorization-in-graphql</id>
     <content type="html"><![CDATA[<p>A <a href="http://facebook.github.io/graphql/">GraphQL</a> system works differently from a &ldquo;traditional&rdquo; RESTful JSON API. Instead of authenticating during controller actions, you can authenticate users with &ldquo;query context.&rdquo;</p>
 
@@ -128,7 +128,7 @@ end
   <entry>
     <title type="html"><![CDATA[Response to "Using a Ruby Class to Write Functional Code"]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/"/>
-    <updated>2015-03-15T14:29:00-07:00</updated>
+    <updated>2015-03-15T14:29:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code</id>
     <content type="html"><![CDATA[<p>Pat Shaughnessy&rsquo;s <a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code">&ldquo;Using a Ruby Class to Write Functional Code&rdquo;</a> gives an example of bringing functional programming principles into object-oriented design. I like it.</p>
 
@@ -229,7 +229,7 @@ return "whatever"
   <entry>
     <title type="html"><![CDATA["Hello World" with mruby]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby/"/>
-    <updated>2014-11-15T19:38:00-08:00</updated>
+    <updated>2014-11-15T19:38:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby</id>
     <content type="html"><![CDATA[<p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
 
@@ -345,7 +345,7 @@ $ ./hello_world
   <entry>
     <title type="html"><![CDATA[Adding Batman.js to an Existing Rails App]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/"/>
-    <updated>2013-10-19T22:08:00-07:00</updated>
+    <updated>2013-10-19T22:08:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app</id>
     <content type="html"><![CDATA[<p>I had an existing app, but I wanted to take the front end to the next level. <a href="http://batmanjs.org/">Batman.js</a> is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful <a href="https://github.com/batmanjs/batman-rails">Rails integration</a>.</p>
 
@@ -457,7 +457,7 @@ end
   <entry>
     <title type="html"><![CDATA[Convert country names and codes with Countrysaurus]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus/"/>
-    <updated>2013-10-07T21:56:00-07:00</updated>
+    <updated>2013-10-07T21:56:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus</id>
     <content type="html"><![CDATA[<p><a href="http://countrysaurus.herokuapp.com/">Countrysaurus</a> is an online tool for merging country codes into a CSV spreadsheet with country names in it. You can also download a CSV of country codes or access it via <a href="http://countrysaurus.herokuapp.com/api_documentation">REST API</a>.</p>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Move ActiveRecord Scopes into Separate Files]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/"/>
-    <updated>2015-03-12T08:14:00-07:00</updated>
+    <updated>2015-03-12T08:14:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files</id>
     <content type="html"><![CDATA[<p>Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you <em>can</em> move them into their own classes.</p>
 
@@ -161,7 +161,7 @@ end
   <entry>
     <title type="html"><![CDATA[Happy Refactoring by Keeping ApplicationController to a Minimum]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum/"/>
-    <updated>2015-01-17T10:24:00-08:00</updated>
+    <updated>2015-01-17T10:24:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/01/17/happy-refactoring-by-keeping-applicationcontroller-to-a-minimum</id>
     <content type="html"><![CDATA[<p>Extending <code>ActionController::Base</code> <em>once</em>, in <code>ApplicationController</code>, is a great Ruby on Rails practice. However, if <code>ApplicationController</code> is your only abstract controller, it&rsquo;s likely to become a maintenance challenge. To avoid this, you should extend <code>ApplicationController</code> as needed and move as much code as possible into its subclasses.</p>
 
@@ -314,7 +314,7 @@ end</p>
   <entry>
     <title type="html"><![CDATA[Dynamically-Generated Headers for ActiveResource Requests]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests/"/>
-    <updated>2014-02-05T15:47:00-08:00</updated>
+    <updated>2014-02-05T15:47:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/02/05/dynamically-generated-headers-for-activeresource-requests</id>
     <content type="html"><![CDATA[<p>Need to add a header to an ActiveResource request? If you need to do it at dynamically at request-time, redefine <code>.headers</code>.</p>
 
@@ -354,7 +354,7 @@ end
   <entry>
     <title type="html"><![CDATA[Batman.js testing with Karma and Jasmine]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine/"/>
-    <updated>2014-01-18T14:38:00-08:00</updated>
+    <updated>2014-01-18T14:38:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/01/18/batman-dot-js-testing-with-karma-and-jasmine</id>
     <content type="html"><![CDATA[<p>Here&rsquo;s how I set up <a href="http://karma-runner.github.io/">Karma</a> &amp; <a href="http://pivotal.github.io/jasmine/">Jasmine</a> to test a <a href="http://batmanjs.org/">Batman.js</a> app on Ruby on Rails.</p>
 
@@ -538,7 +538,7 @@ describe &ldquo;Batman.TestCase is loaded&rdquo;, &ndash;>
   <entry>
     <title type="html"><![CDATA[Slim Templates with Batman.js and the Rails Asset Pipeline]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/"/>
-    <updated>2013-11-25T13:28:00-08:00</updated>
+    <updated>2013-11-25T13:28:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline</id>
     <content type="html"><![CDATA[<p>You can use <a href="http://slim-lang.com/">Slim</a> (or Haml) to serve your <a href="http://batmanjs.org">Batman.js</a> templates in the Rails Asset Pipeline.</p>
 

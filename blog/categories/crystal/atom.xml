@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Crystal | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/crystal/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Crystal First Impressions]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions/"/>
-    <updated>2015-09-27T21:47:00-07:00</updated>
+    <updated>2015-09-27T21:47:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions</id>
     <content type="html"><![CDATA[<p>The <a href="http://crystal-lang.org/">Crystal programming language</a> combines Ruby-like syntax with a really powerful compiler. As a result, it&rsquo;s fun to write, fast to run, and hard to screw up!</p>
 

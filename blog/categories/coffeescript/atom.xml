@@ -4,7 +4,7 @@
   <title><![CDATA[Category: CoffeeScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/coffeescript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Build a Blog with Batman.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/"/>
-    <updated>2014-06-06T08:38:00-07:00</updated>
+    <updated>2014-06-06T08:38:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js</id>
     <content type="html"><![CDATA[<p>In this whirlwind tutorial, we&rsquo;ll build a blog with <a href="http://batmanjs.org">batman.js</a> and <a href="http://firebase.com">Firebase</a>.</p>
 
@@ -972,7 +972,7 @@ comment.save (err, record) =&gt;
   <entry>
     <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
-    <updated>2014-06-05T07:26:00-07:00</updated>
+    <updated>2014-06-05T07:26:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
     <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
 
@@ -1030,7 +1030,7 @@ reader.readAsDataURL(file)
   <entry>
     <title type="html"><![CDATA[Load Batman.js Models from Specific Urls]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/"/>
-    <updated>2013-10-28T10:19:00-07:00</updated>
+    <updated>2013-10-28T10:19:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls</id>
     <content type="html"><![CDATA[<p><a href="http://batmanjs.org/">Batman.js</a>&rsquo;s  <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee">REST Storage Adapter</a> provides a clean interface for operating on records with vanilla REST urls &mdash; but what about when you need a lil' something more?</p>
 

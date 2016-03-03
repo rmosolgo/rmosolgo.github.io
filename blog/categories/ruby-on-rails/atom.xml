@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby on Rails | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby-on-rails/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Batman.js and Devise]]></title>
     <link href="http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise/"/>
-    <updated>2014-07-21T09:08:00-07:00</updated>
+    <updated>2014-07-21T09:08:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2014/07/21/batman-dot-js-and-devise</id>
     <content type="html"><![CDATA[<p>Using <a href="http://batmanjs.org">batman.js</a> with <a href="https://github.com/plataformatec/devise">Devise</a> is pretty straightforward.</p>
 

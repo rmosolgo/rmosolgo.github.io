@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Slim | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/slim/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Slim Templates with Batman.js and the Rails Asset Pipeline]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/"/>
-    <updated>2013-11-25T13:28:00-08:00</updated>
+    <updated>2013-11-25T13:28:00-05:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline</id>
     <content type="html"><![CDATA[<p>You can use <a href="http://slim-lang.com/">Slim</a> (or Haml) to serve your <a href="http://batmanjs.org">Batman.js</a> templates in the Rails Asset Pipeline.</p>
 

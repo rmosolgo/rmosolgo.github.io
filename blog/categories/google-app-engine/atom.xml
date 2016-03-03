@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Google App Engine | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/google-app-engine/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Lessons Learned on Google App Engine]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine/"/>
-    <updated>2013-11-01T13:00:00-07:00</updated>
+    <updated>2013-11-01T13:00:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/11/01/lessons-learned-on-google-app-engine</id>
     <content type="html"><![CDATA[<p>My involvement with a <a href="https://cloud.google.com/products/app-engine">Google App Engine</a>-based project is winding down, so I&rsquo;ll share what I&rsquo;ve learned.</p>
 
@@ -116,7 +116,7 @@ return csv
   <entry>
     <title type="html"><![CDATA[Using Command-Line Tools for Backends on Google App Engine]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/07/backends-on-google-app-engine/"/>
-    <updated>2013-08-07T19:17:00-07:00</updated>
+    <updated>2013-08-07T19:17:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/07/backends-on-google-app-engine</id>
     <content type="html"><![CDATA[<p>It took me quite a while to realize that my <a href="https://cloud.google.com/products/app-engine">GAE</a> <a href="https://developers.google.com/appengine/docs/python/backends/">backend</a> wasn&rsquo;t working because I had to use <a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/uploading">appcfg</a>, not the <a href="https://developers.google.com/appengine/downloads">App Engine Launcher</a> to deploy it. App Engine Launcher&rsquo;s &ldquo;deploy&rdquo; button wouldn&rsquo;t do it.</p>
 
@@ -145,7 +145,7 @@ return csv
   <entry>
     <title type="html"><![CDATA[Enable filesystem writes in GAE dev_appserver]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/05/enable-filesystem-writes-in-gae-dev-appserver/"/>
-    <updated>2013-08-05T20:43:00-07:00</updated>
+    <updated>2013-08-05T20:43:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/05/enable-filesystem-writes-in-gae-dev-appserver</id>
     <content type="html"><![CDATA[<p><a href="https://cloud.google.com/products/">Google App Engine</a>&rsquo;s <code>dev_appserver</code> prevents filesystem writes because GAE has no filesystem &mdash; but sometimes you want to write anyways!</p>
 
@@ -207,7 +207,7 @@ return csv
   <entry>
     <title type="html"><![CDATA[Serving static files in WebApp2 reponses]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses/"/>
-    <updated>2013-08-04T19:22:00-07:00</updated>
+    <updated>2013-08-04T19:22:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/04/serving-static-files-in-webapp2-responses</id>
     <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image.</p>
 
@@ -307,7 +307,7 @@ return csv
   <entry>
     <title type="html"><![CDATA[Handling Files in WebApp2 and Google App Engine]]></title>
     <link href="http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine/"/>
-    <updated>2013-08-04T19:22:00-07:00</updated>
+    <updated>2013-08-04T19:22:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2013/08/04/handling-files-in-webapp2-and-google-app-engine</id>
     <content type="html"><![CDATA[<p>On <a href="https://cloud.google.com/products/">Google App Engine</a>, I had to display the user-submitted image, if there was one, else display a default image. The given object could only have on image, so I was using the <a href="https://developers.google.com/appengine/docs/python/ndb/properties">NDB BlobProperty</a>:</p>
 

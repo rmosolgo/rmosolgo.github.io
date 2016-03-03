@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2015-10-08T22:00:49-07:00</updated>
+  <updated>2016-03-03T10:29:00-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[How many assertions per test case?]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case/"/>
-    <updated>2015-10-08T21:12:00-07:00</updated>
+    <updated>2015-10-08T21:12:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case</id>
     <content type="html"><![CDATA[<p>This question is too hard. Instead, ask, &ldquo;how many behaviors per test case?&rdquo; and answer, &ldquo;one.&rdquo;</p>
 
@@ -112,7 +112,7 @@ end
   <entry>
     <title type="html"><![CDATA[Crystal First Impressions]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions/"/>
-    <updated>2015-09-27T21:47:00-07:00</updated>
+    <updated>2015-09-27T21:47:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions</id>
     <content type="html"><![CDATA[<p>The <a href="http://crystal-lang.org/">Crystal programming language</a> combines Ruby-like syntax with a really powerful compiler. As a result, it&rsquo;s fun to write, fast to run, and hard to screw up!</p>
 
@@ -276,7 +276,7 @@ in ./src/lisp/binding.cr:55: undefined method &lsquo;find_owner&rsquo; for Nil</
   <entry>
     <title type="html"><![CDATA[Response to "Using a Ruby Class to Write Functional Code"]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code/"/>
-    <updated>2015-03-15T14:29:00-07:00</updated>
+    <updated>2015-03-15T14:29:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/15/response-to-using-a-ruby-class-to-write-functional-code</id>
     <content type="html"><![CDATA[<p>Pat Shaughnessy&rsquo;s <a href="http://patshaughnessy.net/2014/4/8/using-a-ruby-class-to-write-functional-code">&ldquo;Using a Ruby Class to Write Functional Code&rdquo;</a> gives an example of bringing functional programming principles into object-oriented design. I like it.</p>
 
@@ -377,7 +377,7 @@ return "whatever"
   <entry>
     <title type="html"><![CDATA[Move ActiveRecord Scopes into Separate Files]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files/"/>
-    <updated>2015-03-12T08:14:00-07:00</updated>
+    <updated>2015-03-12T08:14:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/12/move-activerecord-scopes-into-separate-files</id>
     <content type="html"><![CDATA[<p>Ruby on Rails models tend to grow and grow. When refactoring scopes, it turns out you <em>can</em> move them into their own classes.</p>
 
@@ -522,7 +522,7 @@ end
   <entry>
     <title type="html"><![CDATA[Building up vs Building out]]></title>
     <link href="http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out/"/>
-    <updated>2015-03-11T13:27:00-07:00</updated>
+    <updated>2015-03-11T13:27:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2015/03/11/building-up-vs-building-out</id>
     <content type="html"><![CDATA[<p>While adding a big feature to <a href="http://get.planningcenteronline.com/check-ins">PCO Check-Ins</a>, I was struck with this way of describing my approach to adding complexity to the system.</p>
 
