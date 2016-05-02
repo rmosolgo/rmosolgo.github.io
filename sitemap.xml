@@ -295,16 +295,20 @@
         <lastmod>2016-03-03T10:28:22-05:00</lastmod>
     </url>
     <url>
+        <loc>http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/</loc>
+        <lastmod>2016-05-02T13:32:19-04:00</lastmod>
+    </url>
+    <url>
         <loc>http://rmosolgo.github.io/about/</loc>
         <lastmod>2016-03-03T10:49:19-05:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/archives/</loc>
-        <lastmod>2016-03-03T10:28:22-05:00</lastmod>
+        <lastmod>2016-05-02T13:32:19-04:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/</loc>
-        <lastmod>2016-03-03T10:28:22-05:00</lastmod>
+        <lastmod>2016-05-02T13:32:19-04:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/robots.txt</loc>
@@ -312,6 +316,6 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/talks/</loc>
-        <lastmod>2016-03-03T10:46:40-05:00</lastmod>
+        <lastmod>2016-05-02T13:32:19-04:00</lastmod>
     </url>
 </urlset>
