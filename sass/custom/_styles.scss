@@ -10,6 +10,11 @@ html {
   }
 }
 
+blockquote {
+  color: #777 !important;
+  line-height: 1.3em !important;
+  font-size: 1em !important;
+}
 h1 {
   font-size: $h1-font-size !important;
   line-height: $h1-font-size * 1.2 !important;
