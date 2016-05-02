@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-05-02T13:33:27-04:00</updated>
+  <updated>2016-05-02T13:43:00-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,365 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby Class, meet Elixir Module]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/"/>
+    <updated>2016-05-01T11:10:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module</id>
+    <content type="html"><![CDATA[<p>Elixir modules offer some valuable insight into designing Ruby classes.</p>
+
+<!-- more -->
+
+
+<p>Ruby classes combine <em>data</em> and <em>behavior</em> in a typically object-oriented way:</p>
+
+<ul>
+<li><strong>data:</strong> instances of the class hold state in instance variables</li>
+<li><strong>behavior:</strong> methods on the class alter state.</li>
+</ul>
+
+
+<p>Elixir modules also combine data and behavior:</p>
+
+<ul>
+<li><strong>data:</strong> the module&rsquo;s eponymous struct defines an immutable data structure</li>
+<li><strong>behavior:</strong> the module&rsquo;s functions define state transformations, often taking the struct as input</li>
+</ul>
+
+
+<p>Perhaps we can combine these ideas to gain some functional-style benefits in Ruby!</p>
+
+<h2>Data: Problem</h2>
+
+<p>Ruby&rsquo;s mutable values open the door to errors caused by out-of-sight state changes. Here&rsquo;s a simple example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># mutate the passed-in array 😈</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">cause_mayhem</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span> <span class="o">&lt;&lt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">top_scores</span> <span class="o">=</span> <span class="o">[</span><span class="mi">98</span><span class="p">,</span> <span class="mi">95</span><span class="p">,</span> <span class="mi">89</span><span class="o">]</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span>
+</span><span class='line'><span class="n">top_scores</span><span class="o">.</span><span class="n">max</span> <span class="c1"># ArgumentError: comparison of Fixnum with nil failed</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Unbeknownst to the user, <code>cause_mayhem</code> <em>altered</em> the array. It wasn&rsquo;t equal to its original value anymore! This is possible with many common objects in Ruby programming , eg <code>String</code>, <code>Hash</code>, <code>ActiveRecord::Base</code>, <code>ActiveRecord::Relation</code> and <code>ActionController::Params</code>.</p>
+
+<p>When you pass a value to another method, you have <em>no way</em> to know how your value will be affected. Maybe it will be changed under your feet!</p>
+
+<p>Elixir&rsquo;s immutable values offer a solution to this pitfall. When you pass a value to a function, your value won&rsquo;t be changed because it&rsquo;s <em>impossible</em> to change it!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='elixir'><span class='line'><span class="n">cause_mayhem</span> <span class="o">=</span> <span class="k">fn</span><span class="p">(</span><span class="n">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="m">99999</span> <span class="o">|</span> <span class="n">list</span><span class="p">]</span> <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">top_scores</span> <span class="o">=</span> <span class="p">[</span><span class="m">98</span><span class="p">,</span> <span class="m">95</span><span class="p">,</span> <span class="m">89</span><span class="p">]</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="o">.</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span> <span class="c1"># =&gt; [99999, 98, 95, 89]</span>
+</span><span class='line'><span class="no">Enum</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span>      <span class="c1"># =&gt; 98</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Although <code>cause_mayhem</code> returned a <em>new</em> list, it didn&rsquo;t alter the existing list. Changing the value of an existing item is impossible with Elixir! Because of this, you never have to worry about passing your value to another function. It <em>can&rsquo;t</em> mess up existing code!</p>
+
+<h2>Data: Solution</h2>
+
+<p>The Ruby solution is to write classes whose state is immutable.</p>
+
+<p>A <em>mutable</em> class is one whose instance variables change during its lifetime. An <em>immutable</em> class is one whose instance variables <em>never</em> change during its lifetime.</p>
+
+<p>Here&rsquo;s an example of refactoring a mutable class to be immutable.</p>
+
+<p>First, a mutable <code>Counter</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MutableCounter</span>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:count</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Adds one to the internal value</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">increment</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, here&rsquo;s the problem with this class. It leads to unpredictable code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">MutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; ????</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It could be mutated by <code>cause_mayhem</code>&hellip; but we have no idea!</p>
+
+<p>Next, an immutable <code>Counter</code> class</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ImmutableCounter</span>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:count</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="ss">count</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">=</span> <span class="n">count</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Return a _new_ ImmutableCounter with an incremented count</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">increment</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">count</span><span class="p">:</span> <span class="vi">@count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>No matter how you call methods on that object, its <code>@count</code> will not change after initialization.</p>
+
+<p>Here&rsquo;s our problem code again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">ImmutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1 🎊  </span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There&rsquo;s no way <code>cause_mayhem</code> could alter our counter!</p>
+
+<p><strong>But,</strong> what if you <em>want</em> to alter the value by some other method?</p>
+
+<p>Easy: just make the method <em>return</em> the value you want to use. Here&rsquo;s a modified example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Increment the counter three times and return the new one</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">modify_counter</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># usage:</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">ImmutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>             <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="c1"># store the old counter, just for example:</span>
+</span><span class='line'><span class="n">previous_counter</span> <span class="o">=</span> <span class="n">counter</span>
+</span><span class='line'><span class="c1"># reassign the counter</span>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="n">modify_counter</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># counter has the new value:</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>           <span class="c1"># =&gt; 3</span>
+</span><span class='line'><span class="c1"># previous_counter was unchanged:</span>
+</span><span class='line'><span class="n">previous_counter</span><span class="o">.</span><span class="n">count</span>  <span class="c1"># =&gt; 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, the caller must <em>explicitly</em> receive the new value from the function. This makes it obvious to the reader that the function returned a new, useful value!</p>
+
+<h2>Behavior: Problem</h2>
+
+<p>In Ruby, classes express <em>behavior</em> by exposing public methods. These methods may alter internal state (like <code>MutableCounter#increment</code>). Shared code may be DRYed up by being relocated to a private method.</p>
+
+<p>Here&rsquo;s an example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="c1"># reset cached averages, etc:</span>
+</span><span class='line'>    <span class="n">update_team_aggregates</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is that state changes are scattered throughout the code. Some are visible inline, some are out-of-sight. This makes <code>BaseballTeam</code> harder to understand.</p>
+
+<p>To learn the behavior of <code>add_player</code>, must also know the behavior of <code>update_team_aggregates</code>. <em>Any</em> part of the <code>BaseballTeam</code>&rsquo;s internal state could have been altered in any way! At the end of the method body, there&rsquo;s no guarantee that <code>@players</code> contains the same objects it at the start of the method body. 😢.</p>
+
+<p>In Elixir, any behavior that <em>would</em> mutate an object actually creates a <em>new</em> object. The analogous code is:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='elixir'><span class='line'><span class="k">defmodule</span> <span class="no">BaseballTeam</span> <span class="k">do</span>
+</span><span class='line'><span class="k">  def</span> <span class="n">add_player</span><span class="p">(</span><span class="n">team</span><span class="p">,</span> <span class="n">player</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'><span class="k">    </span><span class="n">players</span> <span class="o">=</span> <span class="p">[</span><span class="n">player</span> <span class="o">|</span> <span class="n">team</span><span class="o">.</span><span class="n">players</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">avg_batting_avg</span><span class="p">,</span> <span class="n">avg_salary</span><span class="p">,</span> <span class="n">avg_pitching_record</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_aggregates</span><span class="p">(</span><span class="n">players</span><span class="p">)</span>
+</span><span class='line'>    <span class="err">%</span><span class="p">{</span><span class="n">team</span> <span class="o">|</span> <span class="ss">players:</span> <span class="n">players</span><span class="p">,</span> <span class="ss">avg_batting_avg:</span> <span class="n">avg_batting_avg</span><span class="p">,</span> <span class="ss">avg_salary:</span> <span class="n">avg_salary</span><span class="p">,</span> <span class="ss">avg_pitching_record:</span> <span class="n">avg_pitching_record</span><span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, it&rsquo;s clear exactly which keys of the <code>BaseballTeam</code> struct are updated when a players is added. It&rsquo;s impossible for <code>calculate_aggregates</code> to alter any other part of the <code>team</code>!</p>
+
+<h2>Behavior: Solution</h2>
+
+<p>The Ruby solution is to write methods as pure functions, that is, methods which use their arguments as their <em>only</em> input (no accessing <code>self</code>) and provide a return value as their <em>only</em> output (no side-effects).</p>
+
+<p>Here&rsquo;s a rewritten Ruby example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="vi">@avg_batting_avg</span><span class="p">,</span> <span class="vi">@avg_salary</span><span class="p">,</span> <span class="vi">@avg_pitching_record</span> <span class="o">=</span> <span class="n">calculate_aggregates</span><span class="p">(</span><span class="vi">@players</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, it&rsquo;s obvious which members of the <code>team</code>&rsquo;s internal state will be modified by <code>add_player</code>. However, a developer <em>could</em> break the purely functional contract of <code>calculate_aggregates</code>.</p>
+
+<p>To avoid that, refactor <code>BaseballTeam</code> to be a composition of <code>@players</code> and <code>@aggregates</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">AggregateStats</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">players</span><span class="p">)</span>
+</span><span class='line'>     <span class="c1"># ...</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="vi">@aggregates</span> <span class="o">=</span> <span class="no">AggregateStats</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="vi">@players</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Aggregate methods delegate to the AggregateStats object:</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">avg_salary</span>
+</span><span class='line'>    <span class="vi">@aggregates</span><span class="o">.</span><span class="n">avg_salary</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Further defensive techniques could be taken, such as:</p>
+
+<ul>
+<li>Creating a <em>new</em> <code>@players</code> array instead of mutating the existing one.</li>
+<li>Freezing <code>@players</code> to prevent other code from changing it</li>
+</ul>
+
+
+<p>Those measures would guarantee correct state, but they may be &ldquo;overkill&rdquo; for some uses!</p>
+
+<h2>Conclusion</h2>
+
+<p>I can&rsquo;t magically transform my Ruby app into an Elixir app, but I <em>can</em> take some of the lessons learned from Elixir and apply them to Ruby code! Plus, Ruby gives us the ability to mutate state when necessary (for example, when performance is critical).</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Using GraphQL without Relay]]></title>
@@ -2391,252 +2750,6 @@ There are roughly two approaches:</p>
 
 
 <p>One thing that I found in neither framework was rate-limited properties, a la Knockout. I&rsquo;d love to have a built-in option for this in batman.js.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Event Handlers in Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js/"/>
-    <updated>2014-07-28T13:23:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js</id>
-    <content type="html"><![CDATA[<p>In <a href="http://batmanjs.org">batman.js</a>, event handlers respond to user interactions like &ldquo;click&rdquo; and &ldquo;submit&rdquo;. You can use them to modify application state in response to those interactions.</p>
-
-<!-- more -->
-
-
-<p>Let&rsquo;s look at:</p>
-
-<ul>
-<li>What event handlers are and where they&rsquo;re defined</li>
-<li>How you can connect handlers to DOM events</li>
-<li>How you can pass arguments to event handlers</li>
-<li>What <code>@</code> refers to inside event handlers</li>
-</ul>
-
-
-<h2>What Are Event Handlers?</h2>
-
-<p>In short, an <em>event handler</em> can be <em>any function inside the render context</em>.</p>
-
-<p>Usually, this means it&rsquo;s a prototype function on a view:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsIndexView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
-</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>or, it&rsquo;s a prototype function on a controller:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationController</span>
-</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since the main <code>MyApp</code> is also inside the render context, you can also use class functions on the app as event handlers:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nb">window</span><span class="p">.</span><span class="nx">MyApp</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">App</span>
-</span><span class='line'>  <span class="vi">@myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>All</strong> of those functions are fair game to be wired up as event handlers.</p>
-
-<h2>Hooking up Event Handlers</h2>
-
-<p>To connect a function to a DOM event, use the <code>data-event</code> binding. You can bind to pretty much any event (I don&rsquo;t know of one that you <em>can&rsquo;t</em> bind to).</p>
-
-<p>The binding takes the form:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="s">&quot;data-bind-</span><span class="si">#{</span><span class="nx">eventName</span><span class="si">}</span><span class="s">=&#39;</span><span class="si">#{</span><span class="nx">handlerName</span><span class="si">}</span><span class="s">&#39;&quot;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>For example, to bind a <code>click</code> event to <code>myEventHandler</code> on this <code>&lt;button&gt;</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;myEventHandler&#39;</span><span class="nt">&gt;</span>Click Me<span class="nt">&lt;/button&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can also bind to the <code>submit</code> event of a <code>&lt;form&gt;</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;form</span> <span class="na">data-event-submit=</span><span class="s">&#39;saveData&#39;</span><span class="nt">&gt;</span>
-</span><span class='line'>  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;submit&#39;</span><span class="nt">&gt;</span>Save<span class="nt">&lt;/input&gt;</span>
-</span><span class='line'><span class="nt">&lt;/form&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>Arguments in Event Handlers</h2>
-
-<p>Event handlers have two sets of arguments:</p>
-
-<ul>
-<li>arguments that you pass in via <code>withArguments</code> filters</li>
-<li>arguments that are automatically passed in by batman.js</li>
-</ul>
-
-
-<h3>Custom Arguments with &ldquo;withArguments&rdquo;</h3>
-
-<p>You can choose some values to pass in with a <code>withArguments</code> filter in your binding.</p>
-
-<p>Consider this event handler:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
-</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item) -&gt;</span>
-</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>I could call this with an <code>item</code> by using a <code>withArguments</code> filter:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item&#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>You can pass multiple arguments with <code>withArgument</code> by separating them with commas.</p>
-
-<p>For example, if I want more flexible alerts, I could redefine the event handler to take <em>two</em> arguments:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
-</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item, punctuation) -&gt;</span>
-</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span> <span class="o">+</span> <span class="nx">punctuation</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Then, pass <em>two</em> arguments into it, separated with <code>,</code>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;!&quot; &#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;?&quot; &#39;</span><span class="nt">&gt;</span>Alert?<span class="nt">&lt;/button&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;.&quot; &#39;</span><span class="nt">&gt;</span>Alert.<span class="nt">&lt;/button&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>Note</strong> that you <strong>must</strong> provide both arguments to the handler. If you don&rsquo;t, batman.js&rsquo;s automatic arguments will take the place of the missing argument!</p>
-
-<h3>Automatic Arguments</h3>
-
-<p>When batman.js invokes an event handler, it <strong>automatically passes in</strong> a few arguments. Here&rsquo;s a handler that uses the automatic arguments:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
-</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">(node, event, view) -&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>It&rsquo;s invoked with:</p>
-
-<ul>
-<li><code>node</code>: the DOM node where the event was triggered. For example, a <code>&lt;button&gt;</code>. If you use the same event handler on different nodes, this value will be different.</li>
-<li><code>event</code>: The event object for the event.  If you&rsquo;re using <code>batman.jquery</code>, it&rsquo;s the jQuery event object. It contains meta-information about the event.</li>
-<li><code>view</code>: The nearest <code>Batman.View</code> instance to <code>node</code>.</li>
-</ul>
-
-
-<h3>Combining Custom and Automatic Arguments</h3>
-
-<p>You can combine custom and automatic arguments. Simply define a handler whose <strong>last three</strong> arguments are the batman.js automatic arguments:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
-</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item, punctuation, node, event, view) -&gt;</span>
-</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span> <span class="o">+</span> <span class="nx">punctuation</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And use <code>withArguments</code> to pass arguments to the function. You <strong>must</strong> pass the <strong>same number</strong> of arguments. For example:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;!&quot;&#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
-</span><span class='line'><span class="c">&lt;!-- note the empty string, &quot;&quot; --&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;&quot;&#39;</span><span class="nt">&gt;</span>Alert<span class="nt">&lt;/button&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>When batman.js passes arguments to the function, it simply merges the <code>withArguments</code> array with its automatic array. So, if your <code>withArguments</code> array is too short, you won&rsquo;t get the same results.</p>
-
-<h2><code>@</code> in Event Handlers</h2>
-
-<p>When batman.js dispatches an event handler, it looks up the base object <em>where that handler is defined</em>. Then, it uses that object as <code>@</code> inside the handler.</p>
-
-<p>For example, consider two event handlers. One is defined on a view:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsIndexView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
-</span><span class='line'>  <span class="nv">eventHandlerOne: </span><span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">@</span><span class="p">)</span> <span class="c1"># =&gt; will be the ItemsIndexView instance</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The other is defined on a controller:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">App</span><span class="p">.</span><span class="nx">ApplicationController</span>
-</span><span class='line'>  <span class="nv">eventHandlerTwo: </span><span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">@</span><span class="p">)</span> <span class="c1"># =&gt; will be the ItemsController instance</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>If you were to hook up those event handlers to buttons:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;eventHandlerOne&#39;</span><span class="nt">&gt;&lt;/button&gt;</span>
-</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;eventHandlerTwo&#39;</span><span class="nt">&gt;&lt;/button&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>then click the buttons, you would see the <code>ItemsIndexView</code> object and the <code>ItemsController</code> object in your console:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">ItemsIndexView</span> <span class="p">{</span><span class="nx">bindings</span><span class="o">:</span> <span class="nb">Array</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="nx">subviews</span><span class="o">:</span> <span class="nx">Set</span><span class="p">,</span> <span class="nx">_batman</span><span class="o">:</span> <span class="nx">_Batman</span><span class="p">,</span> <span class="nx">viewClass</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">source</span><span class="o">:</span> <span class="s2">&quot;events/index&quot;</span><span class="err">…</span><span class="p">}</span>
-</span><span class='line'><span class="nx">ItemsController</span> <span class="p">{</span><span class="nx">redirect</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">handleError</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">errorHandler</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">_batman</span><span class="o">:</span> <span class="nx">_Batman</span><span class="p">,</span> <span class="nx">_actionFrames</span><span class="o">:</span> <span class="nb">Array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="err">…</span><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Since batman.js looks up the base object, event handlers behave just like normal functions in the place you define them.</p>
 ]]></content>
   </entry>
   

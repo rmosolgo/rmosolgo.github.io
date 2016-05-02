@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-05-02T13:33:27-04:00</updated>
+  <updated>2016-05-02T13:43:00-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,298 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby Class, meet Elixir Module]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/"/>
+    <updated>2016-05-01T11:10:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module</id>
+    <content type="html"><![CDATA[<p>Elixir modules offer some valuable insight into designing Ruby classes.</p>
+
+<!-- more -->
+
+
+<p>Ruby classes combine <em>data</em> and <em>behavior</em> in a typically object-oriented way:</p>
+
+<ul>
+<li><strong>data:</strong> instances of the class hold state in instance variables</li>
+<li><strong>behavior:</strong> methods on the class alter state.</li>
+</ul>
+
+
+<p>Elixir modules also combine data and behavior:</p>
+
+<ul>
+<li><strong>data:</strong> the module&rsquo;s eponymous struct defines an immutable data structure</li>
+<li><strong>behavior:</strong> the module&rsquo;s functions define state transformations, often taking the struct as input</li>
+</ul>
+
+
+<p>Perhaps we can combine these ideas to gain some functional-style benefits in Ruby!</p>
+
+<h2>Data: Problem</h2>
+
+<p>Ruby&rsquo;s mutable values open the door to errors caused by out-of-sight state changes. Here&rsquo;s a simple example:</p>
+
+<p>```ruby</p>
+
+<h1>mutate the passed-in array 😈</h1>
+
+<p>def cause_mayhem(array)
+  array &lt;&lt; nil
+end</p>
+
+<p>top_scores = [98, 95, 89]
+cause_mayhem(top_scores)
+top_scores.max # ArgumentError: comparison of Fixnum with nil failed
+```</p>
+
+<p>Unbeknownst to the user, <code>cause_mayhem</code> <em>altered</em> the array. It wasn&rsquo;t equal to its original value anymore! This is possible with many common objects in Ruby programming , eg <code>String</code>, <code>Hash</code>, <code>ActiveRecord::Base</code>, <code>ActiveRecord::Relation</code> and <code>ActionController::Params</code>.</p>
+
+<p>When you pass a value to another method, you have <em>no way</em> to know how your value will be affected. Maybe it will be changed under your feet!</p>
+
+<p>Elixir&rsquo;s immutable values offer a solution to this pitfall. When you pass a value to a function, your value won&rsquo;t be changed because it&rsquo;s <em>impossible</em> to change it!</p>
+
+<p>```elixir
+cause_mayhem = fn(list) &ndash;> [99999 | list] end</p>
+
+<p>top_scores = [98, 95, 89]
+cause_mayhem.(top_scores) # => [99999, 98, 95, 89]
+Enum.max(top_scores)      # => 98
+```</p>
+
+<p>Although <code>cause_mayhem</code> returned a <em>new</em> list, it didn&rsquo;t alter the existing list. Changing the value of an existing item is impossible with Elixir! Because of this, you never have to worry about passing your value to another function. It <em>can&rsquo;t</em> mess up existing code!</p>
+
+<h2>Data: Solution</h2>
+
+<p>The Ruby solution is to write classes whose state is immutable.</p>
+
+<p>A <em>mutable</em> class is one whose instance variables change during its lifetime. An <em>immutable</em> class is one whose instance variables <em>never</em> change during its lifetime.</p>
+
+<p>Here&rsquo;s an example of refactoring a mutable class to be immutable.</p>
+
+<p>First, a mutable <code>Counter</code>:</p>
+
+<p>```ruby
+class MutableCounter
+  attr_reader :count</p>
+
+<p>  def initialize</p>
+
+<pre><code>@count = 0
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Adds one to the internal value
+  def increment</p>
+
+<pre><code>@count += 1
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>Now, here&rsquo;s the problem with this class. It leads to unpredictable code:</p>
+
+<p><code>ruby
+counter = MutableCounter.new
+counter.count         # =&gt; 0
+counter.increment
+counter.count         # =&gt; 1
+cause_mayhem(counter)
+counter.count         # =&gt; ????
+</code></p>
+
+<p>It could be mutated by <code>cause_mayhem</code>&hellip; but we have no idea!</p>
+
+<p>Next, an immutable <code>Counter</code> class</p>
+
+<p>```ruby
+class ImmutableCounter
+  attr_reader :count</p>
+
+<p>  def initialize(count: 0)</p>
+
+<pre><code>@count = count
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Return a <em>new</em> ImmutableCounter with an incremented count
+  def increment</p>
+
+<pre><code>self.class.new(count: @count + 1)
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>No matter how you call methods on that object, its <code>@count</code> will not change after initialization.</p>
+
+<p>Here&rsquo;s our problem code again:</p>
+
+<p><code>ruby
+counter = ImmutableCounter.new
+counter.count         # =&gt; 0
+counter = counter.increment
+counter.count         # =&gt; 1
+cause_mayhem(counter)
+counter.count         # =&gt; 1 🎊  
+</code></p>
+
+<p>There&rsquo;s no way <code>cause_mayhem</code> could alter our counter!</p>
+
+<p><strong>But,</strong> what if you <em>want</em> to alter the value by some other method?</p>
+
+<p>Easy: just make the method <em>return</em> the value you want to use. Here&rsquo;s a modified example:</p>
+
+<p>```ruby</p>
+
+<h1>Increment the counter three times and return the new one</h1>
+
+<p>def modify_counter(counter)
+  counter = counter.increment
+  counter = counter.increment
+  counter = counter.increment
+  counter
+end</p>
+
+<h1>usage:</h1>
+
+<p>counter = ImmutableCounter.new
+counter.count             # => 0</p>
+
+<h1>store the old counter, just for example:</h1>
+
+<p>previous_counter = counter</p>
+
+<h1>reassign the counter</h1>
+
+<p>counter = modify_counter(counter)</p>
+
+<h1>counter has the new value:</h1>
+
+<p>counter.count           # => 3</p>
+
+<h1>previous_counter was unchanged:</h1>
+
+<p>previous_counter.count  # => 0
+```</p>
+
+<p>In this case, the caller must <em>explicitly</em> receive the new value from the function. This makes it obvious to the reader that the function returned a new, useful value!</p>
+
+<h2>Behavior: Problem</h2>
+
+<p>In Ruby, classes express <em>behavior</em> by exposing public methods. These methods may alter internal state (like <code>MutableCounter#increment</code>). Shared code may be DRYed up by being relocated to a private method.</p>
+
+<p>Here&rsquo;s an example:</p>
+
+<p>```ruby
+class BaseballTeam
+  # &hellip;
+  def add_player(player)</p>
+
+<pre><code>@players &lt;&lt; player
+# reset cached averages, etc:
+update_team_aggregates
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>The problem is that state changes are scattered throughout the code. Some are visible inline, some are out-of-sight. This makes <code>BaseballTeam</code> harder to understand.</p>
+
+<p>To learn the behavior of <code>add_player</code>, must also know the behavior of <code>update_team_aggregates</code>. <em>Any</em> part of the <code>BaseballTeam</code>&rsquo;s internal state could have been altered in any way! At the end of the method body, there&rsquo;s no guarantee that <code>@players</code> contains the same objects it at the start of the method body. 😢.</p>
+
+<p>In Elixir, any behavior that <em>would</em> mutate an object actually creates a <em>new</em> object. The analogous code is:</p>
+
+<p>```elixir
+defmodule BaseballTeam do
+  def add_player(team, player) do</p>
+
+<pre><code>players = [player | team.players]
+[avg_batting_avg, avg_salary, avg_pitching_record] = calculate_aggregates(players)
+%{team | players: players, avg_batting_avg: avg_batting_avg, avg_salary: avg_salary, avg_pitching_record: avg_pitching_record}
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>In this case, it&rsquo;s clear exactly which keys of the <code>BaseballTeam</code> struct are updated when a players is added. It&rsquo;s impossible for <code>calculate_aggregates</code> to alter any other part of the <code>team</code>!</p>
+
+<h2>Behavior: Solution</h2>
+
+<p>The Ruby solution is to write methods as pure functions, that is, methods which use their arguments as their <em>only</em> input (no accessing <code>self</code>) and provide a return value as their <em>only</em> output (no side-effects).</p>
+
+<p>Here&rsquo;s a rewritten Ruby example:</p>
+
+<p>```ruby
+class BaseballTeam
+  # &hellip;
+  def add_player(player)</p>
+
+<pre><code>@players &lt;&lt; player
+@avg_batting_avg, @avg_salary, @avg_pitching_record = calculate_aggregates(@players)
+</code></pre>
+
+<p>  end
+end
+```</p>
+
+<p>In this case, it&rsquo;s obvious which members of the <code>team</code>&rsquo;s internal state will be modified by <code>add_player</code>. However, a developer <em>could</em> break the purely functional contract of <code>calculate_aggregates</code>.</p>
+
+<p>To avoid that, refactor <code>BaseballTeam</code> to be a composition of <code>@players</code> and <code>@aggregates</code>:</p>
+
+<p>```ruby
+class BaseballTeam
+  class AggregateStats</p>
+
+<pre><code>def initialize(players)
+ # ...
+end
+# ...
+</code></pre>
+
+<p>  end
+  # &hellip;
+  def add_player(player)</p>
+
+<pre><code>@players &lt;&lt; player
+@aggregates = AggregateStats.new(@players)
+</code></pre>
+
+<p>  end</p>
+
+<p>  # Aggregate methods delegate to the AggregateStats object:
+  def avg_salary</p>
+
+<pre><code>@aggregates.avg_salary
+</code></pre>
+
+<p>  end
+end<br/>
+```</p>
+
+<p>Further defensive techniques could be taken, such as:</p>
+
+<ul>
+<li>Creating a <em>new</em> <code>@players</code> array instead of mutating the existing one.</li>
+<li>Freezing <code>@players</code> to prevent other code from changing it</li>
+</ul>
+
+
+<p>Those measures would guarantee correct state, but they may be &ldquo;overkill&rdquo; for some uses!</p>
+
+<h2>Conclusion</h2>
+
+<p>I can&rsquo;t magically transform my Ruby app into an Elixir app, but I <em>can</em> take some of the lessons learned from Elixir and apply them to Ruby code! Plus, Ruby gives us the ability to mutate state when necessary (for example, when performance is critical).</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Authorization in GraphQL]]></title>
@@ -451,33 +743,6 @@ end
 <p>```</p>
 
 <p>And now I had my own landing page!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Convert country names and codes with Countrysaurus]]></title>
-    <link href="http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus/"/>
-    <updated>2013-10-07T21:56:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2013/10/07/convert-country-names-and-codes-with-countrysaurus</id>
-    <content type="html"><![CDATA[<p><a href="http://countrysaurus.herokuapp.com/">Countrysaurus</a> is an online tool for merging country codes into a CSV spreadsheet with country names in it. You can also download a CSV of country codes or access it via <a href="http://countrysaurus.herokuapp.com/api_documentation">REST API</a>.</p>
-
-<!-- more -->
-
-
-<p>In my old job, I often had spreadsheets with (sometimes misspelled) country names, but I needed to feed data into something with country codes, be it ISO-2, ISO-3, OECD, AidData, whatever kind of code.</p>
-
-<p>Finally, I hammered out a little web app with Ruby&rsquo;s <a href="http://www.sinatrarb.com/">Sinatra</a> web framework to help with this problem. You can upload a (small- or medium-sized) CSV spreadsheet and it will:</p>
-
-<ul>
-<li>Identify unique country names</li>
-<li>Allow you to pick which kinds of codes you need</li>
-<li>Suggest matches</li>
-<li>Allow you to add new matches (in case it doesn&rsquo;t have your country name already)</li>
-<li>Allow you to download your spreadsheet.</li>
-</ul>
-
-
-<p>It&rsquo;s also <a href="https://github.com/rmosolgo/country-fixer">on Github</a>. <a href="http://countrysaurus.herokuapp.com/">Try it out!</a></p>
 ]]></content>
   </entry>
   

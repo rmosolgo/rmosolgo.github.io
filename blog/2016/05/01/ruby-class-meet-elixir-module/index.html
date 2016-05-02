@@ -1,0 +1,567 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Ruby Class, meet Elixir Module - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Elixir modules offer some valuable insight into designing Ruby classes. Ruby classes combine data and behavior in a typically object-oriented way: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Ruby Class, Meet Elixir Module</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-05-01T11:10:00-04:00" pubdate data-updated="true">May 1<span>st</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Elixir modules offer some valuable insight into designing Ruby classes.</p>
+
+<!-- more -->
+
+
+<p>Ruby classes combine <em>data</em> and <em>behavior</em> in a typically object-oriented way:</p>
+
+<ul>
+<li><strong>data:</strong> instances of the class hold state in instance variables</li>
+<li><strong>behavior:</strong> methods on the class alter state.</li>
+</ul>
+
+
+<p>Elixir modules also combine data and behavior:</p>
+
+<ul>
+<li><strong>data:</strong> the module&rsquo;s eponymous struct defines an immutable data structure</li>
+<li><strong>behavior:</strong> the module&rsquo;s functions define state transformations, often taking the struct as input</li>
+</ul>
+
+
+<p>Perhaps we can combine these ideas to gain some functional-style benefits in Ruby!</p>
+
+<h2>Data: Problem</h2>
+
+<p>Ruby&rsquo;s mutable values open the door to errors caused by out-of-sight state changes. Here&rsquo;s a simple example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># mutate the passed-in array 😈</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">cause_mayhem</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">array</span> <span class="o">&lt;&lt;</span> <span class="kp">nil</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">top_scores</span> <span class="o">=</span> <span class="o">[</span><span class="mi">98</span><span class="p">,</span> <span class="mi">95</span><span class="p">,</span> <span class="mi">89</span><span class="o">]</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span>
+</span><span class='line'><span class="n">top_scores</span><span class="o">.</span><span class="n">max</span> <span class="c1"># ArgumentError: comparison of Fixnum with nil failed</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Unbeknownst to the user, <code>cause_mayhem</code> <em>altered</em> the array. It wasn&rsquo;t equal to its original value anymore! This is possible with many common objects in Ruby programming , eg <code>String</code>, <code>Hash</code>, <code>ActiveRecord::Base</code>, <code>ActiveRecord::Relation</code> and <code>ActionController::Params</code>.</p>
+
+<p>When you pass a value to another method, you have <em>no way</em> to know how your value will be affected. Maybe it will be changed under your feet!</p>
+
+<p>Elixir&rsquo;s immutable values offer a solution to this pitfall. When you pass a value to a function, your value won&rsquo;t be changed because it&rsquo;s <em>impossible</em> to change it!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='elixir'><span class='line'><span class="n">cause_mayhem</span> <span class="o">=</span> <span class="k">fn</span><span class="p">(</span><span class="n">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="m">99999</span> <span class="o">|</span> <span class="n">list</span><span class="p">]</span> <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">top_scores</span> <span class="o">=</span> <span class="p">[</span><span class="m">98</span><span class="p">,</span> <span class="m">95</span><span class="p">,</span> <span class="m">89</span><span class="p">]</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="o">.</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span> <span class="c1"># =&gt; [99999, 98, 95, 89]</span>
+</span><span class='line'><span class="no">Enum</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">top_scores</span><span class="p">)</span>      <span class="c1"># =&gt; 98</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Although <code>cause_mayhem</code> returned a <em>new</em> list, it didn&rsquo;t alter the existing list. Changing the value of an existing item is impossible with Elixir! Because of this, you never have to worry about passing your value to another function. It <em>can&rsquo;t</em> mess up existing code!</p>
+
+<h2>Data: Solution</h2>
+
+<p>The Ruby solution is to write classes whose state is immutable.</p>
+
+<p>A <em>mutable</em> class is one whose instance variables change during its lifetime. An <em>immutable</em> class is one whose instance variables <em>never</em> change during its lifetime.</p>
+
+<p>Here&rsquo;s an example of refactoring a mutable class to be immutable.</p>
+
+<p>First, a mutable <code>Counter</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MutableCounter</span>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:count</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Adds one to the internal value</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">increment</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, here&rsquo;s the problem with this class. It leads to unpredictable code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">MutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; ????</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It could be mutated by <code>cause_mayhem</code>&hellip; but we have no idea!</p>
+
+<p>Next, an immutable <code>Counter</code> class</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">ImmutableCounter</span>
+</span><span class='line'>  <span class="kp">attr_reader</span> <span class="ss">:count</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="ss">count</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@count</span> <span class="o">=</span> <span class="n">count</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Return a _new_ ImmutableCounter with an incremented count</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">increment</span>
+</span><span class='line'>    <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">count</span><span class="p">:</span> <span class="vi">@count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>No matter how you call methods on that object, its <code>@count</code> will not change after initialization.</p>
+
+<p>Here&rsquo;s our problem code again:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">ImmutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1</span>
+</span><span class='line'><span class="n">cause_mayhem</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>         <span class="c1"># =&gt; 1 🎊  </span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There&rsquo;s no way <code>cause_mayhem</code> could alter our counter!</p>
+
+<p><strong>But,</strong> what if you <em>want</em> to alter the value by some other method?</p>
+
+<p>Easy: just make the method <em>return</em> the value you want to use. Here&rsquo;s a modified example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Increment the counter three times and return the new one</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">modify_counter</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">increment</span>
+</span><span class='line'>  <span class="n">counter</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># usage:</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="no">ImmutableCounter</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>             <span class="c1"># =&gt; 0</span>
+</span><span class='line'><span class="c1"># store the old counter, just for example:</span>
+</span><span class='line'><span class="n">previous_counter</span> <span class="o">=</span> <span class="n">counter</span>
+</span><span class='line'><span class="c1"># reassign the counter</span>
+</span><span class='line'><span class="n">counter</span> <span class="o">=</span> <span class="n">modify_counter</span><span class="p">(</span><span class="n">counter</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># counter has the new value:</span>
+</span><span class='line'><span class="n">counter</span><span class="o">.</span><span class="n">count</span>           <span class="c1"># =&gt; 3</span>
+</span><span class='line'><span class="c1"># previous_counter was unchanged:</span>
+</span><span class='line'><span class="n">previous_counter</span><span class="o">.</span><span class="n">count</span>  <span class="c1"># =&gt; 0</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, the caller must <em>explicitly</em> receive the new value from the function. This makes it obvious to the reader that the function returned a new, useful value!</p>
+
+<h2>Behavior: Problem</h2>
+
+<p>In Ruby, classes express <em>behavior</em> by exposing public methods. These methods may alter internal state (like <code>MutableCounter#increment</code>). Shared code may be DRYed up by being relocated to a private method.</p>
+
+<p>Here&rsquo;s an example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="c1"># reset cached averages, etc:</span>
+</span><span class='line'>    <span class="n">update_team_aggregates</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is that state changes are scattered throughout the code. Some are visible inline, some are out-of-sight. This makes <code>BaseballTeam</code> harder to understand.</p>
+
+<p>To learn the behavior of <code>add_player</code>, must also know the behavior of <code>update_team_aggregates</code>. <em>Any</em> part of the <code>BaseballTeam</code>&rsquo;s internal state could have been altered in any way! At the end of the method body, there&rsquo;s no guarantee that <code>@players</code> contains the same objects it at the start of the method body. 😢.</p>
+
+<p>In Elixir, any behavior that <em>would</em> mutate an object actually creates a <em>new</em> object. The analogous code is:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='elixir'><span class='line'><span class="k">defmodule</span> <span class="no">BaseballTeam</span> <span class="k">do</span>
+</span><span class='line'><span class="k">  def</span> <span class="n">add_player</span><span class="p">(</span><span class="n">team</span><span class="p">,</span> <span class="n">player</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'><span class="k">    </span><span class="n">players</span> <span class="o">=</span> <span class="p">[</span><span class="n">player</span> <span class="o">|</span> <span class="n">team</span><span class="o">.</span><span class="n">players</span><span class="p">]</span>
+</span><span class='line'>    <span class="p">[</span><span class="n">avg_batting_avg</span><span class="p">,</span> <span class="n">avg_salary</span><span class="p">,</span> <span class="n">avg_pitching_record</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculate_aggregates</span><span class="p">(</span><span class="n">players</span><span class="p">)</span>
+</span><span class='line'>    <span class="err">%</span><span class="p">{</span><span class="n">team</span> <span class="o">|</span> <span class="ss">players:</span> <span class="n">players</span><span class="p">,</span> <span class="ss">avg_batting_avg:</span> <span class="n">avg_batting_avg</span><span class="p">,</span> <span class="ss">avg_salary:</span> <span class="n">avg_salary</span><span class="p">,</span> <span class="ss">avg_pitching_record:</span> <span class="n">avg_pitching_record</span><span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, it&rsquo;s clear exactly which keys of the <code>BaseballTeam</code> struct are updated when a players is added. It&rsquo;s impossible for <code>calculate_aggregates</code> to alter any other part of the <code>team</code>!</p>
+
+<h2>Behavior: Solution</h2>
+
+<p>The Ruby solution is to write methods as pure functions, that is, methods which use their arguments as their <em>only</em> input (no accessing <code>self</code>) and provide a return value as their <em>only</em> output (no side-effects).</p>
+
+<p>Here&rsquo;s a rewritten Ruby example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="vi">@avg_batting_avg</span><span class="p">,</span> <span class="vi">@avg_salary</span><span class="p">,</span> <span class="vi">@avg_pitching_record</span> <span class="o">=</span> <span class="n">calculate_aggregates</span><span class="p">(</span><span class="vi">@players</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this case, it&rsquo;s obvious which members of the <code>team</code>&rsquo;s internal state will be modified by <code>add_player</code>. However, a developer <em>could</em> break the purely functional contract of <code>calculate_aggregates</code>.</p>
+
+<p>To avoid that, refactor <code>BaseballTeam</code> to be a composition of <code>@players</code> and <code>@aggregates</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">BaseballTeam</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">AggregateStats</span>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">players</span><span class="p">)</span>
+</span><span class='line'>     <span class="c1"># ...</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>    <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">add_player</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@players</span> <span class="o">&lt;&lt;</span> <span class="n">player</span>
+</span><span class='line'>    <span class="vi">@aggregates</span> <span class="o">=</span> <span class="no">AggregateStats</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="vi">@players</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Aggregate methods delegate to the AggregateStats object:</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">avg_salary</span>
+</span><span class='line'>    <span class="vi">@aggregates</span><span class="o">.</span><span class="n">avg_salary</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Further defensive techniques could be taken, such as:</p>
+
+<ul>
+<li>Creating a <em>new</em> <code>@players</code> array instead of mutating the existing one.</li>
+<li>Freezing <code>@players</code> to prevent other code from changing it</li>
+</ul>
+
+
+<p>Those measures would guarantee correct state, but they may be &ldquo;overkill&rdquo; for some uses!</p>
+
+<h2>Conclusion</h2>
+
+<p>I can&rsquo;t magically transform my Ruby app into an Elixir app, but I <em>can</em> take some of the lessons learned from Elixir and apply them to Ruby code! Plus, Ruby gives us the ability to mutate state when necessary (for example, when performance is critical).</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-05-01T11:10:00-04:00" pubdate data-updated="true">May 1<span>st</span>, 2016</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/programming/'>Programming</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/03/03/using-graphql-without-relay/" title="Previous Post: Using GraphQL without Relay">&laquo; Using GraphQL without Relay</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2016/05/01/ruby-class-meet-elixir-module/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
