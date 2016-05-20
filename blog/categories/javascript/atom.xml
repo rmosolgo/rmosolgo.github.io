@@ -4,7 +4,7 @@
   <title><![CDATA[Category: JavaScript | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/javascript/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-05-02T13:43:00-04:00</updated>
+  <updated>2016-05-19T22:31:16-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,80 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Finding a Browser-Ready File for Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/"/>
+    <updated>2016-05-19T22:00:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets</id>
+    <content type="html"><![CDATA[<p>I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser-ready JavaScript files.</p>
+
+<!-- more -->
+
+
+<p>There are a few good options for getting browser-ready files for JavaScript libraries:</p>
+
+<ul>
+<li>Download a file from the project&rsquo;s website</li>
+<li>Download a file from the project&rsquo;s source code repository</li>
+<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
+<li>Build the file yourself, following the project&rsquo;s documentation</li>
+</ul>
+
+
+<p><strong>Don&rsquo;t</strong> get a minified version. Sprockets will minify it for us later. In the meantime, the unminified version will help us during development.</p>
+
+<h3>From a Website</h3>
+
+<p>This is the good ol' way of getting JavaScript files. Because we still use browsers, you can still download these files.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/website_download_d3.png" width="300"></p>
+
+<p><img src="/images/sprockets/website_download_react.png" width="500"></p>
+
+<p><img src="/images/sprockets/website_download_moment.png" width="300"></p>
+
+<h3>From the Repo</h3>
+
+<p>Many projects maintain a browser build in the project&rsquo;s source. You may have to poke around a bit, but likely places are the project&rsquo;s root folder, the <code>dist/</code> folder, or the <code>build/</code> folder.</p>
+
+<p>As you explore the repo, remember to examine a stable ref, such as a release or a stable branch.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/repo_download_c3.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_immutable.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_three.png" width="300"></p>
+
+<h3>From a CDN</h3>
+
+<p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
+
+<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
+
+<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
+
+<ul>
+<li>Check the &ldquo;main&rdquo; file</li>
+<li>Check the &ldquo;dist&rdquo; or &ldquo;build&rdquo; directories</li>
+</ul>
+
+
+<h3>Build it from Source</h3>
+
+<p>If a pre-built, browser-ready file is not available, you may have to build it yourself! The project&rsquo;s readme will contain instructions to do so. If it doesn&rsquo;t &hellip; you may want to reconsider adding this dependency! (Even if it&rsquo;s well-maintained, it&rsquo;s not a good match for this asset bundling approach.)</p>
+
+<h2>Summary</h2>
+
+<p>Hopefully these will work well for you!</p>
+
+<p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Using GraphQL without Relay]]></title>
@@ -1280,63 +1354,6 @@ gulp
 </code></p>
 
 <p>Voila! Your app is compiled and HTML will be preloaded!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Load Batman.js Models from Specific Urls]]></title>
-    <link href="http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls/"/>
-    <updated>2013-10-28T10:19:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2013/10/28/load-batman-dot-js-models-from-specific-urls</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org/">Batman.js</a>&rsquo;s  <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee">REST Storage Adapter</a> provides a clean interface for operating on records with vanilla REST urls &mdash; but what about when you need a lil' something more?</p>
-
-<!-- more -->
-
-
-<p>First of all, the magic happens in <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L90">Batman.RestStorage#UrlForRecord</a>. For an already-persisted record, you have a few options:</p>
-
-<h2>pass <code>recordUrl</code> to loadWithOptions/findWithOptions</h2>
-
-<p><strong>findWithOptions</strong> or <strong>loadWithOptions</strong>&rsquo;s <code>options</code> can take a <code>recordUrl</code> param, which is used to retrieve the record. Use <code>findWithOptions</code> to load a new record:</p>
-
-<p>```coffeescript
-  model_id = 1 # you might get this from the request path or from another model&rsquo;s attributes
-  model_url = &ldquo;/some_models/#{model_id}?language=fr&rdquo;
-  MyApp.SomeModel.findWithOptions model_id, {recordUrl: model_url}, (err, model) &ndash;></p>
-
-<pre><code># your model was loaded with the param language=fr!
-</code></pre>
-
-<p>```</p>
-
-<p>or use <code>loadWithOptions</code> to reload an existing record:</p>
-
-<p>```coffeescript
-  # using model from above&hellip;
-  model_url = &ldquo;/some_models/#{model.get(&lsquo;id&rsquo;)}?language=es&rdquo;
-  model.loadWithOptions {recordUrl: model_url}, (err, model) &ndash;></p>
-
-<pre><code># your model was loaded with the param language=es!
-</code></pre>
-
-<p>```</p>
-
-<h2>Set <code>record.url</code></h2>
-
-<p>If you&rsquo;re reloading an already-loaded model, you can set its (POJO) <code>url</code> attribute to the URL you want to use:</p>
-
-<p>```coffeescript
-  model.url = &ldquo;/#{model.constructor.storageKey}/#{model.get(&lsquo;id&rsquo;)}?language=zh&rdquo;
-  model.load (err, model) &ndash;></p>
-
-<pre><code># your model was loaded with the param language=zh!
-</code></pre>
-
-<p>```</p>
-
-<h2>For a New Records or Collections?</h2>
-
-<p>I&rsquo;m not sure yet. Check out <a href="https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L109">Batman.RestStorage#UrlForCollection</a>!</p>
 ]]></content>
   </entry>
   

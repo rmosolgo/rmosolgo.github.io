@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-05-02T13:43:00-04:00</updated>
+  <updated>2016-05-19T22:31:16-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,100 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How I Use Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets/"/>
+    <updated>2016-05-19T08:44:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets</id>
+    <content type="html"><![CDATA[<p>When reviewing issues for <code>react-rails</code>, I see many questions about how to gather JavaScript dependencies with Sprockets. Here is how I use Sprockets to manage JavaScript dependencies.</p>
+
+<!-- more -->
+
+
+<p>I&rsquo;m looking for a few things in a JavaScript bundler:</p>
+
+<ul>
+<li>Stability: I don&rsquo;t want any changes to my dependencies unless I explicitly make them.</li>
+<li>Clarity: I want to be able to quickly tell what dependencies I have (library and version).</li>
+<li>Insulation: I don&rsquo;t want to rely on external services during development, deployment or runtime (except for downloading <em>new</em> dependencies, of course)</li>
+<li>Feature-completeness: I want to concatenate and minify my assets and serve them with cache headers</li>
+</ul>
+
+
+<h2>Using Sprockets</h2>
+
+<p>To <strong>add a new dependency</strong>:</p>
+
+<ol>
+<li>Find a non-minified, browser-ready version of your dependency</li>
+<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> (for example, <code>app/assets/javascripts/moment-v2.13.0.js</code>)</li>
+<li>Require it in <code>application.js</code> with <code>//= require ./vendor/moment-v2.13.0</code></li>
+<li>Access the global variable as needed in your app (eg <code>moment</code>)</li>
+</ol>
+
+
+<p>To <strong>update</strong> a dependency:</p>
+
+<ol>
+<li>Find a non-minified, browser-ready version of the updated dependency</li>
+<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> and remove the <em>old</em> version from that directory</li>
+<li>Update the <code>//= require</code> directive with the new version number</li>
+<li>Check the dependency&rsquo;s changelog and update your app as needed. (Search your project for the global variable to find usages, eg <code>moment</code>.)</li>
+</ol>
+
+
+<p>To <strong>remove</strong> a dependency:</p>
+
+<ol>
+<li>Remove its file (<code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code>)</li>
+<li>Remove the <code>//= require</code> directive</li>
+<li>Search your project for the global variable and remove all usages</li>
+</ol>
+
+
+<h2>Finding a browser-ready file</h2>
+
+<p>This got its own page: <a href="/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/">Finding a browser-ready file</a>.</p>
+
+<h2>Adding the file to <code>vendor/</code></h2>
+
+<p>Use an <strong>unminified</strong> version of the library. It will help in debugging development and viewing diffs when you update the dependency. Have no fear, Sprockets will minify it for you for production.</p>
+
+<p>Include the <strong>version number</strong> in the file name. This will give you more confidence in updating the library, since you&rsquo;ll know what version you&rsquo;re coming from.</p>
+
+<h2>Integrating with Sprockets</h2>
+
+<p>The <code>//= require ./vendor/{library}-v{version}</code> directive is your friend. Like an entry in <code>package.json</code>, it tells the reader what dependency you have.</p>
+
+<p>Now, your library will be accessible by its global name, such as <code>React</code>, <code>d3</code> or <code>Immutable</code>.</p>
+
+<p>Consuming a library via global variable is not ideal. But it <em>does</em> help you remember that, at the end of the day, the browser is one giant, mutable namespace, so you must be a good citizen! At least global variables can be grepped like any other dependency.</p>
+
+<p>Consider isolating your dependency. For example, you could wrap <code>Pusher</code> in an application-specific event emitter. This way, when you update Pusher, you only have to check one file for its usages. (Some libraries are poor candidates for isolation. My app will never be isolated from React!)</p>
+
+<h2>Caveats</h2>
+
+<p>There are some things Sprockets doesn&rsquo;t provide for me, which I wish it did:</p>
+
+<ul>
+<li>Named imports: I wish there was a good alternative to global namespacing with Sprockets, but not yet. (It&rsquo;s not a deal breaker &mdash; it doesn&rsquo;t hurt to be familiar with this constraint because it&rsquo;s the reality of the browser, anyways.)</li>
+<li>Tree shaking: It wish I could only transmit the parts of Underscore.js I actually used!</li>
+</ul>
+
+
+<p>Perhaps I should read up on Sprockets and submit a patch 😎</p>
+
+<p>Also, there&rsquo;s one case where copy-pasting isn&rsquo;t a great solution. Some libraries (like React.js) have <em>separate</em> &ldquo;development&rdquo; and &ldquo;production&rdquo; builds. The production build has fewer runtime checks than the development build, making it smaller and faster. There are a few solutions to this problem:</p>
+
+<ul>
+<li>Use a gem which provides the proper file for each environment (like <code>react-rails</code>)</li>
+<li>Add environment-specific folders to the asset pipeline (like <code>react-rails</code> does, I can write more on this if need be)</li>
+<li>Use the development build in productiosn (weigh the costs first: what&rsquo;s the difference in behavior, performance and file size?)</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby Class, meet Elixir Module]]></title>
@@ -631,118 +725,6 @@ $ ./hello_world
 
 
 <p>However, I don&rsquo;t know of any English documentation for these things yet!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Adding Batman.js to an Existing Rails App]]></title>
-    <link href="http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app/"/>
-    <updated>2013-10-19T22:08:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2013/10/19/adding-batman-dot-js-to-an-existing-rails-app</id>
-    <content type="html"><![CDATA[<p>I had an existing app, but I wanted to take the front end to the next level. <a href="http://batmanjs.org/">Batman.js</a> is a full-featured, developer-friendly, Rails-inclined CoffeeScript (or JavaScript) framework with powerful <a href="https://github.com/batmanjs/batman-rails">Rails integration</a>.</p>
-
-<!-- more -->
-
-
-<h3>Installing Batman.js</h3>
-
-<p>I was already using <a href="https://github.com/rails-api/active_model_serializers">ActiveModel::Serializer</a> to serve JSON from my app. To get Batman on the scene, I included
-<code>batman-rails</code> in my Gemfile and installed it:</p>
-
-<p>```ruby Gemfile.rb</p>
-
-<pre><code>require 'batman-rails', '~&gt; 0.15'
-</code></pre>
-
-<p>```</p>
-
-<p><code>bash
-  $ bundle install
-</code></p>
-
-<p>The <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> comes with a generator to get everything in order.
-I ran it and restarted my Rails server:</p>
-
-<p><code>bash
-  $ rails g batman:app # that's not _your_ app name, it's just "app"
-  $ powder restart # restart your Rails server one way or another
-</code></p>
-
-<p>I visited my app&rsquo;s <code>root_url</code> and found Batman-rails landing page. How&rsquo;d it get there!? Sure enough, the Batman generator had added a punchy line to the top of my routes file:</p>
-
-<p><code>ruby config/routes.rb
-  get "(*redirect_path)", to: "batman#index", constraints: lambda { |request| request.format == "text/html" }
-</code></p>
-
-<p>It captures all <code>text/html</code> requests and passes them to <code>BatmanController</code>, which was also created by the generator:</p>
-
-<p>```ruby app/controllers/batman_controller
-  class BatmanController &lt; ApplicationController</p>
-
-<pre><code>def index
-  render nothing: true, layout: 'batman'
-end
-</code></pre>
-
-<p>  end
-```</p>
-
-<p>Along with that, there was a new file in my <code>app/views/layouts</code> folder, and then of course, <code>app/assets/batman</code>.</p>
-
-<h3>My first view</h3>
-
-<p>I didn&rsquo;t want the Batman landing page at my <code>root_url</code>, I wanted a list of sounds! So, I ran a Batman generator, beefed up the model and controller, created the index html, and redefined the route:</p>
-
-<p><code>
-  $ rails g batman:scaffold Sounds
-</code></p>
-
-<p>```coffeescript app/assets/batman/models/sound.js.coffee</p>
-
-<pre><code>class Lang.Sound extends Batman.Model
-  @resourceName: 'sounds'
-  @storageKey: 'sounds'
-
-  @persist Batman.RailsStorage
-
-  # Use @encode to tell batman.js which properties Rails will send back with its JSON.
-  @encode 'letter'
-  @encodeTimestamps()
-</code></pre>
-
-<p>```</p>
-
-<p>```coffeescript app/assets/batman/controllers/sounds_controller.js.coffee</p>
-
-<pre><code>class Lang.SoundsController extends Lang.ApplicationController
-  routingKey: 'sounds'
-  index: (params) -&gt;
-    @set("sounds", Lang.Sound.get('all'))
-</code></pre>
-
-<p>```</p>
-
-<p>```haml app/assets/batman/html/sounds/index.html</p>
-
-<pre><code>&lt;ul&gt;
-  &lt;li data-foreach-sound="sounds"&gt;
-    &lt;span data-bind="sound.letter" /&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-</code></pre>
-
-<p>```</p>
-
-<p><em>your filename will be your app name:</em>
-```coffeescript app/assets/batman/lang.js.coffee</p>
-
-<pre><code>class Lang extends Batman.App
-  @root "sounds#index"
-</code></pre>
-
-<p>```</p>
-
-<p>And now I had my own landing page!</p>
 ]]></content>
   </entry>
   

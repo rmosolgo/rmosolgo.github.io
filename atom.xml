@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-05-02T13:43:00-04:00</updated>
+  <updated>2016-05-19T22:31:16-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,174 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Finding a Browser-Ready File for Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/"/>
+    <updated>2016-05-19T22:00:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets</id>
+    <content type="html"><![CDATA[<p>I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser-ready JavaScript files.</p>
+
+<!-- more -->
+
+
+<p>There are a few good options for getting browser-ready files for JavaScript libraries:</p>
+
+<ul>
+<li>Download a file from the project&rsquo;s website</li>
+<li>Download a file from the project&rsquo;s source code repository</li>
+<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
+<li>Build the file yourself, following the project&rsquo;s documentation</li>
+</ul>
+
+
+<p><strong>Don&rsquo;t</strong> get a minified version. Sprockets will minify it for us later. In the meantime, the unminified version will help us during development.</p>
+
+<h3>From a Website</h3>
+
+<p>This is the good ol&#8217; way of getting JavaScript files. Because we still use browsers, you can still download these files.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_d3.png" width="300"></p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_react.png" width="500"></p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_moment.png" width="300"></p>
+
+<h3>From the Repo</h3>
+
+<p>Many projects maintain a browser build in the project&rsquo;s source. You may have to poke around a bit, but likely places are the project&rsquo;s root folder, the <code>dist/</code> folder, or the <code>build/</code> folder.</p>
+
+<p>As you explore the repo, remember to examine a stable ref, such as a release or a stable branch.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_c3.png" width="300"></p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_immutable.png" width="300"></p>
+
+<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_three.png" width="300"></p>
+
+<h3>From a CDN</h3>
+
+<p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
+
+<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
+
+<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
+
+<ul>
+<li>Check the &ldquo;main&rdquo; file</li>
+<li>Check the &ldquo;dist&rdquo; or &ldquo;build&rdquo; directories</li>
+</ul>
+
+
+<h3>Build it from Source</h3>
+
+<p>If a pre-built, browser-ready file is not available, you may have to build it yourself! The project&rsquo;s readme will contain instructions to do so. If it doesn&rsquo;t &hellip; you may want to reconsider adding this dependency! (Even if it&rsquo;s well-maintained, it&rsquo;s not a good match for this asset bundling approach.)</p>
+
+<h2>Summary</h2>
+
+<p>Hopefully these will work well for you!</p>
+
+<p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How I Use Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets/"/>
+    <updated>2016-05-19T08:44:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets</id>
+    <content type="html"><![CDATA[<p>When reviewing issues for <code>react-rails</code>, I see many questions about how to gather JavaScript dependencies with Sprockets. Here is how I use Sprockets to manage JavaScript dependencies.</p>
+
+<!-- more -->
+
+
+<p>I&rsquo;m looking for a few things in a JavaScript bundler:</p>
+
+<ul>
+<li>Stability: I don&rsquo;t want any changes to my dependencies unless I explicitly make them.</li>
+<li>Clarity: I want to be able to quickly tell what dependencies I have (library and version).</li>
+<li>Insulation: I don&rsquo;t want to rely on external services during development, deployment or runtime (except for downloading <em>new</em> dependencies, of course)</li>
+<li>Feature-completeness: I want to concatenate and minify my assets and serve them with cache headers</li>
+</ul>
+
+
+<h2>Using Sprockets</h2>
+
+<p>To <strong>add a new dependency</strong>:</p>
+
+<ol>
+<li>Find a non-minified, browser-ready version of your dependency</li>
+<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> (for example, <code>app/assets/javascripts/moment-v2.13.0.js</code>)</li>
+<li>Require it in <code>application.js</code> with <code>//= require ./vendor/moment-v2.13.0</code></li>
+<li>Access the global variable as needed in your app (eg <code>moment</code>)</li>
+</ol>
+
+
+<p>To <strong>update</strong> a dependency:</p>
+
+<ol>
+<li>Find a non-minified, browser-ready version of the updated dependency</li>
+<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> and remove the <em>old</em> version from that directory</li>
+<li>Update the <code>//= require</code> directive with the new version number</li>
+<li>Check the dependency&rsquo;s changelog and update your app as needed. (Search your project for the global variable to find usages, eg <code>moment</code>.)</li>
+</ol>
+
+
+<p>To <strong>remove</strong> a dependency:</p>
+
+<ol>
+<li>Remove its file (<code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code>)</li>
+<li>Remove the <code>//= require</code> directive</li>
+<li>Search your project for the global variable and remove all usages</li>
+</ol>
+
+
+<h2>Finding a browser-ready file</h2>
+
+<p>This got its own page: <a href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/">Finding a browser-ready file</a>.</p>
+
+<h2>Adding the file to <code>vendor/</code></h2>
+
+<p>Use an <strong>unminified</strong> version of the library. It will help in debugging development and viewing diffs when you update the dependency. Have no fear, Sprockets will minify it for you for production.</p>
+
+<p>Include the <strong>version number</strong> in the file name. This will give you more confidence in updating the library, since you&rsquo;ll know what version you&rsquo;re coming from.</p>
+
+<h2>Integrating with Sprockets</h2>
+
+<p>The <code>//= require ./vendor/{library}-v{version}</code> directive is your friend. Like an entry in <code>package.json</code>, it tells the reader what dependency you have.</p>
+
+<p>Now, your library will be accessible by its global name, such as <code>React</code>, <code>d3</code> or <code>Immutable</code>.</p>
+
+<p>Consuming a library via global variable is not ideal. But it <em>does</em> help you remember that, at the end of the day, the browser is one giant, mutable namespace, so you must be a good citizen! At least global variables can be grepped like any other dependency.</p>
+
+<p>Consider isolating your dependency. For example, you could wrap <code>Pusher</code> in an application-specific event emitter. This way, when you update Pusher, you only have to check one file for its usages. (Some libraries are poor candidates for isolation. My app will never be isolated from React!)</p>
+
+<h2>Caveats</h2>
+
+<p>There are some things Sprockets doesn&rsquo;t provide for me, which I wish it did:</p>
+
+<ul>
+<li>Named imports: I wish there was a good alternative to global namespacing with Sprockets, but not yet. (It&rsquo;s not a deal breaker &mdash; it doesn&rsquo;t hurt to be familiar with this constraint because it&rsquo;s the reality of the browser, anyways.)</li>
+<li>Tree shaking: It wish I could only transmit the parts of Underscore.js I actually used!</li>
+</ul>
+
+
+<p>Perhaps I should read up on Sprockets and submit a patch 😎</p>
+
+<p>Also, there&rsquo;s one case where copy-pasting isn&rsquo;t a great solution. Some libraries (like React.js) have <em>separate</em> &ldquo;development&rdquo; and &ldquo;production&rdquo; builds. The production build has fewer runtime checks than the development build, making it smaller and faster. There are a few solutions to this problem:</p>
+
+<ul>
+<li>Use a gem which provides the proper file for each environment (like <code>react-rails</code>)</li>
+<li>Add environment-specific folders to the asset pipeline (like <code>react-rails</code> does, I can write more on this if need be)</li>
+<li>Use the development build in productiosn (weigh the costs first: what&rsquo;s the difference in behavior, performance and file size?)</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby Class, meet Elixir Module]]></title>
@@ -2448,308 +2616,6 @@ There are roughly two approaches:</p>
 <p>I&rsquo;m in the market to improve the performance of <code>Batman.View</code>, but I&rsquo;m not sure I can take anything from <code>$scope</code>. All of batman.js depends on playing by the observability rules. I don&rsquo;t see any way I can get native JS prototypal inheritance to participate in that.</p>
 
 <p>I also like sticking with the &ldquo;It&rsquo;s just batman.js&rdquo; in the view layer. If you can write good <code>@accessor</code>s, then you&rsquo;ve mastered <code>Batman.View</code>, too.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Being the Judge]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/08/02/being-the-judge/"/>
-    <updated>2014-08-02T22:08:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/08/02/being-the-judge</id>
-    <content type="html"><![CDATA[<p>I was just pondering whether a person ought to have children or not. It&rsquo;s funny when I try to be the judge.</p>
-
-<!-- more -->
-
-
-<p>Propagation of the human race is a funny business. There&rsquo;s no test for it. You don&rsquo;t even have to get a license, like you do for driving or for getting married. You just &hellip; <em>do</em> it. Even if you think about it carefully and make the decision with solemnity, that&rsquo;s no guarantee of the outcome. You might just get a rascal and there&rsquo;s nothing to be done about it.</p>
-
-<h3>Judging</h3>
-
-<p>I often find myself assessing whether something is good or bad, right or wrong, whether its something in my life, or something out in the world, or just an idea of this or that. In the end, I don&rsquo;t believe that I make a great judge: I don&rsquo;t have all the information, I&rsquo;m short-sighted and I&rsquo;m lacking in perception and wisdom.</p>
-
-<p>I realized just now that in a way, it&rsquo;s just <em>not my role</em> to judge. I think that&rsquo;s the meaning of &ldquo;<a href="http://www.esvbible.org/Matthew+13:24/">Don&rsquo;t separate the wheat from the weeds, I&rsquo;ll do that at harvest time</a>&rdquo;. A person&rsquo;s job is to live a human life according to God&rsquo;s call. Generally, this means extending patience, forgiveness &amp; guidance in deference to God&rsquo;s judgements on his appointed day.</p>
-
-<h3>It&rsquo;s like&hellip;</h3>
-
-<p>It&rsquo;s like in a movie when a boy finds that the CEO&rsquo;s office is unlocked. He tiptoes to the tall, wide desk. He climbs into the big leather chair and gives it a swing to the right and left. He helps himself to a pen and practices his signature on the company letterhead. &ldquo;Very nice!&rdquo;</p>
-
-<p>Of course, the door clicks again. It&rsquo;s the boss. With a downward flick of his finger, he signals for the boy to get down. Although the boy likes the feeling of the big chair, he&rsquo;s not fit for the duties of CEO.</p>
-
-<h3>My Role</h3>
-
-<p>This is freeing. I&rsquo;m prone to getting caught up in matters of judgement that are, in fact, beyond me. I would do well to determine the way that the Lord has put before me and walk it, leaving executive decisions to the executive. Throughout history and in my experience, he has proven worthy of that trust.</p>
-
-<p>Certainly it&rsquo;s good to try to understand the world, but when you come up short, that&rsquo;s OK. The boss has the whole plan in mind and he&rsquo;s checked the accounts twice. It&rsquo;s going to add up! Fulfill your duties to the utmost!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/"/>
-    <updated>2014-08-02T09:38:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a front-end MVC framework with an unrivaled implementation of key-value observing. I will explore computed properties in batman.js by contrasting them with Ember.js&rsquo;s computed properties.</p>
-
-<!-- more -->
-
-
-<p>First, disclaimers!</p>
-
-<ul>
-<li>I didn&rsquo;t write any of the <code>Batman.Property</code> code that makes this feature possible. I&rsquo;m only a fanboy!</li>
-<li>I don&rsquo;t know Ember.js. I&rsquo;ve just gathered examples from the <a href="http://emberjs.com/guides">Ember Guides</a>.</li>
-</ul>
-
-
-<p>To explore computed properties, let&rsquo;s take the <strong>canonical <code>fullName</code> example</strong>. It:</p>
-
-<ul>
-<li>depends on two other properties, <code>firstName</code> and <code>lastName</code></li>
-<li>returns a string that joins <code>firstName</code> and <code>lastName</code> with a space</li>
-<li>can be set</li>
-<li>sets <code>firstName</code> and <code>lastName</code> by splitting on whitespace</li>
-</ul>
-
-
-<p>We&rsquo;ll also explore an <strong>aggregrated <code>roster</code> property</strong> which:</p>
-
-<ul>
-<li>depends on <code>fullName</code> for each person</li>
-<li>joins <code>fullName</code> with <code>,</code></li>
-</ul>
-
-
-<h2>fullName in Ember.js</h2>
-
-<p>(This is yanked wholesale from the <a href="http://emberjs.com/guides/object-model/computed-properties/">Computed Properties Guide</a>.)</p>
-
-<p>A couple of things to notice:</p>
-
-<ul>
-<li><code>fullName</code> is defined as <em>one function</em> which handles <code>get</code> and <code>set</code> operations.</li>
-<li><code>fullName</code> must be told what properties it depends on.</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Person</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
-</span><span class='line'>  <span class="nx">firstName</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="c1">// These aren&#39;t necessary, they&#39;re</span>
-</span><span class='line'>  <span class="nx">lastName</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>  <span class="c1">// just for clarity.</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">fullName</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">previousValue</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="c1">// setter</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="kd">var</span> <span class="nx">nameParts</span> <span class="o">=</span> <span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\s+/</span><span class="p">);</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">,</span>  <span class="nx">nameParts</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// getter, also the return value is cached</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">,</span> <span class="s1">&#39;lastName&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Usage is pretty standard: use <code>get</code> and <code>set</code> to access properties.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">captainAmerica</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">();</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;fullName&#39;</span><span class="p">,</span> <span class="s2">&quot;William Burnside&quot;</span><span class="p">);</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;firstName&#39;</span><span class="p">);</span> <span class="c1">// William</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;lastName&#39;</span><span class="p">);</span>  <span class="c1">// Burnside</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>fullName in Batman.js</h2>
-
-<p>Two things to notice:</p>
-
-<ul>
-<li><code>get</code> and <code>set</code> operations are defined <em>separately</em>.</li>
-<li><code>fullName</code> doesn&rsquo;t have to be told what its dependencies are.</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nb">Object</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;firstName&#39;</span> <span class="c1"># not necessary,</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;lastName&#39;</span>  <span class="c1"># just here for clarity</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;fullName&#39;</span><span class="p">,</span>
-</span><span class='line'>    <span class="nv">get: </span><span class="nf">(key) -&gt;</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s"> </span><span class="si">#{</span><span class="nx">@get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
-</span><span class='line'>    <span class="nv">set: </span><span class="nf">(key, value) -&gt;</span>
-</span><span class='line'>      <span class="nv">nameParts = </span><span class="nx">value</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/\s+/</span><span class="p">)</span>
-</span><span class='line'>      <span class="nx">@set</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</span><span class='line'>      <span class="nx">@set</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">,</span> <span class="nx">nameParts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span class='line'>      <span class="k">return</span> <span class="nx">value</span> <span class="c1"># should return newly-set value, although the `get` function will be used for caching.</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The usage is almost identical:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="nv">captainAmerica = </span><span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">,</span> <span class="s">&#39;William Burnside&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;firstName&#39;</span><span class="p">)</span> <span class="c1"># William</span>
-</span><span class='line'><span class="nx">captainAmerica</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;lastName&#39;</span><span class="p">)</span>  <span class="c1"># Burnside</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>roster in Ember.js</h2>
-
-<p>(This was adapted from the <a href="http://emberjs.com/guides/object-model/computed-properties-and-aggregate-data/">Computed Properties and Aggregate Data Guide</a>.)</p>
-
-<p>Some things stood out to me:</p>
-
-<ul>
-<li><code>roster</code>&rsquo;s properties are declared with a DSL. Array dependencies are limited to one layer deep (ie, you can&rsquo;t use <code>@each</code> twice).</li>
-<li><code>mapBy</code> is provided by <code>Ember.Enumerable</code> to handle arrays of objects. Nice!</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">PeopleController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">Controller</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
-</span><span class='line'>  <span class="nx">people</span><span class="o">:</span> <span class="p">[</span>
-</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">firstName</span><span class="o">:</span> <span class="s2">&quot;Tom&quot;</span><span class="p">,</span> <span class="nx">lastName</span><span class="o">:</span> <span class="s2">&quot;Dale&quot;</span><span class="p">}),</span>
-</span><span class='line'>    <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">firstName</span><span class="o">:</span> <span class="s2">&quot;Yehuda&quot;</span><span class="p">,</span> <span class="nx">lastName</span><span class="o">:</span> <span class="s2">&quot;Katz&quot;</span><span class="p">})</span>
-</span><span class='line'>  <span class="p">],</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">roster</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kd">var</span> <span class="nx">people</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;people&#39;</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">people</span><span class="p">.</span><span class="nx">mapBy</span><span class="p">(</span><span class="s1">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">);</span>
-</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s1">&#39;people.@each.fullName&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>roster in Batman.js</h2>
-
-<p>Here&rsquo;s the analogous construction in batman.js:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">App</span><span class="p">.</span><span class="nx">PeopleController</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Controller</span>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;people&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span><span class="p">([</span> <span class="c1"># this is future-code: constructor will take an array in v0.17.0</span>
-</span><span class='line'>      <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Tom&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Dale&quot;</span><span class="p">)</span>
-</span><span class='line'>      <span class="k">new</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Person</span><span class="p">(</span><span class="nv">firstName: </span><span class="s">&quot;Yehuda&quot;</span><span class="p">,</span> <span class="nv">lastName: </span><span class="s">&quot;Katz&quot;</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">])</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;roster&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span>
-</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;people&#39;</span><span class="p">).</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&#39;fullName&#39;</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s">&#39;, &#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>One thing is the same:</p>
-
-<ul>
-<li><code>mapToProperty</code> works like <code>mapBy</code></li>
-</ul>
-
-
-<p>You might notice two big differences:</p>
-
-<ul>
-<li><code>people</code> is a <code>Batman.Set</code> instead of a native Array.</li>
-<li><code>roster</code> didn&rsquo;t have to be told what its dependencies are</li>
-</ul>
-
-
-<p>By using batman.js data structures inside <code>@accessor</code> functions, we benefit from batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a>. It looks like automatic source tracking was considered by the Ember core team, but deemed <a href="https://github.com/emberjs/ember.js/issues/269#issuecomment-3178319">impossible</a> or <a href="https://github.com/emberjs/ember.js/issues/386#issuecomment-3523589">prohibitively expensive</a>.</p>
-
-<p>I recently saw a quote in a <a href="https://www.youtube.com/watch?v=-DX3vJiqxm4">React.js talk</a>:</p>
-
-<blockquote><p>Intellectuals solve probelms. Geniuses prevent them. &ndash; Albert Einstein</p></blockquote>
-
-<p>I think that&rsquo;s just what the Shopify team did when they implemented <code>Batman.Observable</code>! The API is very simple and it Just Works<sup>TM</sup>.</p>
-
-<h2>My Opinion</h2>
-
-<p><strong>Pros of batman.js:</strong></p>
-
-<ul>
-<li>Elegant <code>@accessor</code> API for getters and setters: define <code>get</code> and <code>set</code> separately instead of testing for arguments.</li>
-<li>Automatic dependency tracking: batman.js knows what objects &amp; properties were accessed during computation and observes accordingly.</li>
-<li>There&rsquo;s no limit to the depth of enumerable dependencies. Any property of a <code>Batman.Object</code> that&rsquo;s accessed will be tracked, no matter where it exists in the app.</li>
-</ul>
-
-
-<p>In fact, <code>@accessor</code> is the heart and soul of a batman.js app. You&rsquo;re basically declaring a system of computed properties, then updating that system from user input. Batman.js propagates information to wherever it needs to be.</p>
-
-<p><strong>Cons of batman.js:</strong></p>
-
-<ul>
-<li>&ldquo;It&rsquo;s just not Ember.&rdquo; You miss out on huge user base, corporate support, and everything that goes with that.</li>
-<li>Beyond that, batman.js resources are sparse. The <a href="http://batmanjs.org/docs/index.html">new guides</a>, <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">cookbook</a> and <a href="http://batmanjs.org/docs/index.html">API docs</a> are improving every week, but for advanced usage you still have to sourcedive sometimes.</li>
-<li>There <strong>is</strong> a performance hit for global observability. The only place I&rsquo;ve noticed it is with complex iteration views (<a href="https://github.com/batmanjs/batman/issues/1086">batmanjs/batman#1086</a>). I&rsquo;m hoping to tackle this soon since it&rsquo;s becoming an issue in <a href="http://get.planningcenteronline.com/check-ins">PCO Check-ins</a>.</li>
-</ul>
-
-
-<p>I&rsquo;m not aware of any features missing from batman.js, but I do miss the &ldquo;googleability&rdquo; of a well-traveled path. Batman.js also lacks some of the dev tools like a decent Chrome extension and a command-line client.</p>
-
-<p>I always want to know <em>how</em> things works, so getting in the source is actually a benefit for me.</p>
-
-<p><strong>Six of one, half-dozen of the other:</strong></p>
-
-<ul>
-<li>Dependency DSL vs <code>Batman.{DataStructure}</code></li>
-<li>Calling super: <code>this._super</code> vs. <code>@wrapAccessor</code></li>
-<li>External API with <code>get</code> and <code>set</code></li>
-<li>Cached values in computed properties</li>
-<li>In batman.js, you can opt out of tracking with <code>Batman.Property.withoutTracking</code>. It&rsquo;s obscure, but I think it&rsquo;s ok because batman.js always covers the more common case.</li>
-</ul>
-
-
-<p>One thing that I found in neither framework was rate-limited properties, a la Knockout. I&rsquo;d love to have a built-in option for this in batman.js.</p>
 ]]></content>
   </entry>
   

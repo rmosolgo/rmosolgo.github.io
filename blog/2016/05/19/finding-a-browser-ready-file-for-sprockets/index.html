@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Finding a Browser-Ready File for Sprockets - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <header role="banner"><hgroup>
+  <img src="/images/hood-ornament-image2.png" width="50">
+  <!--h1>
+  	<a href="/">Robert Mosolgo</a>
+  </h1 !-->
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><!-- img src="/images/hood-ornament-image2.png" -->
+<ul class="subscription" data-subscription="rss">
+  
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+  
+</ul>
+  
+<ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Finding a Browser-Ready File for Sprockets</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-05-19T22:00:00-04:00" pubdate data-updated="true">May 19<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser-ready JavaScript files.</p>
+
+<!-- more -->
+
+
+<p>There are a few good options for getting browser-ready files for JavaScript libraries:</p>
+
+<ul>
+<li>Download a file from the project&rsquo;s website</li>
+<li>Download a file from the project&rsquo;s source code repository</li>
+<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
+<li>Build the file yourself, following the project&rsquo;s documentation</li>
+</ul>
+
+
+<p><strong>Don&rsquo;t</strong> get a minified version. Sprockets will minify it for us later. In the meantime, the unminified version will help us during development.</p>
+
+<h3>From a Website</h3>
+
+<p>This is the good ol&#8217; way of getting JavaScript files. Because we still use browsers, you can still download these files.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/website_download_d3.png" width="300"></p>
+
+<p><img src="/images/sprockets/website_download_react.png" width="500"></p>
+
+<p><img src="/images/sprockets/website_download_moment.png" width="300"></p>
+
+<h3>From the Repo</h3>
+
+<p>Many projects maintain a browser build in the project&rsquo;s source. You may have to poke around a bit, but likely places are the project&rsquo;s root folder, the <code>dist/</code> folder, or the <code>build/</code> folder.</p>
+
+<p>As you explore the repo, remember to examine a stable ref, such as a release or a stable branch.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/repo_download_c3.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_immutable.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_three.png" width="300"></p>
+
+<h3>From a CDN</h3>
+
+<p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
+
+<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
+
+<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
+
+<ul>
+<li>Check the &ldquo;main&rdquo; file</li>
+<li>Check the &ldquo;dist&rdquo; or &ldquo;build&rdquo; directories</li>
+</ul>
+
+
+<h3>Build it from Source</h3>
+
+<p>If a pre-built, browser-ready file is not available, you may have to build it yourself! The project&rsquo;s readme will contain instructions to do so. If it doesn&rsquo;t &hellip; you may want to reconsider adding this dependency! (Even if it&rsquo;s well-maintained, it&rsquo;s not a good match for this asset bundling approach.)</p>
+
+<h2>Summary</h2>
+
+<p>Hopefully these will work well for you!</p>
+
+<p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-05-19T22:00:00-04:00" pubdate data-updated="true">May 19<span>th</span>, 2016</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/javascript/'>JavaScript</a>, <a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/sprockets/'>Sprockets</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/05/19/how-i-use-sprockets/" title="Previous Post: How I Use Sprockets">&laquo; How I Use Sprockets</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
