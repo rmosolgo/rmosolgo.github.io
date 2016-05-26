@@ -3,7 +3,6 @@ layout: post
 title: "Ruby Class, meet Elixir Module"
 date: 2016-05-01 11:10
 comments: true
-published: false
 categories:
   - Ruby
   - Programming
