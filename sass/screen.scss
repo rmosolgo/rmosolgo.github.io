@@ -1,11 +1,113 @@
-@import "compass";
-@include global-reset;
-@include reset-html5;
+// @import "compass";
+// @include global-reset;
+// @include reset-html5;
+//
+// @import "custom/colors";
+// @import "custom/fonts";
+// @import "custom/layout";
+// @import "base";
+// @import "partials";
+// @import "plugins/**/*";
+// @import "custom/styles";
+@import "github-jekyll";
 
-@import "custom/colors";
-@import "custom/fonts";
-@import "custom/layout";
-@import "base";
-@import "partials";
-@import "plugins/**/*";
-@import "custom/styles";
+body, html {
+  width: 100%;
+  padding: 0px;
+  margin: 0px;
+  background-color: white;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+#wrapper {
+  max-width: 800px;
+  margin: 0px auto;
+  background-color: white;
+  padding: 20px;
+}
+
+.site-title {
+  text-align: center;
+}
+
+.main-navigation {
+  padding-bottom: 5px;
+  border-bottom: 1px solid black;
+  list-style: none;
+  display: flex;
+  li {
+    flex: 1;
+  }
+}
+
+.mobile-nav {
+  display: none;
+}
+
+a {
+  $link-color: #676FF3;
+  $visited-link-color: #3B3F8C;
+  text-decoration: none;
+  color: $link-color;
+  &:visited {
+    color: $visited-link-color;
+  }
+
+}
+
+.archive-post {
+  h1 {
+    margin-bottom: 5px;
+  }
+  .archive-post-date {
+    float: right;
+  }
+}
+
+.index-post {
+  margin-bottom: 25px;
+  header {
+    margin-top: 12px;
+    h1 {
+      margin: 0px 0px 8px 0px;
+    }
+    p {
+      margin: 6px 0px 0px 0px;
+    }
+  }
+}
+
+.highlight {
+  pre {
+    width: 100%;
+  }
+  .code {
+    pre {
+      border-top-left-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
+  }
+}
+
+.batmanjs-warning {
+  background: #FFEABD;
+  text-align: center;
+  padding: 10px;
+  font-size: 20px;
+  font-style: italic;
+  font-weigth: bold;
+}
+
+.talks-page {
+  .talk {
+    margin-bottom: 20px;
+    display: flex;
+  }
+  .talk-image {
+    img {
+      max-width: 300px;
+      margin-right: 20px;
+      border: 1px solid black;
+    }
+  }
+}

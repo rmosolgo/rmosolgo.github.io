@@ -1,7 +1,6 @@
 ---
 layout: page
 title: "Talks"
-date: 2016-03-03 17:24
 comments: true
 sharing: true
 footer: true
@@ -27,23 +26,19 @@ talks:
 ---
 
 <div class='talks-page'>
-  <ul>
   {% for talk in page.talks %}
-    <li>
-      <div class='talk'>
-        <div class='talk-image'>
-          <a href="{{ talk.slides_url }}" target="_blank">
-            <img src='/images/{{ talk.image_name }}' />
-          </a>
-        </div>
-        <div class='talk-description'>
-          <h2 class='talk-title'>{{ talk.title }}</h2>
-          <p class='talk-given-at'>{{ talk.given_at }}</p>
-          <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
-          <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
-        </div>
+    <div class='talk'>
+      <div class='talk-image'>
+        <a href="{{ talk.slides_url }}" target="_blank">
+          <img src='/images/{{ talk.image_name }}' />
+        </a>
       </div>
-    </li>
+      <div class='talk-description'>
+        <h2 class='talk-title'>{{ talk.title }}</h2>
+        <p class='talk-given-at'>{{ talk.given_at }}</p>
+        <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
+        <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
+      </div>
+    </div>
   {% endfor %}
-  </ul>
 </div>

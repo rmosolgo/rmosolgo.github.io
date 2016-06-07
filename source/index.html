@@ -6,7 +6,7 @@ layout: default
   {% assign index = true %}
   {% for post in paginator.posts %}
   {% assign content = post.content %}
-    <article>
+    <article class="index-post">
       {% include article.html %}
     </article>
   {% endfor %}
@@ -20,12 +20,3 @@ layout: default
     {% endif %}
   </div>
 </div>
-{% unless page.sidebar == false or site.sidebar == false %}
-  <aside class="sidebar">
-    {% if site.blog_index_asides.size %}
-      {% include_array blog_index_asides %}
-    {% else %}
-      {% include_array default_asides %}
-    {% endif %}
-  </aside>
-{% endunless %}
