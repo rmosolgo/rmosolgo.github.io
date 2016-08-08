@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Summer Reading: Specializing Ruby - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Specialising Dynamic Techniques for Implementing the Ruby Programming Language (&ldquo;Specializing Ruby&rdquo;) is approachable and enjoyable ( &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-19264608-11']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Summer Reading: Specializing Ruby</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-08-06T11:10:00-04:00" pubdate data-updated="true">Aug 6<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://chrisseaton.com/phd/"><em>Specialising Dynamic Techniques for Implementing the Ruby Programming Language</em></a> (&ldquo;Specializing Ruby&rdquo;) is approachable and enjoyable (despite being a PhD thesis 😝).</p>
+
+<!-- more -->
+
+
+<p><em>Specializing Ruby</em> describes <a href="https://twitter.com/ChrisGSeaton">Chris Seaton</a>&rsquo;s work on <a href="http://chrisseaton.com/rubytruffle/">JRuby+Truffle</a>. It seems to be aimed at an unfamiliar audience, so it&rsquo;s loaded with background information and careful explanations. Those were a big benefit to me! I&rsquo;ll describe a few things that I enjoyed the most:</p>
+
+<ul>
+<li>Introduction to Truffle and Graal</li>
+<li>Optimizing Metaprogramming with Dispatch Chains</li>
+<li>Zero-Overhead Debugging</li>
+<li>Interpreting Native Extensions</li>
+</ul>
+
+
+<h4>TL;DR:</h4>
+
+<p>JRuby+Truffle is really fast and implements (or <em>can implement</em>) all of Ruby&rsquo;s features. The paper is full of statements like this one (from section 5):</p>
+
+<blockquote><p>The techniques in this chapter have given us a way to implement metaprogramming operations as efficiently as conventional operations&hellip; During peak performance &hellip; the technique has zero-overhead compared to conventional operations.</p></blockquote>
+
+<p>And benchmarks like this one:</p>
+
+<p><img src="/images/jruby_truffle/jruby_truffle_benchmark_example.png" width="500"></p>
+
+<p><em>(JRuby+Truffle is 30x faster than CRuby 2.2.2)</em></p>
+
+<p>The only question I have is, how bad is the warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize.</p>
+
+<h2>Introduction to Truffle and Graal</h2>
+
+<p>Seaton&rsquo;s work is built on top of two existing Java projects: <strong>Truffle</strong> and <strong>Graal</strong> (pronunciation: 😖❓).</p>
+
+<p>Truffle is a <em>language implementation framework</em> for <em>self-optimizing AST interpreters</em>. This means:</p>
+
+<ul>
+<li>Truffle is for <em>implementing languages</em>. People have used Truffle to implement many languages, including Ruby, C, and Python.</li>
+<li>Truffle languages are <em>AST interpreters</em>. A Truffle language parses its source code into a tree of nodes (the <em>abstract syntax tree</em>, AST), which represents the program. Then, it executes the program by traversing the tree, taking actions at each node.</li>
+<li>Truffle languages can <em>self-optimize</em>. Nodes can observe their execution and replace themselves with optimized versions of themselves.</li>
+</ul>
+
+
+<p>Graal is a <em>dynamic compiler</em> for the JVM, written in Java. A few points about Graal:</p>
+
+<ul>
+<li>It&rsquo;s a just-in-time compiler, so it improves a program&rsquo;s performance while the program runs.</li>
+<li>Graal is written in Java, which means it can expose its own APIs to other Java programs (like Truffle).</li>
+<li>Graal includes a powerful system for <em>de-optimizing</em>. This is especially important for Ruby, since Ruby&rsquo;s metaprogramming constructs allow programs to define new behavior for themselves while running.</li>
+</ul>
+
+
+<p>Truffle has a &ldquo;Graal backend,&rdquo; which supports close cooperation between the two. Together, they make a great team for language implementation: Truffle provides a simple approach to language design and Graal offers a means to optimize all the way to machine code.</p>
+
+<h2>Optimizing Metaprogramming with Dispatch Chains</h2>
+
+<p>This is a novel optimization technique for Ruby, described in section 5.</p>
+
+<p>Since Ruby is dynamic, method lookups must happen at runtime. In CRuby, call sites have <em>caches</em> which store the result of method lookups and may short-circuit the lookup next time the call happens.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1">#          ^- here&#39;s the call site</span>
+</span><span class='line'><span class="c1">#             the _actual_ method definition to use</span>
+</span><span class='line'><span class="c1">#             depends on `some_object`&#39;s class, which is unknown</span>
+</span><span class='line'><span class="c1">#             until the program is actually running</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One such cache is a <em>polymorphic inline cache</em>, which is roughly a map of <code>Class =&gt; method</code> pairs. When CRuby starts the call, it checks the cache for the current receiver&rsquo;s class. On a cache hit, it uses the cached method definition. On a cache miss, it looks up a definition and adds it to the cache.</p>
+
+<p>The cache might look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Cache:</span>
+</span><span class='line'><span class="c1">#   - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#   - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In some cases, CRuby declares bankruptcy. Dynamic method calls (<code>.send</code>) are not cached!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1">#          ^- who knows what method to call!?!?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>JRuby+Truffle&rsquo;s solution to this challenge is <em>dispatch chains.</em> Each call site (including <code>.send</code>) gets a dispatch chain, which is a like two-layer cache. First, it stores the <em>name</em> of the method. Then, it stores the <em>class</em> of the receiver. For a &ldquo;static&rdquo; method call, it looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And for a dynamic method call, it caches <em>each</em> method name:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span><span class='line'><span class="c1"># - &quot;some_other_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_other_method</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this respect, JRuby+Truffle treats <em>every</em> method call like a <code>.send(...)</code>. This cache is implemented with Truffle nodes, so it&rsquo;s optimized as much as the rest of the program.</p>
+
+<p>I wonder if this kind of method cache could be implemented for CRuby!</p>
+
+<h2>Zero-Overhead Debugging</h2>
+
+<p>Debugging in JRuby+Truffle (described in section 6) is a tour de force for the Truffle-Graal combo. Other Rubies incur big performance penalties for debugging. Some require a special &ldquo;debug&rdquo; flag. But Seaton implements zero-overhead, always-available debugging by applying Truffle concepts in a new way.</p>
+
+<p>Debugging hooks (such as the beginning of a new line) are added as &ldquo;transparent&rdquo; Truffle AST nodes, analogous to CRuby&rsquo;s <code>trace</code> instruction. By default, they don&rsquo;t do anything &mdash; they just call through to their child nodes. Since they&rsquo;re &ldquo;just&rdquo; Truffle nodes, they&rsquo;re optimized like the rest of the program (and since they&rsquo;re transparent, they&rsquo;re optimized away completely). When those nodes are targeted for debugging, they&rsquo;re de-optimized, updated with the appropriate debug code, and the program continues running (and self-optimizing). When the debugger is detached, the node de-optimizes again, replaces itself with transparent nodes again, and the program resumes.</p>
+
+<p>This chapter included a good description of Graal&rsquo;s <code>Assumption</code> concept. Assumptions are attached to optimized code. As long as <code>isValid()</code> is true, optimized code is executed. However, when an assumption is marked as invalid, Graal transfers execution back to the interpreter. Debugging takes advantage of this construct: debug nodes are transparent under the assumption that no debugger is attached to them. But when a developer attaches a debugger, then that assumption is invalidated and Graal de-optimizes and starts interpreting with the new debug nodes. Removing a debugger does the same thing: it invalidates an assumption, automatically de-optimizing the compiled code.</p>
+
+<h2>Interpreting Native Extensions</h2>
+
+<p>Truffle: if it&rsquo;s not solving your problems, you&rsquo;re not using enough of it!</p>
+
+<p>Throughout the paper, Seaton points out the &ldquo;real-world&rdquo; challenge of any new Ruby implementation: it simply <em>must</em> support <em>all</em> existing code, including C extensions! If you require developers to rewrite code for a new implementation, they probably won&rsquo;t bother with it.</p>
+
+<p>He also points out that CRuby&rsquo;s C API is an implementer&rsquo;s nightmare (my words, not his). It&rsquo;s tightly coupled to CRuby&rsquo;s implementation it provides direct access to CRuby&rsquo;s memory (eg, string pointers).</p>
+
+<p>Truffle&rsquo;s design offers a solution to this problem. Truffle languages implement common interfaces for AST nodes and objects, meaning that they can be <em>shared</em> between languages! With this technique, JRuby+Truffle can implement Ruby&rsquo;s C API by interpreting C with Truffle. Since it&rsquo;s &ldquo;just Truffle&rdquo;, C and Ruby ASTs can be seamlessly merged. They are even optimized together, just like a pure-Ruby program.</p>
+
+<p>Seaton describes some particular techniques for adapting the pre-existing TruffleC project to the Ruby C API. In typical fashion, JRuby+Truffle outpaces CRuby &mdash; even for C extensions!</p>
+
+<h2>Conclusion</h2>
+
+<p>&ldquo;Optimizing Ruby&rdquo; was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can&rsquo;t use JRuby+Truffle until it runs all of Ruby on Rails, which isn&rsquo;t the case <em>yet</em>. I&rsquo;m eager to see how this project matures!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-08-06T11:10:00-04:00" pubdate data-updated="true">Aug 6<span>th</span>, 2016</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/" data-via="" data-counturl="http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/" title="Previous Post: Finding a Browser-Ready File for Sprockets">&laquo; Finding a Browser-Ready File for Sprockets</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Robert Mosolgo -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+    
+
+<script type="text/javascript">
+      var disqus_shortname = 'rmosolgo';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/';
+        var disqus_url = 'http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  </div>
+</body>
+</html>

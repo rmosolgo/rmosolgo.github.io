@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2016-06-07T10:37:49-04:00</updated>
+  <updated>2016-08-08T13:34:19-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,167 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Summer Reading: Specializing Ruby]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/"/>
+    <updated>2016-08-06T11:10:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby</id>
+    <content type="html"><![CDATA[<p><a href="http://chrisseaton.com/phd/"><em>Specialising Dynamic Techniques for Implementing the Ruby Programming Language</em></a> (&ldquo;Specializing Ruby&rdquo;) is approachable and enjoyable (despite being a PhD thesis 😝).</p>
+
+<!-- more -->
+
+
+<p><em>Specializing Ruby</em> describes <a href="https://twitter.com/ChrisGSeaton">Chris Seaton</a>&rsquo;s work on <a href="http://chrisseaton.com/rubytruffle/">JRuby+Truffle</a>. It seems to be aimed at an unfamiliar audience, so it&rsquo;s loaded with background information and careful explanations. Those were a big benefit to me! I&rsquo;ll describe a few things that I enjoyed the most:</p>
+
+<ul>
+<li>Introduction to Truffle and Graal</li>
+<li>Optimizing Metaprogramming with Dispatch Chains</li>
+<li>Zero-Overhead Debugging</li>
+<li>Interpreting Native Extensions</li>
+</ul>
+
+
+<h4>TL;DR:</h4>
+
+<p>JRuby+Truffle is really fast and implements (or <em>can implement</em>) all of Ruby&rsquo;s features. The paper is full of statements like this one (from section 5):</p>
+
+<blockquote><p>The techniques in this chapter have given us a way to implement metaprogramming operations as efficiently as conventional operations&hellip; During peak performance &hellip; the technique has zero-overhead compared to conventional operations.</p></blockquote>
+
+<p>And benchmarks like this one:</p>
+
+<p><img src="http://rmosolgo.github.io/images/jruby_truffle/jruby_truffle_benchmark_example.png" width="500"></p>
+
+<p><em>(JRuby+Truffle is 30x faster than CRuby 2.2.2)</em></p>
+
+<p>The only question I have is, how bad is the warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize.</p>
+
+<h2>Introduction to Truffle and Graal</h2>
+
+<p>Seaton&rsquo;s work is built on top of two existing Java projects: <strong>Truffle</strong> and <strong>Graal</strong> (pronunciation: 😖❓).</p>
+
+<p>Truffle is a <em>language implementation framework</em> for <em>self-optimizing AST interpreters</em>. This means:</p>
+
+<ul>
+<li>Truffle is for <em>implementing languages</em>. People have used Truffle to implement many languages, including Ruby, C, and Python.</li>
+<li>Truffle languages are <em>AST interpreters</em>. A Truffle language parses its source code into a tree of nodes (the <em>abstract syntax tree</em>, AST), which represents the program. Then, it executes the program by traversing the tree, taking actions at each node.</li>
+<li>Truffle languages can <em>self-optimize</em>. Nodes can observe their execution and replace themselves with optimized versions of themselves.</li>
+</ul>
+
+
+<p>Graal is a <em>dynamic compiler</em> for the JVM, written in Java. A few points about Graal:</p>
+
+<ul>
+<li>It&rsquo;s a just-in-time compiler, so it improves a program&rsquo;s performance while the program runs.</li>
+<li>Graal is written in Java, which means it can expose its own APIs to other Java programs (like Truffle).</li>
+<li>Graal includes a powerful system for <em>de-optimizing</em>. This is especially important for Ruby, since Ruby&rsquo;s metaprogramming constructs allow programs to define new behavior for themselves while running.</li>
+</ul>
+
+
+<p>Truffle has a &ldquo;Graal backend,&rdquo; which supports close cooperation between the two. Together, they make a great team for language implementation: Truffle provides a simple approach to language design and Graal offers a means to optimize all the way to machine code.</p>
+
+<h2>Optimizing Metaprogramming with Dispatch Chains</h2>
+
+<p>This is a novel optimization technique for Ruby, described in section 5.</p>
+
+<p>Since Ruby is dynamic, method lookups must happen at runtime. In CRuby, call sites have <em>caches</em> which store the result of method lookups and may short-circuit the lookup next time the call happens.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1">#          ^- here&#39;s the call site</span>
+</span><span class='line'><span class="c1">#             the _actual_ method definition to use</span>
+</span><span class='line'><span class="c1">#             depends on `some_object`&#39;s class, which is unknown</span>
+</span><span class='line'><span class="c1">#             until the program is actually running</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>One such cache is a <em>polymorphic inline cache</em>, which is roughly a map of <code>Class =&gt; method</code> pairs. When CRuby starts the call, it checks the cache for the current receiver&rsquo;s class. On a cache hit, it uses the cached method definition. On a cache miss, it looks up a definition and adds it to the cache.</p>
+
+<p>The cache might look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Cache:</span>
+</span><span class='line'><span class="c1">#   - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#   - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In some cases, CRuby declares bankruptcy. Dynamic method calls (<code>.send</code>) are not cached!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1">#          ^- who knows what method to call!?!?</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>JRuby+Truffle&rsquo;s solution to this challenge is <em>dispatch chains.</em> Each call site (including <code>.send</code>) gets a dispatch chain, which is a like two-layer cache. First, it stores the <em>name</em> of the method. Then, it stores the <em>class</em> of the receiver. For a &ldquo;static&rdquo; method call, it looks like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And for a dynamic method call, it caches <em>each</em> method name:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
+</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
+</span><span class='line'><span class="c1"># - &quot;some_other_method&quot; =&gt;</span>
+</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_other_method</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In this respect, JRuby+Truffle treats <em>every</em> method call like a <code>.send(...)</code>. This cache is implemented with Truffle nodes, so it&rsquo;s optimized as much as the rest of the program.</p>
+
+<p>I wonder if this kind of method cache could be implemented for CRuby!</p>
+
+<h2>Zero-Overhead Debugging</h2>
+
+<p>Debugging in JRuby+Truffle (described in section 6) is a tour de force for the Truffle-Graal combo. Other Rubies incur big performance penalties for debugging. Some require a special &ldquo;debug&rdquo; flag. But Seaton implements zero-overhead, always-available debugging by applying Truffle concepts in a new way.</p>
+
+<p>Debugging hooks (such as the beginning of a new line) are added as &ldquo;transparent&rdquo; Truffle AST nodes, analogous to CRuby&rsquo;s <code>trace</code> instruction. By default, they don&rsquo;t do anything &mdash; they just call through to their child nodes. Since they&rsquo;re &ldquo;just&rdquo; Truffle nodes, they&rsquo;re optimized like the rest of the program (and since they&rsquo;re transparent, they&rsquo;re optimized away completely). When those nodes are targeted for debugging, they&rsquo;re de-optimized, updated with the appropriate debug code, and the program continues running (and self-optimizing). When the debugger is detached, the node de-optimizes again, replaces itself with transparent nodes again, and the program resumes.</p>
+
+<p>This chapter included a good description of Graal&rsquo;s <code>Assumption</code> concept. Assumptions are attached to optimized code. As long as <code>isValid()</code> is true, optimized code is executed. However, when an assumption is marked as invalid, Graal transfers execution back to the interpreter. Debugging takes advantage of this construct: debug nodes are transparent under the assumption that no debugger is attached to them. But when a developer attaches a debugger, then that assumption is invalidated and Graal de-optimizes and starts interpreting with the new debug nodes. Removing a debugger does the same thing: it invalidates an assumption, automatically de-optimizing the compiled code.</p>
+
+<h2>Interpreting Native Extensions</h2>
+
+<p>Truffle: if it&rsquo;s not solving your problems, you&rsquo;re not using enough of it!</p>
+
+<p>Throughout the paper, Seaton points out the &ldquo;real-world&rdquo; challenge of any new Ruby implementation: it simply <em>must</em> support <em>all</em> existing code, including C extensions! If you require developers to rewrite code for a new implementation, they probably won&rsquo;t bother with it.</p>
+
+<p>He also points out that CRuby&rsquo;s C API is an implementer&rsquo;s nightmare (my words, not his). It&rsquo;s tightly coupled to CRuby&rsquo;s implementation it provides direct access to CRuby&rsquo;s memory (eg, string pointers).</p>
+
+<p>Truffle&rsquo;s design offers a solution to this problem. Truffle languages implement common interfaces for AST nodes and objects, meaning that they can be <em>shared</em> between languages! With this technique, JRuby+Truffle can implement Ruby&rsquo;s C API by interpreting C with Truffle. Since it&rsquo;s &ldquo;just Truffle&rdquo;, C and Ruby ASTs can be seamlessly merged. They are even optimized together, just like a pure-Ruby program.</p>
+
+<p>Seaton describes some particular techniques for adapting the pre-existing TruffleC project to the Ruby C API. In typical fashion, JRuby+Truffle outpaces CRuby &mdash; even for C extensions!</p>
+
+<h2>Conclusion</h2>
+
+<p>&ldquo;Optimizing Ruby&rdquo; was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can&rsquo;t use JRuby+Truffle until it runs all of Ruby on Rails, which isn&rsquo;t the case <em>yet</em>. I&rsquo;m eager to see how this project matures!</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Finding a Browser-Ready File for Sprockets]]></title>
@@ -2484,138 +2645,6 @@ There are roughly two approaches:</p>
 
 
 <p>We held on to Batman.js for a long time because it lended itself to <em>live-updating everything</em>. I think React is going to cover the a few key things there, and just <em>changing pages</em> will do the rest. So far I&rsquo;ve hooked up Pusher to Flux-style stores, then wrapped anything live-updating in a React component that observes that store. It&rsquo;s a lot more hands-on than Batman.js updates, but it has other advantages.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Render Scope in AngularJS and Batman.js]]></title>
-    <link href="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/"/>
-    <updated>2014-08-10T18:45:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js</id>
-    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> and <a href="http://angularjs.org">AngularJS</a> both create hierarchical view scopes, but their implementations are very different.</p>
-
-<!-- more -->
-
-
-<p><em>(please forgive my inconsistent rendering of AngularJS/Angular/Angular.js/angular, I don&rsquo;t know which one is right!)</em></p>
-
-<p>In batman.js and Angular, there is a view scope <em>hierarchy</em> which mirrors the DOM. In this heirarchy, objects may:</p>
-
-<ul>
-<li>add values into the render scope</li>
-<li>access <em>their own</em> values</li>
-<li>belong to a <em>parent object</em></li>
-<li>access values from <em>their parents</em></li>
-<li>have <em>child objects</em> of their own</li>
-</ul>
-
-
-<p>Consider a page like this:</p>
-
-<p><a href="http://rmosolgo.github.io/images/batmanjs_nested_views.png"><img src="http://rmosolgo.github.io/images/batmanjs_nested_views.png" alt="Batman.js view hierarchy" /></a></p>
-
-<p>The <code>HouseholdView</code> has many child views. The <code>PersonView</code>s belong to their parent, <code>HouseholdView</code>. They may access values from <code>HouseholdView</code> (such as the shared <code>householdName</code>).</p>
-
-<p><em>Note: The batman.js view hierarchy includes a few other objects as well &mdash; see below.</em></p>
-
-<h1>Finding Values in the Hierarchy</h1>
-
-<p>To answer the question &ldquo;how can child views access data from their parents&rdquo;, Batman.js and Angular take different approaches.</p>
-
-<h3>$scope &amp; Prototypal Inheritance</h3>
-
-<p>In Angular, data bindings are evaluated against a <strong>magical <code>$scope</code> object</strong>. The scope object has key-value pairs which correspond to values in the data bindings. When <code>$scope</code>s are created, Angular massages (tampers with?) the prototypal inheritance chain so that a child scope&rsquo;s prototype <em>is</em> its parent scope.</p>
-
-<p>(Usually, an object&rsquo;s prototype is another &ldquo;pristine&rdquo; object of its same type. It&rsquo;s generally treated as the &ldquo;perfect instance&rdquo; of the type. Other instances delegate to the prototype for properties that aren&rsquo;t defined explicitly on themselves.)</p>
-
-<p>In this case, a child <code>$scope</code>&rsquo;s prototype is not a &ldquo;pristine instance&rdquo;, but instead it&rsquo;s the parent <code>$scope</code> object. That way, if a value isn&rsquo;t found in a child scope, it is looked up in the prototype chain. This is <strong>brilliant</strong>. Angular delegates value lookup to built-in JavaScript features. (There is one gotcha described below.)</p>
-
-<p>When a parent <code>$scope</code> has many children, all children have the same parent <code>$scope</code> object as their prototype.</p>
-
-<h3>Batman.View &amp; View::lookupKeypath</h3>
-
-<p>Batman.js builds a <strong>tree of <code>Batman.View</code> objects</strong>. The root of the tree is called the <code>LayoutView</code> and it is created automatically by batman.js. Each view keeps track of its children in its <code>subviews</code>, which is a <code>Batman.Set</code> containing views that are rendered inside it. Each view also keeps track of its <code>superview</code>, which is its parent <code>Batman.View</code>.</p>
-
-<p>To evaluate data bindings, batman.js uses <code>lookupKeypath</code> on the view in question. This function climbs the &ldquo;view hierarchy&rdquo;, which actually includes a few extra objects:</p>
-
-<ul>
-<li>The <code>Batman.Controller</code> instance which rendered the view</li>
-<li><code>Batman.currentApp</code>, which is the <code>Batman.App</code> subclass that you defined (the clas, not an instance)</li>
-<li><code>Batman.container</code>, which is usually <code>window</code></li>
-</ul>
-
-
-<p>Here&rsquo;s the whole view hierarchy from the previous example:</p>
-
-<p><a href="http://rmosolgo.github.io/images/batmanjs_nested_views_whole_tree.png"><img src="http://rmosolgo.github.io/images/batmanjs_nested_views_whole_tree.png" alt="The whole batman.js view hierarchy" /></a></p>
-
-<p>Since <code>Batman.currentApp</code> is in the view hierarchy, any <code>@classAccessor</code>s you define there are accessible in view bindings, akin to global scope in JavaScript.</p>
-
-<h1>Automatically-Created Scopes</h1>
-
-<p>In batman.js and Angular, there are data bindings that create child scopes of their own. For example, <code>ng-repeat</code> and <code>data-foreach</code> both create a collection of child scopes with the same parent.</p>
-
-<p>Angular does this by creating many child <code>$scopes</code> with the same parent <code>$scope</code> as their prototype.</p>
-
-<p>Batman.js does this by automatically adding nodes to the view hierarchy. One downside of batman.js is that creating lots and lots of new views is CPU-intensive. I don&rsquo;t know whether the same is true for creating <code>$scope</code>s.</p>
-
-<h1>How Does It Know Which Scope to Bind To?</h1>
-
-<p>When I was reading about <code>$scope</code>, I learned that some new Angular users hit a snag when they try to set values on a <em>parent scope</em> from within a <em>child scope</em>. As JavaScript should, it updates the child <code>$scope</code> with the new value, not the parent <code>$scope</code>, which is the child&rsquo;s prototype.</p>
-
-<p>That&rsquo;s how prototypal inheritance works: It looks up missing values on the prototype, but it sets <em>new</em> values on the instance. Then, it stops &ldquo;falling back&rdquo; to the prototype for the property that was set on the instance.</p>
-
-<p>To work around this, it&rsquo;s recommended to &ldquo;always use a <code>.</code> in your <code>ng-model</code>s&rdquo;. (<code>ng-model</code> is a binding that creates a child scope.)</p>
-
-<p>Batman.js doesn&rsquo;t have this problem because, when uses <code>lookupKeypath</code>, it remembers which <code>View</code> object was the target for that keypath, then updates <em>that object</em> whenever the keypath changes.</p>
-
-<p>However, Batman.js is prone to a different gotcha. If you leave an accessor unset (ie, returns <code>undefined</code>), then set it <em>after</em> a view has rendered, it&rsquo;s possible that <code>View::lookupKeypath</code> won&rsquo;t find it correctly. To avoid this, set defaults (or <code>null</code>) before bindings are evaluated:</p>
-
-<ul>
-<li>before <code>@render</code> in controller actions</li>
-<li>in the <code>constructor</code> for view instances</li>
-</ul>
-
-
-<p>Or, make sure <code>@accessor</code>s return <code>null</code> instead of <code>undefined</code>.</p>
-
-<p>Batman.js treats <code>undefined</code> as the signal that an object doesn&rsquo;t have an accessor for a keypath, so be careful when setting keys <code>undefined</code>!</p>
-
-<h1>How Does It Know When to Update the DOM?</h1>
-
-<p>When these scope objects (<code>View</code> or <code>$scope</code>) change, the framework must update the DOM accordingly.</p>
-
-<p>Angular has a &ldquo;digest cycle&rdquo; where it checks for changes in the <code>$scope</code> since last run, then updates the DOM if necessary. It automatically tracks any values that are put into templates. You can also watch other keys on <code>$scope</code> with <code>$scope.$watch</code>. If you modify <code>$scope</code> from <em>outside</em> Angular.js code, you must manually trigger the digest cycle with <code>$scope.$apply</code>.</p>
-
-<p><code>Batman.View</code> uses the <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/"><code>Batman.Property</code></a> system to automatically track dependencies and changes. Any keypath that is passed to a <code>data-</code> binding is automatically observed. DOM updates are triggered when:</p>
-
-<ul>
-<li>A keypath is updated with <code>set</code>. Doesn&rsquo;t matter whether it&rsquo;s inside batman.js code or inside an AJAX callback &mdash; batman.js will recognize the update either way.</li>
-<li>A property&rsquo;s dependencies change. When you declare a computed property with <code>@accessor</code> and bind it to a view, the view will update the DOM whenever that property&rsquo;s dependencies cause it to change.</li>
-</ul>
-
-
-<p>(In fact, those two cases are the heart of observability in batman.js: assign a value with <code>set</code> or delegate to batman.js&rsquo;s source tracking.)</p>
-
-<p>To force an update, use <code>set</code> to update a bound property or one of its dependencies.</p>
-
-<h1>Other Random Points</h1>
-
-<ul>
-<li>Angular&rsquo;s &ldquo;evalute an expression&rdquo; is like batman.js&rsquo;s &ldquo;lookup a keypath&rdquo;</li>
-<li><code>Batman.View::propagateToSubviews</code> is like <code>$scope.$broadcast</code>: it sends messages down the view tree.</li>
-<li>As of batman.js almost-v0.17, there is no analog for <code>$scope.$emit</code> (which sends events <em>up</em> the view chain)</li>
-<li>batman.js exports global function <code>$context($0)</code> which is just like <code>angular.element($0).scope()</code> (where <code>$0</code> is the highlighted element in the Chrome inspector).</li>
-</ul>
-
-
-<h1>My Opinion</h1>
-
-<p>I think Angular&rsquo;s <code>$scope</code> is brilliant. I imagine it&rsquo;s performant as well, although I don&rsquo;t know (and I&rsquo;m currently writing without internet access). It introduces few gotchas. In general, it seems like it Just Works<sup>TM</sup>.</p>
-
-<p>I&rsquo;m in the market to improve the performance of <code>Batman.View</code>, but I&rsquo;m not sure I can take anything from <code>$scope</code>. All of batman.js depends on playing by the observability rules. I don&rsquo;t see any way I can get native JS prototypal inheritance to participate in that.</p>
-
-<p>I also like sticking with the &ldquo;It&rsquo;s just batman.js&rdquo; in the view layer. If you can write good <code>@accessor</code>s, then you&rsquo;ve mastered <code>Batman.View</code>, too.</p>
 ]]></content>
   </entry>
   
