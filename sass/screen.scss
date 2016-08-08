@@ -77,6 +77,10 @@ a {
   }
 }
 
+figure.code {
+  margin: 0px;
+}
+
 .highlight {
   pre {
     width: 100%;
@@ -87,6 +91,17 @@ a {
       border-bottom-left-radius: 0px;
     }
   }
+}
+
+blockquote {
+  $blockquote-color: #999999;
+  margin: 4px 0px;
+  padding: 0px 20px;
+  border-left-style: solid;
+  border-left-width: 1px;
+  border-left-color: $blockquote-color;
+  color: $blockquote-color;
+  font-style: italic;
 }
 
 .batmanjs-warning {
