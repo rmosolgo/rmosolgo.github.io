@@ -113,20 +113,6 @@
 </ul>
 
 
-<h4>TL;DR:</h4>
-
-<p>JRuby+Truffle is really fast and implements (or <em>can implement</em>) all of Ruby&rsquo;s features. The paper is full of statements like this one (from section 5):</p>
-
-<blockquote><p>The techniques in this chapter have given us a way to implement metaprogramming operations as efficiently as conventional operations&hellip; During peak performance &hellip; the technique has zero-overhead compared to conventional operations.</p></blockquote>
-
-<p>And benchmarks like this one:</p>
-
-<p><img src="/images/jruby_truffle/jruby_truffle_benchmark_example.png" width="500"></p>
-
-<p><em>(JRuby+Truffle is 30x faster than CRuby 2.2.2)</em></p>
-
-<p>The only question I have is, how bad is the warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize.</p>
-
 <h2>Introduction to Truffle and Graal</h2>
 
 <p>Seaton&rsquo;s work is built on top of two existing Java projects: <strong>Truffle</strong> and <strong>Graal</strong> (pronunciation: 😖❓).</p>
@@ -249,6 +235,8 @@
 <p>Seaton describes some particular techniques for adapting the pre-existing TruffleC project to the Ruby C API. In typical fashion, JRuby+Truffle outpaces CRuby &mdash; even for C extensions!</p>
 
 <h2>Conclusion</h2>
+
+<p>The only remaining question I have is, how bad is warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize. Is JIT warm-up a real issue?</p>
 
 <p>&ldquo;Optimizing Ruby&rdquo; was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can&rsquo;t use JRuby+Truffle until it runs all of Ruby on Rails, which isn&rsquo;t the case <em>yet</em>. I&rsquo;m eager to see how this project matures!</p>
 </div>
