@@ -18,21 +18,6 @@ _Specializing Ruby_ describes [Chris Seaton](https://twitter.com/ChrisGSeaton)'s
 - Zero-Overhead Debugging
 - Interpreting Native Extensions
 
-#### TL;DR:
-
-JRuby+Truffle is really fast and implements (or _can implement_) all of Ruby's features. The paper is full of statements like this one (from section 5):
-
-> The techniques in this chapter have given us a way to implement metaprogramming operations as efficiently as conventional operations... During peak performance ... the technique has zero-overhead compared to conventional operations.
-
-And benchmarks like this one:
-
-{% img /images/jruby_truffle/jruby_truffle_benchmark_example.png 500 %}
-
-_(JRuby+Truffle is 30x faster than CRuby 2.2.2)_
-
-The only question I have is, how bad is the warm-up cost in practice? All of JRuby+Truffle's benchmarks are at "peak performance", but the system is "cold" at start-up, and many triggers in the program can cause the system to de-optimize.
-
-
 ## Introduction to Truffle and Graal
 
 Seaton's work is built on top of two existing Java projects: __Truffle__ and __Graal__ (pronunciation: 😖❓).
@@ -128,5 +113,7 @@ Truffle's design offers a solution to this problem. Truffle languages implement 
 Seaton describes some particular techniques for adapting the pre-existing TruffleC project to the Ruby C API. In typical fashion, JRuby+Truffle outpaces CRuby -- even for C extensions!
 
 ## Conclusion
+
+The only remaining question I have is, how bad is warm-up cost in practice? All of JRuby+Truffle's benchmarks are at "peak performance", but the system is "cold" at start-up, and many triggers in the program can cause the system to de-optimize. Is JIT warm-up a real issue?
 
 "Optimizing Ruby" was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can't use JRuby+Truffle until it runs all of Ruby on Rails, which isn't the case _yet_. I'm eager to see how this project matures!
