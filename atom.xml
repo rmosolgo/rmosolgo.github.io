@@ -177,7 +177,7 @@
 <ul>
 <li>Download a file from the project&rsquo;s website</li>
 <li>Download a file from the project&rsquo;s source code repository</li>
-<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
+<li>Download a file from a CDN (unpkg is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
 <li>Build the file yourself, following the project&rsquo;s documentation</li>
 </ul>
 
@@ -214,9 +214,9 @@
 
 <p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
 
-<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
+<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://unpkg.com/">unpkg</a>.</p>
 
-<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
+<p>Since unpkg is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
 
 <ul>
 <li>Check the &ldquo;main&rdquo; file</li>
