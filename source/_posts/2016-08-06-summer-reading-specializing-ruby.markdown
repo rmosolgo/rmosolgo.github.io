@@ -5,6 +5,7 @@ date: 2016-08-06 11:10
 comments: true
 categories:
 - Ruby
+- Language Implementation
 ---
 
 [_Specialising Dynamic Techniques for Implementing the Ruby Programming Language_](http://chrisseaton.com/phd/) ("Specializing Ruby") is approachable and enjoyable (despite being a PhD thesis 😝).
