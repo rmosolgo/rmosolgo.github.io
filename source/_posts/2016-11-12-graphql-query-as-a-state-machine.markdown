@@ -206,4 +206,4 @@ This information allows us to "rewrite" the query above in a deterministic way:
 
 Now, each runtime type transitions to _exactly_ one selection. This information simplifies pre-execution analysis and execution. Additionally, this computed state can cache field-level values like coerced arguments and field resolve functions.
 
-In [graphql-ruby](https://github.com/rmosolgo/graphql-ruby), these transformations are implemented in `GraphQL::InternalRepresentation`.
+In [graphql-ruby](https://github.com/rmosolgo/graphql-ruby), these transformations are implemented in `GraphQL::InternalRepresentation`. At time of writing, the multi-selection state is implemented as an array of `InternalRepresentation::Node`s, but [an incoming PR](https://github.com/rmosolgo/graphql-ruby/pull/395) will formalize them as `InternalRepresentation::Selection`s
