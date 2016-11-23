@@ -47,19 +47,19 @@ Let's examine a regular expression as a state machine. Here's `/^abc$/` (matches
 
 In the diagram above, each state is represented by a box. Between states, transitions are represented by arrows. Since this is a regular expression, the transitions are named after the strings which they match. For example, if the machine is in the `start` state and it observes an `"a"`, it moves to Matching State 1 (`MS1`). As the regular expression matches the string `"abc"`, it progresses through the states, finally reaching `end`.
 
-Let's see another regular expression, `/^abc?$/`. It matches two strings: `"ab"` and `"abc"`. Here's the state machine:
+Let's see another regular expression, `/^a(bc|bd)$/`. It matches two strings, `"abc"` and `"abd"`. Here's a naive machine for this expression:
 
 ```
-|                                      +-----+
-|                             . "b" -> | MS2 | --- EOS ----------.
-| +-------+          +-----+ /         +-----+                    `-----> +-----+
+|                                      +-----+          +-----+  
+|                             . "b" -> | MS2 | - "d" -> | MS3 | - EOS
+| +-------+          +-----+ /         +-----+          +-----+       `-> +-----+
 | | start | - "a" -> | MS1 |                                              | end |
 | +-------+          +-----+ \         +-----+          +-----+       .-> +-----+
-|                              `"b" -> | MS3 | - "c" -> | MS4 | - EOS
+|                              `"b" -> | MS4 | - "c" -> | MS5 | - EOS
 |                                      +-----+          +-----+
 ```
 
-Contrasting this machine to the previous one, we can see a difference: this machine has a _branch_. To make matters "worse", the branch is _ambiguous_: from `MS1`, when a `"b"` appears in the string, should the machine move to `MS2` or `MS3`? It can only tell by looking _ahead_, and possibly backtracking, which is inefficient.
+Contrasting this machine to the previous one, we can see a difference: this machine has a _branch_. To make matters "worse", the branch is _ambiguous_: from `MS1`, when a `"b"` appears in the string, should the machine move to `MS2` or `MS4`? It can only tell by looking _ahead_, and possibly backtracking, which is inefficient.
 
 This difference is called _deterministic_ vs _non-deterministic_. The first machine is deterministic: for each state, each input character can lead to _exactly_ one state (`failed` state is not pictured). The second machine is _non_-deterministic: for some states, an input character may lead to _multiple_ states.
 
@@ -80,15 +80,16 @@ Let's apply the transformation to the non-deterministic machine above:
 
 
 ```
-|                                                     .--- EOS ----------.
-| +-------+          +-----+          +------------+ /                    `---> +-----+
-| | start | - "a" -> | MS1 | - "b" -> | MS2 or MS3 |                            | end |
-| +-------+          +-----+          +------------+ \         +-----+       .-> +-----+
-|                                                      `"c" -> | MS4 | - EOS
-|                                                              +-----+          
+|                                                              +-----+
+|                                                     . "d" -> | MS3 | - EOS .
+| +-------+          +-----+          +------------+ /         +-----+        `-> +-----+
+| | start | - "a" -> | MS1 | - "b" -> | MS2 or MS4 |                              | end |
+| +-------+          +-----+          +------------+ \         +-----+        .-> +-----+
+|                                                      `"c" -> | MS5 | - EOS '
+|                                                              +-----+
 ```
 
-The non-deterministic transitions on `"b"` have been replaced by a _single_ transition to a newly-created state. The new state represents `MS2` _or_ `MS3`, and it has transitions from _both_ of those states. It may transition on `EOS` _or_ it may transition on `"c"`.
+The non-deterministic transitions on `"b"` have been replaced by a _single_ transition to a newly-created state. The new state represents `MS2` _or_ `MS4`, and it has transitions from _both_ of those states. It may transition on `EOS` _or_ it may transition on `"c"`.
 
 The result is a deterministic machine: for each input, we have exactly one transition, so we never need to backtrack.
 
@@ -206,4 +207,11 @@ This information allows us to "rewrite" the query above in a deterministic way:
 
 Now, each runtime type transitions to _exactly_ one selection. This information simplifies pre-execution analysis and execution. Additionally, this computed state can cache field-level values like coerced arguments and field resolve functions.
 
-In [graphql-ruby](https://github.com/rmosolgo/graphql-ruby), these transformations are implemented in `GraphQL::InternalRepresentation`. At time of writing, the multi-selection state is implemented as an array of `InternalRepresentation::Node`s, but [an incoming PR](https://github.com/rmosolgo/graphql-ruby/pull/395) will formalize them as `InternalRepresentation::Selection`s
+In [graphql-ruby](https://github.com/rmosolgo/graphql-ruby), these transformations are implemented in `GraphQL::InternalRepresentation`. At time of writing, the multi-selection state is implemented as an array of `InternalRepresentation::Node`s, but [an incoming PR](https://github.com/rmosolgo/graphql-ruby/pull/395) will formalize them as `InternalRepresentation::Selection`s.
+
+## Ceci n'est pas un state machine
+
+Although this mindset helps solve a problem with GraphQL fragment merging, there are also some key differences between a GraphQL query and a state machine:
+
+- A GraphQL query cannot be cyclical. That is, the same state may not be reached more than once. (Even "returning" from a selection is not _actually_ the same state: you're in a different place because some fields have been resolved.)
+- Because a GraphQL query can't form a cycle, "precompiling" it to a deterministic machine doesn't yield a big payoff. Instead, you can build states _as you reach them_, saving some work in case some branches are not reached at runtime (or if an error occurs during execution).

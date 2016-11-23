@@ -33,7 +33,7 @@ GEM
       rack
     rake (0.9.6)
     rb-fsevent (0.9.4)
-    rdiscount (2.0.7.3)
+    rdiscount (2.2.0.1)
     rubypants (0.2.0)
     sass (3.2.19)
     sass-globbing (1.0.0)
@@ -60,11 +60,11 @@ DEPENDENCIES
   pygments.rb (~> 0.3.4)
   rake (~> 0.9)
   rb-fsevent (~> 0.9)
-  rdiscount (~> 2.0.7)
+  rdiscount (~> 2.0)
   rubypants (~> 0.2.0)
   sass-globbing (~> 1.0.0)
   sinatra (~> 1.4.2)
   stringex (~> 1.4.0)
 
 BUNDLED WITH
-   1.10.4
+   1.12.0
