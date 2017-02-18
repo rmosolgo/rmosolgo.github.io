@@ -12,6 +12,11 @@ A [GraphQL](http://facebook.github.io/graphql/) system works differently from a 
 
 <!-- more -->
 
+__UPDATE 23 Jan 2017:__ For more resources on authorization with [graphql-ruby](https://github.com/rmosolgo/graphql-ruby), see:
+
+- [Authorization guide](http://rmosolgo.github.io/graphql-ruby/queries/authorization)
+- [GraphQL::Pro](http://graphql.pro/) [authorization guide](http://rmosolgo.github.io/graphql-ruby/pro/authorization) for integration with Pundit, CanCan or custom auth schemes.
+
 ## Query Context
 
 GraphQL execution systems should allow the consumer to pass some arbitrary data "through" the query, so it is accessible at any time during execution. For example, you could take some information from an HTTP request, pass it into the query, then use that information during field resolution.

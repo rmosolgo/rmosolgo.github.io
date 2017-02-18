@@ -12,6 +12,8 @@ Although [Relay](http://facebook.github.io/relay/) made [GraphQL](facebook.githu
 
 <!-- more -->
 
+__Update 18 Feb 2017:__ For a zero-dependency improvement of this concept, see [f/graphql-js](https://github.com/f/graphql.js).
+
 GraphQL servers like [`express-graphql`](https://github.com/graphql/express-graphql) or [`graphql-ruby` on Rails](https://github.com/rmosolgo/graphql-ruby-demo) expose a single endpoint which responds to queries.
 
 The endpoint accepts a few parameters:
