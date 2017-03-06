@@ -51,11 +51,14 @@ li {
 
 a {
   $link-color: #676FF3;
-  $visited-link-color: #3B3F8C;
+  $visited-link-color: #6468b1;
   text-decoration: none;
   color: $link-color;
   &:visited {
     color: $visited-link-color;
+  }
+  &:hover {
+    text-decoration: underline;
   }
 
 }

@@ -98,4 +98,6 @@ This setup is easier to maintain because the query string is so easy to read. An
 
 Maybe you noticed an optimization waiting to happen: since we always send the same query string, why send it at all? We could store it on the server ahead of time, then call it by name at runtime.
 
-I heard that Facebook's GraphQL server had this behavior, but I don't know that any of the open implementations have it yet. I'm [considering it for `graphql-ruby`](https://github.com/rmosolgo/graphql-ruby/pull/76).
+~~I heard that Facebook's GraphQL server had this behavior, but I don't know that any of the open implementations have it yet. I'm [considering it for `graphql-ruby`](https://github.com/rmosolgo/graphql-ruby/pull/76).~~
+
+Update: this behavior is called "persisted queries" and is supported by [`GraphQL::Pro`](http://graphql.pro), read more in [this introductory blog post](#).
