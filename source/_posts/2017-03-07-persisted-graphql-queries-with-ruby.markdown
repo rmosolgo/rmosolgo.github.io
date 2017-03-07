@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Persisted GraphQL Queries with Ruby"
-date: 2017-03-05 10:49
+date: 2017-03-07 7:55
 comments: true
 categories:
 - Ruby
@@ -24,10 +24,10 @@ A `GraphQL::Pro::Repository` works like a single, large GraphQL document with ma
 
 From a client's perspective, the server has a fixed set of operations it can perform. Each one can be executed by sending its [operation name](http://graphql.org/learn/queries/#operation-name).
 
-The repository approach allows us to use several pre-existing GraphQL concepts:
+The repository approach allows us to use pre-existing GraphQL concepts:
 
-- __A document__: A [GraphQL document](https://facebook.github.io/graphql/#sec-Language.Query-Document) is a set of operations and fragments. The semantics of a valid document are [well-specified](https://facebook.github.io/graphql/#sec-Validation) and broadly implemented. A repository is an extension of this concept.
-- [__Operation name__](http://graphql.org/learn/queries/#operation-name): GraphQL includes a way to specify which operation to run from among a set. Repositories build on this by separating the set of operations (which lives on the server) from the identifier (which comes from the client).
+- __[Document](https://facebook.github.io/graphql/#sec-Language.Query-Document)__: A GraphQL document is a set of operations and fragments. The semantics of a valid document are [well-specified](https://facebook.github.io/graphql/#sec-Validation) and broadly implemented. A repository is an extension of this concept.
+- [__Operation name__](http://graphql.org/learn/queries/#operation-name): GraphQL includes a way to specify which operation to run in a document. Repositories build on this by separating the set of operations (which lives on the server) from the identifier (which comes from the client).
 
 By employing these concepts, we make full use of the battle-tested [graphql-ruby](https://github.com/rmosolgo/graphql-ruby) runtime without deviating from the spec.
 
@@ -70,7 +70,7 @@ Next, update your controller to execute queries with the repository instead of t
 Finally, execute the operation by sending a request with the `operationName`:
 
 ```js
-$.post("/graphql", { operationName: "getItems" }, function(response) {
+$.post("/graphql", { operationName: "GetItems" }, function(response) {
   console.log(response.data)
 })
 
@@ -104,11 +104,11 @@ app/graphql/documents/UpdateComment.graphql
 
 This way, a reader can skim the `app/graphql/documents` directory to take a quick inventory of operations. Also, this one-to-one mapping mimics the Ruby convention of putting constants in identically-named files.
 
-In the end, `GraphQL::Pro::Repository` will accept files with any name, as long as they're in the specified `path`.
+In the end, `GraphQL::Pro::Repository` will accept files with any name, as long as they match `#{path}/**/*.graphql`.
 
 ## Sharing Fragments
 
-Since a repository functions as one big GraphQL document, fragments are shared by default.
+Since a repository functions as one big GraphQL document, [fragments](http://graphql.org/learn/queries/#fragments) are shared by default.
 
 You can put fragments in their own files, then reference them from each operation that needs them. This way, operations with common data responsibilities can share code, ensuring that they stay in sync.
 
@@ -202,3 +202,6 @@ This way:
 
 - Repositories can also [accept dynamic inputs](http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#arbitrary-input). This allows you to use GraphiQL during development or continue serving old clients while you transition to server-defined queries.
 - On Rails, repositories watch their files and reload as needed. If you're using another framework, you can [reload repositories](http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#watching-files) as needed.
+- You can use a repository to find [unused fields](http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#analysis) in your schema.
+
+For me, I'm hoping to improve client support (eg, Apollo Client) and server tooling (eg, query diffing) to make repositories even more useful!
