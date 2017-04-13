@@ -5,7 +5,7 @@ date: 2016-10-18 15:05
 comments: true
 categories:
 - Rails
-- React
+- React.js
 - CSS
 ---
 
