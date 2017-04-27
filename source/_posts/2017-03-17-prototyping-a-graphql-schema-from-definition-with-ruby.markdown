@@ -96,6 +96,7 @@ Isn’t that a nice way to set up a simple schema?
 You can provide a single callable that responds to `#call(type, field, obj, args, ctx)`. What a mouthful!
 
 The _advantage_ of that hefty method signature is that it’s enough to specify any resolution behavior you can imagine. For example, you could create a system where type modules were found by name, then methods were called by name:
+
 ```ruby
 module ExecuteGraphQLByConvention
   module_function
@@ -115,7 +116,7 @@ So, a single function combined with Ruby’s flexibility and power opens a lot o
 Doesn’t it remind you a bit of method dispatch? The arguments are:
 
 GraphQL Field Resolution | Method Dispatch
-=======|======
+-------|--------
 `type` | class
 `field` | method
 `obj` | receiver
