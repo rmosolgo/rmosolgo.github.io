@@ -5,12 +5,26 @@ comments: true
 sharing: true
 footer: true
 talks:
+  - title: "GraphQL at GitHub"
+    given_at: "GraphQL-Ruby Hackday, August 25 2017"
+    tagline: "A tour of GitHub's GraphQL ecosystem"
+    synopsis: "Investigate the problems and solutions for GitHub's use of GraphQL, and next steps for improving the system"
+    image_name: talks_graphql_at_github.png
+    slides_url: /assets/graphql_at_github.pdf
+  - title: "Solving GraphQL's Challenges"
+    given_at: "Ruby Nation, June 16, 2017"
+    tagline: "A survey of challenges in GraphQL on Rails."
+    synopsis: "Including the solutions to those problems as provided by the graphql gem and how we addressed these issues in GitHub's GraphQL API."
+    image_name: talks_solving_graphqls_challenges.png
+    slides_url: /assets/solving_graphqls_challenges.pdf
+    video_url: https://www.youtube.com/watch?v=hCvczSqpdYs
   - title: "Data Fetching with GraphQL and ActionCable"
     given_at: "RubyConf Colombia, September 2, 2016"
     tagline: "An introduction to GraphQL and an application in Rails"
     synopsis: "GraphQL is a tool for simplifying client-server communication. Transporting data over ActionCable brings new possibilities for live updates and incremental data loading."
     image_name: talks_graphql_action_cable.png
     slides_url: /assets/graphql_action_cable.pdf
+    video_url: https://www.youtube.com/watch?v=9UG_xqc_Dvw
   - title: "Testing Your Code"
     given_at: "Full Stack North County, October 8, 2015"
     tagline: "Testing will make you happy!"
@@ -44,6 +58,9 @@ talks:
         <p class='talk-given-at'>{{ talk.given_at }}</p>
         <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
         <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
+        {% if talk.video_url %}
+          <p><a href="{{ talk.video_url }}" target="_blank">video &rarr;</a></p>
+        {% endif %}
       </div>
     </div>
   {% endfor %}
