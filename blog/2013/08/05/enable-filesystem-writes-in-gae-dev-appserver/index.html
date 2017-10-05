@@ -1,0 +1,218 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Enable filesystem writes in GAE dev_appserver - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Google App Engine&rsquo;s dev_appserver prevents filesystem writes because GAE has no filesystem &ndash; but sometimes you want to write anyways! I &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2013/08/05/enable-filesystem-writes-in-gae-dev-appserver">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Enable Filesystem Writes in GAE Dev_appserver</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-05T20:43:00-04:00" pubdate data-updated="true">Aug 5<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="https://cloud.google.com/products/">Google App Engine</a>&rsquo;s <code>dev_appserver</code> prevents filesystem writes because GAE has no filesystem &ndash; but sometimes you want to write anyways!</p>
+
+<!-- more -->
+
+
+<p>I was working over a big set of data from the <a href="https://developers.google.com/appengine/docs/python/storage#App_Engine_Datastore">Google App Engine High-Replication Datastore</a> and I found that, somewhere in my loop, memory was slipping away&hellip;</p>
+
+<p>So I got <a href="http://mg.pov.lt/objgraph/">objgraph</a>, which creates a graphic based on your memory usage. But I had a problem: Google App Engine doesn&rsquo;t have a filesystem, so the development server prevents you from writing to files. <code>objgraph</code> couldn&rsquo;t create my graphic!</p>
+
+<p>Luckily, the fix was simple: I found the line that threw the error and commented it out. <em>(The file is <code>[your_appengine_root]\google\appengine\tools\devappserver2\python\stubs.py</code>)</em></p>
+
+<figure class='code'><figcaption><span>stubs.py  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>  <span class="c"># Starting on line 242:</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+</span><span class='line'>    <span class="sd">&quot;&quot;&quot;Initializer. See file built-in documentation.&quot;&quot;&quot;</span>
+</span><span class='line'>    <span class="c"># if mode not in FakeFile.ALLOWED_MODES:</span>
+</span><span class='line'>    <span class="c">#   raise IOError(errno.EROFS, &#39;Read-only file system&#39;, filename)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="ow">not</span> <span class="n">FakeFile</span><span class="o">.</span><span class="n">is_file_accessible</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+</span><span class='line'>      <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">EACCES</span><span class="p">,</span> <span class="s">&#39;file not accessible&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nb">super</span><span class="p">(</span><span class="n">FakeFile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>By the way, it didn&rsquo;t turn out to be a memory leak. It was <a href="https://developers.google.com/appengine/docs/python/ndb/cache">GAE&rsquo;s NDB caching</a> in action &ndash; I just disabled it by:</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">for</span> <span class="n">d_key</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">keys_only</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+</span><span class='line'>  <span class="n">d</span> <span class="o">=</span> <span class="n">d_key</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">use_memcache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span><span class='line'>  <span class="c"># ...</span>
+</span><span class='line'>  <span class="n">d</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">use_memcache</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then I was all clear!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-05T20:43:00-04:00" pubdate data-updated="true">Aug 5<span>th</span>, 2013</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/google-app-engine/'>Google App Engine</a>, <a class='category' href='/blog/categories/python/'>Python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2013/08/04/serving-static-files-in-webapp2-responses/" title="Previous Post: Serving static files in WebApp2 reponses">&laquo; Serving static files in WebApp2 reponses</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2013/08/07/backends-on-google-app-engine/" title="Next Post: Using Command-Line Tools for Backends on Google App Engine">Using Command-Line Tools for Backends on Google App Engine &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

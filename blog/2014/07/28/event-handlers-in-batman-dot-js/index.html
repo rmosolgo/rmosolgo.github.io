@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Event Handlers in Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="In batman.js, event handlers respond to user interactions like &ldquo;click&rdquo; and &ldquo;submit&rdquo;. You can use them to modify application &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/07/28/event-handlers-in-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+  <div class='batmanjs-warning'>
+      To my knowledge, <a href="http://github.com/batmanjs/batman">batman.js</a> is not maintained. For that reason, I don't suggest that you use it for a new project!
+  </div>
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Event Handlers in Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-28T13:23:00-04:00" pubdate data-updated="true">Jul 28<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In <a href="http://batmanjs.org">batman.js</a>, event handlers respond to user interactions like &ldquo;click&rdquo; and &ldquo;submit&rdquo;. You can use them to modify application state in response to those interactions.</p>
+
+<!-- more -->
+
+
+<p>Let&rsquo;s look at:</p>
+
+<ul>
+<li>What event handlers are and where they&rsquo;re defined</li>
+<li>How you can connect handlers to DOM events</li>
+<li>How you can pass arguments to event handlers</li>
+<li>What <code>@</code> refers to inside event handlers</li>
+</ul>
+
+
+<h2>What Are Event Handlers?</h2>
+
+<p>In short, an <em>event handler</em> can be <em>any function inside the render context</em>.</p>
+
+<p>Usually, this means it&rsquo;s a prototype function on a view:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsIndexView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
+</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>or, it&rsquo;s a prototype function on a controller:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationController</span>
+</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since the main <code>MyApp</code> is also inside the render context, you can also use class functions on the app as event handlers:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nb">window</span><span class="p">.</span><span class="nx">MyApp</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">App</span>
+</span><span class='line'>  <span class="vi">@myEventHandler: </span><span class="nf">-&gt;</span> <span class="c1"># handle some event</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>All</strong> of those functions are fair game to be wired up as event handlers.</p>
+
+<h2>Hooking up Event Handlers</h2>
+
+<p>To connect a function to a DOM event, use the <code>data-event</code> binding. You can bind to pretty much any event (I don&rsquo;t know of one that you <em>can&rsquo;t</em> bind to).</p>
+
+<p>The binding takes the form:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="s">&quot;data-bind-</span><span class="si">#{</span><span class="nx">eventName</span><span class="si">}</span><span class="s">=&#39;</span><span class="si">#{</span><span class="nx">handlerName</span><span class="si">}</span><span class="s">&#39;&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>For example, to bind a <code>click</code> event to <code>myEventHandler</code> on this <code>&lt;button&gt;</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;myEventHandler&#39;</span><span class="nt">&gt;</span>Click Me<span class="nt">&lt;/button&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can also bind to the <code>submit</code> event of a <code>&lt;form&gt;</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;form</span> <span class="na">data-event-submit=</span><span class="s">&#39;saveData&#39;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&#39;submit&#39;</span><span class="nt">&gt;</span>Save<span class="nt">&lt;/input&gt;</span>
+</span><span class='line'><span class="nt">&lt;/form&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Arguments in Event Handlers</h2>
+
+<p>Event handlers have two sets of arguments:</p>
+
+<ul>
+<li>arguments that you pass in via <code>withArguments</code> filters</li>
+<li>arguments that are automatically passed in by batman.js</li>
+</ul>
+
+
+<h3>Custom Arguments with &ldquo;withArguments&rdquo;</h3>
+
+<p>You can choose some values to pass in with a <code>withArguments</code> filter in your binding.</p>
+
+<p>Consider this event handler:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
+</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item) -&gt;</span>
+</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I could call this with an <code>item</code> by using a <code>withArguments</code> filter:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item&#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can pass multiple arguments with <code>withArgument</code> by separating them with commas.</p>
+
+<p>For example, if I want more flexible alerts, I could redefine the event handler to take <em>two</em> arguments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
+</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item, punctuation) -&gt;</span>
+</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span> <span class="o">+</span> <span class="nx">punctuation</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, pass <em>two</em> arguments into it, separated with <code>,</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;!&quot; &#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;?&quot; &#39;</span><span class="nt">&gt;</span>Alert?<span class="nt">&lt;/button&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;.&quot; &#39;</span><span class="nt">&gt;</span>Alert.<span class="nt">&lt;/button&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>Note</strong> that you <strong>must</strong> provide both arguments to the handler. If you don&rsquo;t, batman.js&rsquo;s automatic arguments will take the place of the missing argument!</p>
+
+<h3>Automatic Arguments</h3>
+
+<p>When batman.js invokes an event handler, it <strong>automatically passes in</strong> a few arguments. Here&rsquo;s a handler that uses the automatic arguments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
+</span><span class='line'>  <span class="nv">myEventHandler: </span><span class="nf">(node, event, view) -&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s invoked with:</p>
+
+<ul>
+<li><code>node</code>: the DOM node where the event was triggered. For example, a <code>&lt;button&gt;</code>. If you use the same event handler on different nodes, this value will be different.</li>
+<li><code>event</code>: The event object for the event.  If you&rsquo;re using <code>batman.jquery</code>, it&rsquo;s the jQuery event object. It contains meta-information about the event.</li>
+<li><code>view</code>: The nearest <code>Batman.View</code> instance to <code>node</code>.</li>
+</ul>
+
+
+<h3>Combining Custom and Automatic Arguments</h3>
+
+<p>You can combine custom and automatic arguments. Simply define a handler whose <strong>last three</strong> arguments are the batman.js automatic arguments:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ApplicationContorller</span>
+</span><span class='line'>  <span class="nv">alertItemName: </span><span class="nf">(item, punctuation, node, event, view) -&gt;</span>
+</span><span class='line'>    <span class="nv">itemName = </span><span class="nx">item</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="nx">alert</span><span class="p">(</span><span class="nx">itemName</span> <span class="o">+</span> <span class="nx">punctuation</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And use <code>withArguments</code> to pass arguments to the function. You <strong>must</strong> pass the <strong>same number</strong> of arguments. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h1</span> <span class="na">data-bind=</span><span class="s">&#39;item.name&#39;</span><span class="nt">&gt;&lt;/h1&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;!&quot;&#39;</span><span class="nt">&gt;</span>Alert!<span class="nt">&lt;/button&gt;</span>
+</span><span class='line'><span class="c">&lt;!-- note the empty string, &quot;&quot; --&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;alertItemName | withArguments item, &quot;&quot;&#39;</span><span class="nt">&gt;</span>Alert<span class="nt">&lt;/button&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When batman.js passes arguments to the function, it simply merges the <code>withArguments</code> array with its automatic array. So, if your <code>withArguments</code> array is too short, you won&rsquo;t get the same results.</p>
+
+<h2><code>@</code> in Event Handlers</h2>
+
+<p>When batman.js dispatches an event handler, it looks up the base object <em>where that handler is defined</em>. Then, it uses that object as <code>@</code> inside the handler.</p>
+
+<p>For example, consider two event handlers. One is defined on a view:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsIndexView</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">View</span>
+</span><span class='line'>  <span class="nv">eventHandlerOne: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">@</span><span class="p">)</span> <span class="c1"># =&gt; will be the ItemsIndexView instance</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The other is defined on a controller:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">MyApp</span><span class="p">.</span><span class="nx">ItemsController</span> <span class="k">extends</span> <span class="nx">App</span><span class="p">.</span><span class="nx">ApplicationController</span>
+</span><span class='line'>  <span class="nv">eventHandlerTwo: </span><span class="nf">-&gt;</span>
+</span><span class='line'>    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">@</span><span class="p">)</span> <span class="c1"># =&gt; will be the ItemsController instance</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If you were to hook up those event handlers to buttons:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;eventHandlerOne&#39;</span><span class="nt">&gt;&lt;/button&gt;</span>
+</span><span class='line'><span class="nt">&lt;button</span> <span class="na">data-event-click=</span><span class="s">&#39;eventHandlerTwo&#39;</span><span class="nt">&gt;&lt;/button&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>then click the buttons, you would see the <code>ItemsIndexView</code> object and the <code>ItemsController</code> object in your console:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">ItemsIndexView</span> <span class="p">{</span><span class="nx">bindings</span><span class="o">:</span> <span class="nb">Array</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="nx">subviews</span><span class="o">:</span> <span class="nx">Set</span><span class="p">,</span> <span class="nx">_batman</span><span class="o">:</span> <span class="nx">_Batman</span><span class="p">,</span> <span class="nx">viewClass</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">source</span><span class="o">:</span> <span class="s2">&quot;events/index&quot;</span><span class="err">…</span><span class="p">}</span>
+</span><span class='line'><span class="nx">ItemsController</span> <span class="p">{</span><span class="nx">redirect</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">handleError</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">errorHandler</span><span class="o">:</span> <span class="kd">function</span><span class="p">,</span> <span class="nx">_batman</span><span class="o">:</span> <span class="nx">_Batman</span><span class="p">,</span> <span class="nx">_actionFrames</span><span class="o">:</span> <span class="nb">Array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="err">…</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since batman.js looks up the base object, event handlers behave just like normal functions in the place you define them.</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-07-28T13:23:00-04:00" pubdate data-updated="true">Jul 28<span>th</span>, 2014</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2014/07/21/batman-dot-js-and-devise/" title="Previous Post: Batman.js and Devise">&laquo; Batman.js and Devise</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/" title="Next Post: Computed Properties: Batman.js and Ember.js">Computed Properties: Batman.js and Ember.js &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

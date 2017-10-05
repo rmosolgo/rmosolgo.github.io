@@ -1,0 +1,463 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>GraphQL Query as a State Machine - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="State machines are applied to a wide variety of programming problems. I found it useful to think of a GraphQL query as a state machine. Part 0: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2016/11/12/graphql-query-as-a-state-machine">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">GraphQL Query as a State Machine</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-11-12T13:07:00-05:00" pubdate data-updated="true">Nov 12<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>State machines are applied to a wide variety of programming problems. I found it useful to think of a GraphQL query as a state machine.</p>
+
+<!-- more -->
+
+
+<h2>Part 0: Introduction to State Machines</h2>
+
+<p>Practically speaking, a state machine is a unit of code with these properties:</p>
+
+<ul>
+<li>It has a set of <em>states</em></li>
+<li>It is in one state at a time</li>
+<li><em>Transitions</em> connect one state to another</li>
+<li>Transitions can be triggered by outside activity and/or make changes to code on the &ldquo;outside&rdquo;</li>
+<li>One state is the <em>starting</em> state</li>
+<li>One or more states may be valid <em>ending</em> states</li>
+</ul>
+
+
+<p>State machines are also called &ldquo;finite automata&rdquo;.</p>
+
+<p>To see why code like this is useful, let&rsquo;s examine a couple of applications of <em>state machines</em>:</p>
+
+<ul>
+<li>Some <strong>ORM</strong>s use a state machine to track the lifecycle of persisted objects. For example, the set of states may be: <code>new</code>, <code>persisted</code> and <code>destroyed</code>. A new object begins in the <code>new</code> state. Calling <code>save()</code> initiates a transition to the  <code>persisted</code> state. Calling <code>destroy()</code> moves the machine to the the <code>destroyed</code> state. Moving from <code>destroyed</code> to <code>new</code> is impossible; there is no transition between these states.</li>
+<li><strong>Regular expressions</strong> are often implemented with state machines. The regular expression&rsquo;s various patterns are transformed into states. While the expression is tested against a string, matching characters cause transitions from one valid state to another. Non-matching characters case a transition to the &ldquo;failed&rdquo; state. After the string has been completely tested, the regular expression tests itself: if it&rsquo;s in a valid <em>ending</em> state, then the string was a match. If it isn&rsquo;t, then the string was <em>not</em> a match.</li>
+</ul>
+
+
+<p>In summary, state machines provide a model for well-defined progression through a many-stepped process.</p>
+
+<h2>Determinism and Non-Determinism</h2>
+
+<p>Let&rsquo;s examine a regular expression as a state machine. Here&rsquo;s <code>/^abc$/</code> (matches <code>"abc"</code> only):</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>+-------+          +-----+          +-----+          +-----+          +-----+
+</span><span class='line'>| start | - "a" -&gt; | MS1 | - "b" -&gt; | MS2 | - "c" -&gt; | MS3 | - EOS -&gt; | end |
+</span><span class='line'>+-------+          +-----+          +-----+          +-----+          +-----+
+</span><span class='line'>
+</span><span class='line'>* MS: "Matching State"
+</span><span class='line'>* EOS: "End of string"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the diagram above, each state is represented by a box. Between states, transitions are represented by arrows. Since this is a regular expression, the transitions are named after the strings which they match. For example, if the machine is in the <code>start</code> state and it observes an <code>"a"</code>, it moves to Matching State 1 (<code>MS1</code>). As the regular expression matches the string <code>"abc"</code>, it progresses through the states, finally reaching <code>end</code>.</p>
+
+<p>Let&rsquo;s see another regular expression, <code>/^a(bc|bd)$/</code>. It matches two strings, <code>"abc"</code> and <code>"abd"</code>. Here&rsquo;s a naive machine for this expression:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>|                                      +-----+          +-----+  
+</span><span class='line'>|                             . "b" -&gt; | MS2 | - "d" -&gt; | MS3 | - EOS
+</span><span class='line'>| +-------+          +-----+ /         +-----+          +-----+       `-&gt; +-----+
+</span><span class='line'>| | start | - "a" -&gt; | MS1 |                                              | end |
+</span><span class='line'>| +-------+          +-----+ \         +-----+          +-----+       .-&gt; +-----+
+</span><span class='line'>|                              `"b" -&gt; | MS4 | - "c" -&gt; | MS5 | - EOS
+</span><span class='line'>|                                      +-----+          +-----+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Contrasting this machine to the previous one, we can see a difference: this machine has a <em>branch</em>. To make matters &ldquo;worse&rdquo;, the branch is <em>ambiguous</em>: from <code>MS1</code>, when a <code>"b"</code> appears in the string, should the machine move to <code>MS2</code> or <code>MS4</code>? It can only tell by looking <em>ahead</em>, and possibly backtracking, which is inefficient.</p>
+
+<p>This difference is called <em>deterministic</em> vs <em>non-deterministic</em>. The first machine is deterministic: for each state, each input character can lead to <em>exactly</em> one state (<code>failed</code> state is not pictured). The second machine is <em>non</em>-deterministic: for some states, an input character may lead to <em>multiple</em> states.</p>
+
+<h2>Solving Non-Determinism</h2>
+
+<p>It turns out, you can <em>transform</em> a non-deterministic machine into a deterministic machine. The process works like this:</p>
+
+<ul>
+<li>Inspect the non-deterministic machine:</li>
+<li>For each state, gather the possible inputs for that state.</li>
+<li>For each possible input, find the one-or-more destination states which it leads to.</li>
+<li>Take those destination states a create a <em>new</em> state in deterministic machine
+
+<ul>
+<li>For a set of destination states <code>S</code>, the new state represents &ldquo;any of <code>S</code>&rdquo;</li>
+<li>Repeat the process from this new state (find possible inputs, derive a new state for its possible destinations)</li>
+</ul>
+</li>
+</ul>
+
+
+<p>The result is a deterministic machine, some of whose states represent a <em>set</em> of states in the non-deterministic machine.</p>
+
+<p>Let&rsquo;s apply the transformation to the non-deterministic machine above:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>|                                                              +-----+
+</span><span class='line'>|                                                     . "d" -&gt; | MS3 | - EOS .
+</span><span class='line'>| +-------+          +-----+          +------------+ /         +-----+        `-&gt; +-----+
+</span><span class='line'>| | start | - "a" -&gt; | MS1 | - "b" -&gt; | MS2 or MS4 |                              | end |
+</span><span class='line'>| +-------+          +-----+          +------------+ \         +-----+        .-&gt; +-----+
+</span><span class='line'>|                                                      `"c" -&gt; | MS5 | - EOS '
+</span><span class='line'>|                                                              +-----+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The non-deterministic transitions on <code>"b"</code> have been replaced by a <em>single</em> transition to a newly-created state. The new state represents <code>MS2</code> <em>or</em> <code>MS4</code>, and it has transitions from <em>both</em> of those states. It may transition on <code>EOS</code> <em>or</em> it may transition on <code>"c"</code>.</p>
+
+<p>The result is a deterministic machine: for each input, we have exactly one transition, so we never need to backtrack.</p>
+
+<h2>What about GraphQL?</h2>
+
+<p>Consider a GraphQL query:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{
+</span><span class='line'>  parent {
+</span><span class='line'>    child {
+</span><span class='line'>      field1
+</span><span class='line'>      field2
+</span><span class='line'>      field3
+</span><span class='line'>    }
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Executing this query can be articulated in terms of a state machine:</p>
+
+<ul>
+<li>Each selection (<code>{ ... }</code>) is a state, which has a <em>type</em> (a GraphQL type) and a <em>value</em> (a value in the host language, eg, Ruby object)</li>
+<li>Fields are transitions: they move execution from one state to another (that is, from one selection to a child selection)</li>
+<li>When each field in a selection has been executed, the machine moves &ldquo;back&rdquo; to the parent state</li>
+<li>The <em>starting</em> state is the root-level selection (eg, <code>query { ... }</code>)</li>
+<li>The <em>ending</em> state is also the root-level selection, after traversing all selections in the query</li>
+<li>Some transitions are invalid: for example, if the value is <code>nil</code>, the machine can&rsquo;t move into a state whose type is non-null.</li>
+</ul>
+
+
+<h2>Non-Determinism in GraphQL</h2>
+
+<p>Consider a query with three conditional fragments:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{
+</span><span class='line'>  node(id: $nodeId) {
+</span><span class='line'>    ... on Interface1 { child { field1 } }
+</span><span class='line'>    ... on Interface2 { child { field2 } }
+</span><span class='line'>    ... on Interface3 { child { field3 } }
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Depending on the runtime type of <code>node(id: $nodeId)</code>, 0, 1, 2, or 3 of those typed selections may be executed. This is a kind of non-determinism.</p>
+
+<p>A simple solution for a GraphQL AST interpreter is:</p>
+
+<ul>
+<li>Test each condition and gather the selections which apply</li>
+<li>For each unique field in the set of selections, evaluate it</li>
+<li>Evaluate sub-selections for each field which matches that unique field</li>
+</ul>
+
+
+<p>Concretely, that boils down to:</p>
+
+<ul>
+<li>Get the runtime type (<code>RT</code>) of the object (<code>O</code>) returned by <code>node(id: $nodeId)</code></li>
+<li>For each interface type, if <code>RT</code> implements that interface, gather that selection</li>
+<li>Find uniquely-named fields in the set of selections (<code>child</code> is the only one)</li>
+<li>Resolve <code>child</code> field on <code>O</code></li>
+<li>For each selection in the set, find fields named <code>child</code> and gather them up (a subset of <code>field1</code>, <code>field2</code>, <code>field3</code>)</li>
+<li>Repeat</li>
+</ul>
+
+
+<p>This solution is not a good fit for <a href="https://github.com/rmosolgo/graphql-ruby"><code>graphql-ruby</code></a> because we have a pre-execution phase for analyzing incoming queries. This flow requires runtime types which are not available until fields are <em>actually</em> executed.</p>
+
+<h2>Solving Non-Determinism in GraphQL</h2>
+
+<p>To streamline execution, we can apply a similar transformation to a GraphQL query. Before executing, we can check each field:</p>
+
+<ul>
+<li>Identify each possible return type</li>
+<li>Identify each type condition</li>
+<li>Build a new &ldquo;state&rdquo; for each valid combination of return type and type conditions</li>
+</ul>
+
+
+<p>The state contains a <em>set</em> of selections. This machine can be the basis of <em>both</em> pre-execution and execution, since all possible transitions have been identified. Execution will follow a subset of those transitions, depending on the runtime type of returned objects.</p>
+
+<p>To visualize this transformation, consider a schema like this one:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>type Query {
+</span><span class='line'>  node(id: ID!) : Node
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>union Node = TypeA | TypeB
+</span><span class='line'>
+</span><span class='line'>type TypeA implements Interface1, Interface2 {
+</span><span class='line'>  # ...
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>type TypeB implements Interface2, Interface3 {
+</span><span class='line'>  # ...
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>interface Interface1 { ... }
+</span><span class='line'>interface Interface2 { ... }
+</span><span class='line'>interface Interface3 { ... }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Revisiting the previous query, we can do some ahead-of-time calculation about the possible execution paths:</p>
+
+<ul>
+<li><code>node(id: $nodeId)</code> returns one of: <code>TypeA</code>, <code>TypeB</code></li>
+<li>selections are conditioned by: <code>Interface1</code>, <code>Interface2</code>, <code>Inteface3</code></li>
+<li>If <code>node(...)</code> returns <code>TypeA</code>, selections from <code>Interface1</code> and <code>Interface2</code> should be applied</li>
+<li>If <code>node(...)</code> returns <code>TypeB</code>, selections from <code>Interface2</code> and <code>Interface3</code> should be applied</li>
+</ul>
+
+
+<p>This information allows us to &ldquo;rewrite&rdquo; the query above in a deterministic way:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{
+</span><span class='line'>  node(id: $nodeId) {
+</span><span class='line'>    ... on TypeA {
+</span><span class='line'>      child { field1, field2 }
+</span><span class='line'>    }
+</span><span class='line'>    ... on TypeB {
+</span><span class='line'>      child { field2, field3 }
+</span><span class='line'>    }
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, each runtime type transitions to <em>exactly</em> one selection. This information simplifies pre-execution analysis and execution. Additionally, this computed state can cache field-level values like coerced arguments and field resolve functions.</p>
+
+<p>In <a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a>, these transformations are implemented in <code>GraphQL::InternalRepresentation</code>. At time of writing, the multi-selection state is implemented as an array of <code>InternalRepresentation::Node</code>s, but <a href="https://github.com/rmosolgo/graphql-ruby/pull/395">an incoming PR</a> will formalize them as <code>InternalRepresentation::Selection</code>s.</p>
+
+<h2>Ceci n&#8217;est pas un state machine</h2>
+
+<p>Although this mindset helps solve a problem with GraphQL fragment merging, there are also some key differences between a GraphQL query and a state machine:</p>
+
+<ul>
+<li>A GraphQL query cannot be cyclical. That is, the same state may not be reached more than once. (Even &ldquo;returning&rdquo; from a selection is not <em>actually</em> the same state: you&rsquo;re in a different place because some fields have been resolved.)</li>
+<li>Because a GraphQL query can&rsquo;t form a cycle, &ldquo;precompiling&rdquo; it to a deterministic machine doesn&rsquo;t yield a big payoff. Instead, you can build states <em>as you reach them</em>, saving some work in case some branches are not reached at runtime (or if an error occurs during execution).</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-11-12T13:07:00-05:00" pubdate data-updated="true">Nov 12<span>th</span>, 2016</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/graphql/'>GraphQL</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2016/10/24/hash-key-vs-hash-get/" title="Previous Post: Hash#key? vs Hash#[]">&laquo; Hash#key? vs Hash#[]</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2016/11/23/raising-exceptions-is-bad/" title="Next Post: Raising Exceptions is Bad">Raising Exceptions is Bad &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

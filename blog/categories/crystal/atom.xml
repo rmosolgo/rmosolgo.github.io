@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Crystal | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/crystal/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Crystal First Impressions]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions/"/>
+    <updated>2015-09-27T21:47:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions</id>
+    <content type="html"><![CDATA[<p>The <a href="http://crystal-lang.org/">Crystal programming language</a> combines Ruby-like syntax with a really powerful compiler. As a result, it&rsquo;s fun to write, fast to run, and hard to screw up!</p>
+
+<!-- more -->
+
+
+<p>My Crystal experience so far:</p>
+
+<ul>
+<li><a href="https://github.com/danott">danott</a> mentioned it in our Slack a few weeks ago</li>
+<li>I read the great <a href="http://crystal-lang.org/docs/">Crystal docs</a></li>
+<li>I cobbled together <a href="https://github.com/rmosolgo/crythtal">a lisp (barely)</a></li>
+</ul>
+
+
+<p>I&rsquo;d say it&rsquo;s a combination of:</p>
+
+<ul>
+<li>a more-stable-Ruby (like Elixir, but without Erlang)</li>
+<li>a developer-friendly, life-embetter-ing type system (like Elm, but &hellip; not JavaScript)</li>
+<li>a real compiler! (like C, but fun to read and write)</li>
+</ul>
+
+
+<p>Um, what else could you want?! (See last paragraph 😛)</p>
+
+<h2>Crystal Syntax</h2>
+
+<p>Crystal brings the best of Ruby:</p>
+
+<ul>
+<li><strong>Concise literals</strong>, just like Ruby (take it for granted until you use regexps in Python 🙀)</li>
+<li><strong>Great OO support</strong>, classes &amp; modules just like Ruby</li>
+<li><strong>Attractive syntax</strong> thanks to blocks, operator overloading and optional parens</li>
+<li><strong>consistent</strong>, predictable standard library (like Ruby)</li>
+</ul>
+
+
+<p>Plus, some improvements over Ruby:</p>
+
+<ul>
+<li><strong>Method overloading</strong></li>
+<li>Python-like <strong>keyword args</strong>: must have default value, may be passed as kwargs or positional args (I could go either way on this since Ruby 2.1, but it beats <code>options={}</code>)</li>
+<li>More robust <strong>Proc literals</strong>, reminded me of Elixir</li>
+<li>Convention: <strong><code>?</code> methods return maybe-nil types</strong>, while their counterparts raise on nil</li>
+<li>First-class <strong>enums</strong> &amp; <strong>tuples</strong></li>
+<li><strong>Immutable strings</strong>, like Ruby 3 will have (?)</li>
+</ul>
+
+
+<p>For completeness, you lose some things from Ruby:</p>
+
+<ul>
+<li>Runtime <strong>code creation</strong>, like <code>define_method</code> &amp; friends</li>
+<li>Runtime <strong>code evaluation</strong>, like <code>eval</code> &amp; friends</li>
+</ul>
+
+
+<p>Crystal offers a powerful <strong>macro system</strong> that makes up for the loss of runtime metaprogramming. Unlike C preprossing, Crystal macros are awesome. You basically define functions which are called at compile-time, then generate code with liquid-like syntax.</p>
+
+<h2>Crystal Typing</h2>
+
+<h3>Inferring Types</h3>
+
+<p>Crystal infers types from your code, so these are OK:</p>
+
+<pre><code class="ruby">my_string = "Hello World"
+# String
+my_hash = {key: "value", key2: "value2"}
+# Hash(Symbol, String)
+my_array = [1,2,3]
+# Array(Int32)
+</code></pre>
+
+<p>When types mix, Crystal automatically unions them. It will ensure any usages of the variable in question are valid for both types. For example:</p>
+
+<pre><code class="ruby">my_variable = "string"
+my_variable = 1
+# String | Int32
+
+# Ok, because String &amp; Int32 both implement #to_f
+my_variable.to_f
+
+# You can add runtime checks to call type-specific methods
+if my_variable.is_a?(String)
+  my_variable.upcase
+end
+</code></pre>
+
+<p>There are some times you need to define types to help the compiler. For example, there aren&rsquo;t any values here to tell the compiler what to expect:</p>
+
+<pre><code class="ruby">some_array =  [] of Int32
+# You can use custom types, too
+some_hash =   {} of Symbol =&gt; SomeCustomClass
+</code></pre>
+
+<h3>Goodbye, NoMethodErrors</h3>
+
+<p>If you&rsquo;re like me, you hate this:</p>
+
+<pre><code>undefined method `whatever' for nil:NilClass
+</code></pre>
+
+<p>Something somehow became nil. 😢</p>
+
+<p>Instead, Crystal reads your code, and if there&rsquo;s somewhere a value could be nil, it throws a compile error:</p>
+
+<pre><code>in ./src/lisp/binding.cr:55: undefined method 'find_owner' for Nil
+
+      @parent.find_owner(key)
+              ^~~~~~~~~~
+</code></pre>
+
+<p>You have two options:</p>
+
+<ul>
+<li>Add an explicit not-nil check (<code>if object.is_a?(String) ...</code>) so the compiler knows it will be safe</li>
+<li>Refactor so the value won&rsquo;t be nil</li>
+</ul>
+
+
+<p>Of course, the first one seems better at the start, but I hope to get better at the second one 😁.</p>
+
+<h2>What&rsquo;s Missing?</h2>
+
+<p>Crystal really shows its youth. Its shortcomings all fall in that vein:</p>
+
+<ul>
+<li><strong>Poorly documented</strong>, which isn&rsquo;t so bad if you&rsquo;re coming from Ruby</li>
+<li><strong>Few projects</strong> out there (I think the <a href="http://crystalshards.herokuapp.com/">package repository is a free Heroku app</a>)</li>
+<li>Standard library has <strong>some kinks</strong>, they say it is still changing</li>
+</ul>
+
+
+<p>One example of a standard library kink is the handling of <code>break</code>, <code>next</code> and <code>return</code> in blocks. If you want to exit a block early, you have to choose one of those three. The problem is that, to choose the right one, you have to know whether the method captures the block into a proc or simply yields values to it. It&rsquo;s a drag to have to know a method&rsquo;s implementation to call it! (IRL, I didn&rsquo;t run into this and I suspect it would be easy enough to work around it.)</p>
+
+<h2>Now What?</h2>
+
+<p>I really liked Crystal and I hope I can work with it more!</p>
+]]></content>
+  </entry>
+  
+</feed>

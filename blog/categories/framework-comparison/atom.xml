@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Framework Comparison | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/framework-comparison/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Render Scope in AngularJS and Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js/"/>
+    <updated>2014-08-10T18:45:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/08/10/render-scope-in-angular-dot-js-and-batman-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> and <a href="http://angularjs.org">AngularJS</a> both create hierarchical view scopes, but their implementations are very different.</p>
+
+<!-- more -->
+
+
+<p><em>(please forgive my inconsistent rendering of AngularJS/Angular/Angular.js/angular, I don&rsquo;t know which one is right!)</em></p>
+
+<p>In batman.js and Angular, there is a view scope <em>hierarchy</em> which mirrors the DOM. In this heirarchy, objects may:</p>
+
+<ul>
+<li>add values into the render scope</li>
+<li>access <em>their own</em> values</li>
+<li>belong to a <em>parent object</em></li>
+<li>access values from <em>their parents</em></li>
+<li>have <em>child objects</em> of their own</li>
+</ul>
+
+
+<p>Consider a page like this:</p>
+
+<p><a href="/images/batmanjs_nested_views.png"><img src="/images/batmanjs_nested_views.png" alt="Batman.js view hierarchy" /></a></p>
+
+<p>The <code>HouseholdView</code> has many child views. The <code>PersonView</code>s belong to their parent, <code>HouseholdView</code>. They may access values from <code>HouseholdView</code> (such as the shared <code>householdName</code>).</p>
+
+<p><em>Note: The batman.js view hierarchy includes a few other objects as well &ndash; see below.</em></p>
+
+<h1>Finding Values in the Hierarchy</h1>
+
+<p>To answer the question &ldquo;how can child views access data from their parents&rdquo;, Batman.js and Angular take different approaches.</p>
+
+<h3>$scope &amp; Prototypal Inheritance</h3>
+
+<p>In Angular, data bindings are evaluated against a <strong>magical <code>$scope</code> object</strong>. The scope object has key-value pairs which correspond to values in the data bindings. When <code>$scope</code>s are created, Angular massages (tampers with?) the prototypal inheritance chain so that a child scope&rsquo;s prototype <em>is</em> its parent scope.</p>
+
+<p>(Usually, an object&rsquo;s prototype is another &ldquo;pristine&rdquo; object of its same type. It&rsquo;s generally treated as the &ldquo;perfect instance&rdquo; of the type. Other instances delegate to the prototype for properties that aren&rsquo;t defined explicitly on themselves.)</p>
+
+<p>In this case, a child <code>$scope</code>&rsquo;s prototype is not a &ldquo;pristine instance&rdquo;, but instead it&rsquo;s the parent <code>$scope</code> object. That way, if a value isn&rsquo;t found in a child scope, it is looked up in the prototype chain. This is <strong>brilliant</strong>. Angular delegates value lookup to built-in JavaScript features. (There is one gotcha described below.)</p>
+
+<p>When a parent <code>$scope</code> has many children, all children have the same parent <code>$scope</code> object as their prototype.</p>
+
+<h3>Batman.View &amp; View::lookupKeypath</h3>
+
+<p>Batman.js builds a <strong>tree of <code>Batman.View</code> objects</strong>. The root of the tree is called the <code>LayoutView</code> and it is created automatically by batman.js. Each view keeps track of its children in its <code>subviews</code>, which is a <code>Batman.Set</code> containing views that are rendered inside it. Each view also keeps track of its <code>superview</code>, which is its parent <code>Batman.View</code>.</p>
+
+<p>To evaluate data bindings, batman.js uses <code>lookupKeypath</code> on the view in question. This function climbs the &ldquo;view hierarchy&rdquo;, which actually includes a few extra objects:</p>
+
+<ul>
+<li>The <code>Batman.Controller</code> instance which rendered the view</li>
+<li><code>Batman.currentApp</code>, which is the <code>Batman.App</code> subclass that you defined (the clas, not an instance)</li>
+<li><code>Batman.container</code>, which is usually <code>window</code></li>
+</ul>
+
+
+<p>Here&rsquo;s the whole view hierarchy from the previous example:</p>
+
+<p><a href="/images/batmanjs_nested_views_whole_tree.png"><img src="/images/batmanjs_nested_views_whole_tree.png" alt="The whole batman.js view hierarchy" /></a></p>
+
+<p>Since <code>Batman.currentApp</code> is in the view hierarchy, any <code>@classAccessor</code>s you define there are accessible in view bindings, akin to global scope in JavaScript.</p>
+
+<h1>Automatically-Created Scopes</h1>
+
+<p>In batman.js and Angular, there are data bindings that create child scopes of their own. For example, <code>ng-repeat</code> and <code>data-foreach</code> both create a collection of child scopes with the same parent.</p>
+
+<p>Angular does this by creating many child <code>$scopes</code> with the same parent <code>$scope</code> as their prototype.</p>
+
+<p>Batman.js does this by automatically adding nodes to the view hierarchy. One downside of batman.js is that creating lots and lots of new views is CPU-intensive. I don&rsquo;t know whether the same is true for creating <code>$scope</code>s.</p>
+
+<h1>How Does It Know Which Scope to Bind To?</h1>
+
+<p>When I was reading about <code>$scope</code>, I learned that some new Angular users hit a snag when they try to set values on a <em>parent scope</em> from within a <em>child scope</em>. As JavaScript should, it updates the child <code>$scope</code> with the new value, not the parent <code>$scope</code>, which is the child&rsquo;s prototype.</p>
+
+<p>That&rsquo;s how prototypal inheritance works: It looks up missing values on the prototype, but it sets <em>new</em> values on the instance. Then, it stops &ldquo;falling back&rdquo; to the prototype for the property that was set on the instance.</p>
+
+<p>To work around this, it&rsquo;s recommended to &ldquo;always use a <code>.</code> in your <code>ng-model</code>s&rdquo;. (<code>ng-model</code> is a binding that creates a child scope.)</p>
+
+<p>Batman.js doesn&rsquo;t have this problem because, when uses <code>lookupKeypath</code>, it remembers which <code>View</code> object was the target for that keypath, then updates <em>that object</em> whenever the keypath changes.</p>
+
+<p>However, Batman.js is prone to a different gotcha. If you leave an accessor unset (ie, returns <code>undefined</code>), then set it <em>after</em> a view has rendered, it&rsquo;s possible that <code>View::lookupKeypath</code> won&rsquo;t find it correctly. To avoid this, set defaults (or <code>null</code>) before bindings are evaluated:</p>
+
+<ul>
+<li>before <code>@render</code> in controller actions</li>
+<li>in the <code>constructor</code> for view instances</li>
+</ul>
+
+
+<p>Or, make sure <code>@accessor</code>s return <code>null</code> instead of <code>undefined</code>.</p>
+
+<p>Batman.js treats <code>undefined</code> as the signal that an object doesn&rsquo;t have an accessor for a keypath, so be careful when setting keys <code>undefined</code>!</p>
+
+<h1>How Does It Know When to Update the DOM?</h1>
+
+<p>When these scope objects (<code>View</code> or <code>$scope</code>) change, the framework must update the DOM accordingly.</p>
+
+<p>Angular has a &ldquo;digest cycle&rdquo; where it checks for changes in the <code>$scope</code> since last run, then updates the DOM if necessary. It automatically tracks any values that are put into templates. You can also watch other keys on <code>$scope</code> with <code>$scope.$watch</code>. If you modify <code>$scope</code> from <em>outside</em> Angular.js code, you must manually trigger the digest cycle with <code>$scope.$apply</code>.</p>
+
+<p><code>Batman.View</code> uses the <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/"><code>Batman.Property</code></a> system to automatically track dependencies and changes. Any keypath that is passed to a <code>data-</code> binding is automatically observed. DOM updates are triggered when:</p>
+
+<ul>
+<li>A keypath is updated with <code>set</code>. Doesn&rsquo;t matter whether it&rsquo;s inside batman.js code or inside an AJAX callback &ndash; batman.js will recognize the update either way.</li>
+<li>A property&rsquo;s dependencies change. When you declare a computed property with <code>@accessor</code> and bind it to a view, the view will update the DOM whenever that property&rsquo;s dependencies cause it to change.</li>
+</ul>
+
+
+<p>(In fact, those two cases are the heart of observability in batman.js: assign a value with <code>set</code> or delegate to batman.js&rsquo;s source tracking.)</p>
+
+<p>To force an update, use <code>set</code> to update a bound property or one of its dependencies.</p>
+
+<h1>Other Random Points</h1>
+
+<ul>
+<li>Angular&rsquo;s &ldquo;evalute an expression&rdquo; is like batman.js&rsquo;s &ldquo;lookup a keypath&rdquo;</li>
+<li><code>Batman.View::propagateToSubviews</code> is like <code>$scope.$broadcast</code>: it sends messages down the view tree.</li>
+<li>As of batman.js almost-v0.17, there is no analog for <code>$scope.$emit</code> (which sends events <em>up</em> the view chain)</li>
+<li>batman.js exports global function <code>$context($0)</code> which is just like <code>angular.element($0).scope()</code> (where <code>$0</code> is the highlighted element in the Chrome inspector).</li>
+</ul>
+
+
+<h1>My Opinion</h1>
+
+<p>I think Angular&rsquo;s <code>$scope</code> is brilliant. I imagine it&rsquo;s performant as well, although I don&rsquo;t know (and I&rsquo;m currently writing without internet access). It introduces few gotchas. In general, it seems like it Just Works<sup>TM</sup>.</p>
+
+<p>I&rsquo;m in the market to improve the performance of <code>Batman.View</code>, but I&rsquo;m not sure I can take anything from <code>$scope</code>. All of batman.js depends on playing by the observability rules. I don&rsquo;t see any way I can get native JS prototypal inheritance to participate in that.</p>
+
+<p>I also like sticking with the &ldquo;It&rsquo;s just batman.js&rdquo; in the view layer. If you can write good <code>@accessor</code>s, then you&rsquo;ve mastered <code>Batman.View</code>, too.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/"/>
+    <updated>2014-08-02T09:38:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a front-end MVC framework with an unrivaled implementation of key-value observing. I will explore computed properties in batman.js by contrasting them with Ember.js&rsquo;s computed properties.</p>
+
+<!-- more -->
+
+
+<p>First, disclaimers!</p>
+
+<ul>
+<li>I didn&rsquo;t write any of the <code>Batman.Property</code> code that makes this feature possible. I&rsquo;m only a fanboy!</li>
+<li>I don&rsquo;t know Ember.js. I&rsquo;ve just gathered examples from the <a href="http://emberjs.com/guides">Ember Guides</a>.</li>
+</ul>
+
+
+<p>To explore computed properties, let&rsquo;s take the <strong>canonical <code>fullName</code> example</strong>. It:</p>
+
+<ul>
+<li>depends on two other properties, <code>firstName</code> and <code>lastName</code></li>
+<li>returns a string that joins <code>firstName</code> and <code>lastName</code> with a space</li>
+<li>can be set</li>
+<li>sets <code>firstName</code> and <code>lastName</code> by splitting on whitespace</li>
+</ul>
+
+
+<p>We&rsquo;ll also explore an <strong>aggregrated <code>roster</code> property</strong> which:</p>
+
+<ul>
+<li>depends on <code>fullName</code> for each person</li>
+<li>joins <code>fullName</code> with <code>,</code></li>
+</ul>
+
+
+<h2>fullName in Ember.js</h2>
+
+<p>(This is yanked wholesale from the <a href="http://emberjs.com/guides/object-model/computed-properties/">Computed Properties Guide</a>.)</p>
+
+<p>A couple of things to notice:</p>
+
+<ul>
+<li><code>fullName</code> is defined as <em>one function</em> which handles <code>get</code> and <code>set</code> operations.</li>
+<li><code>fullName</code> must be told what properties it depends on.</li>
+</ul>
+
+
+<pre><code class="javascript">App.Person = Ember.Object.extend({
+  firstName: null, // These aren't necessary, they're
+  lastName: null,  // just for clarity.
+
+  fullName: function(key, value, previousValue) {
+    // setter
+    if (arguments.length &gt; 1) {
+      var nameParts = value.split(/\s+/);
+      this.set('firstName', nameParts[0]);
+      this.set('lastName',  nameParts[1]);
+    }
+
+    // getter, also the return value is cached
+    return this.get('firstName') + ' ' + this.get('lastName');
+  }.property('firstName', 'lastName')
+});
+</code></pre>
+
+<p>Usage is pretty standard: use <code>get</code> and <code>set</code> to access properties.</p>
+
+<pre><code class="javascript">var captainAmerica = App.Person.create();
+captainAmerica.set('fullName', "William Burnside");
+captainAmerica.get('firstName'); // William
+captainAmerica.get('lastName');  // Burnside
+</code></pre>
+
+<h2>fullName in Batman.js</h2>
+
+<p>Two things to notice:</p>
+
+<ul>
+<li><code>get</code> and <code>set</code> operations are defined <em>separately</em>.</li>
+<li><code>fullName</code> doesn&rsquo;t have to be told what its dependencies are.</li>
+</ul>
+
+
+<pre><code class="coffeescript">class App.Person extends Batman.Object
+  @accessor 'firstName' # not necessary,
+  @accessor 'lastName'  # just here for clarity
+
+  @accessor 'fullName',
+    get: (key) -&gt; "#{@get('firstName')} #{@get('lastName')}"
+    set: (key, value) -&gt;
+      nameParts = value.split(/\s+/)
+      @set('firstName', nameParts[0])
+      @set('lastName', nameParts[1])
+      return value # should return newly-set value, although the `get` function will be used for caching.
+</code></pre>
+
+<p>The usage is almost identical:</p>
+
+<pre><code class="coffeescript">captainAmerica = new App.Person
+captainAmerica.set('fullName', 'William Burnside')
+captainAmerica.get('firstName') # William
+captainAmerica.get('lastName')  # Burnside
+</code></pre>
+
+<h2>roster in Ember.js</h2>
+
+<p>(This was adapted from the <a href="http://emberjs.com/guides/object-model/computed-properties-and-aggregate-data/">Computed Properties and Aggregate Data Guide</a>.)</p>
+
+<p>Some things stood out to me:</p>
+
+<ul>
+<li><code>roster</code>&rsquo;s properties are declared with a DSL. Array dependencies are limited to one layer deep (ie, you can&rsquo;t use <code>@each</code> twice).</li>
+<li><code>mapBy</code> is provided by <code>Ember.Enumerable</code> to handle arrays of objects. Nice!</li>
+</ul>
+
+
+<pre><code class="javascript">App.PeopleController = Ember.Controller.extend({
+  people: [
+    App.Person.create({firstName: "Tom", lastName: "Dale"}),
+    App.Person.create({firstName: "Yehuda", lastName: "Katz"})
+  ],
+
+  roster: function() {
+    var people = this.get('people');
+    return people.mapBy('fullName').join(', ');
+  }.property('people.@each.fullName')
+});
+</code></pre>
+
+<h2>roster in Batman.js</h2>
+
+<p>Here&rsquo;s the analogous construction in batman.js:</p>
+
+<pre><code class="coffeescript">class App.PeopleController extends Batman.Controller
+  @accessor 'people', -&gt;
+    new Batman.Set([ # this is future-code: constructor will take an array in v0.17.0
+      new App.Person(firstName: "Tom", lastName: "Dale")
+      new App.Person(firstName: "Yehuda", lastName: "Katz")
+    ])
+
+  @accessor 'roster', -&gt;
+    @get('people').mapToProperty('fullName').join(', ')
+</code></pre>
+
+<p>One thing is the same:</p>
+
+<ul>
+<li><code>mapToProperty</code> works like <code>mapBy</code></li>
+</ul>
+
+
+<p>You might notice two big differences:</p>
+
+<ul>
+<li><code>people</code> is a <code>Batman.Set</code> instead of a native Array.</li>
+<li><code>roster</code> didn&rsquo;t have to be told what its dependencies are</li>
+</ul>
+
+
+<p>By using batman.js data structures inside <code>@accessor</code> functions, we benefit from batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a>. It looks like automatic source tracking was considered by the Ember core team, but deemed <a href="https://github.com/emberjs/ember.js/issues/269#issuecomment-3178319">impossible</a> or <a href="https://github.com/emberjs/ember.js/issues/386#issuecomment-3523589">prohibitively expensive</a>.</p>
+
+<p>I recently saw a quote in a <a href="https://www.youtube.com/watch?v=-DX3vJiqxm4">React.js talk</a>:</p>
+
+<blockquote><p>Intellectuals solve probelms. Geniuses prevent them. - Albert Einstein</p></blockquote>
+
+<p>I think that&rsquo;s just what the Shopify team did when they implemented <code>Batman.Observable</code>! The API is very simple and it Just Works<sup>TM</sup>.</p>
+
+<h2>My Opinion</h2>
+
+<p><strong>Pros of batman.js:</strong></p>
+
+<ul>
+<li>Elegant <code>@accessor</code> API for getters and setters: define <code>get</code> and <code>set</code> separately instead of testing for arguments.</li>
+<li>Automatic dependency tracking: batman.js knows what objects &amp; properties were accessed during computation and observes accordingly.</li>
+<li>There&rsquo;s no limit to the depth of enumerable dependencies. Any property of a <code>Batman.Object</code> that&rsquo;s accessed will be tracked, no matter where it exists in the app.</li>
+</ul>
+
+
+<p>In fact, <code>@accessor</code> is the heart and soul of a batman.js app. You&rsquo;re basically declaring a system of computed properties, then updating that system from user input. Batman.js propagates information to wherever it needs to be.</p>
+
+<p><strong>Cons of batman.js:</strong></p>
+
+<ul>
+<li>&ldquo;It&rsquo;s just not Ember.&rdquo; You miss out on huge user base, corporate support, and everything that goes with that.</li>
+<li>Beyond that, batman.js resources are sparse. The <a href="http://batmanjs.org/docs/index.html">new guides</a>, <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">cookbook</a> and <a href="http://batmanjs.org/docs/index.html">API docs</a> are improving every week, but for advanced usage you still have to sourcedive sometimes.</li>
+<li>There <strong>is</strong> a performance hit for global observability. The only place I&rsquo;ve noticed it is with complex iteration views (<a href="https://github.com/batmanjs/batman/issues/1086">batmanjs/batman#1086</a>). I&rsquo;m hoping to tackle this soon since it&rsquo;s becoming an issue in <a href="http://get.planningcenteronline.com/check-ins">PCO Check-ins</a>.</li>
+</ul>
+
+
+<p>I&rsquo;m not aware of any features missing from batman.js, but I do miss the &ldquo;googleability&rdquo; of a well-traveled path. Batman.js also lacks some of the dev tools like a decent Chrome extension and a command-line client.</p>
+
+<p>I always want to know <em>how</em> things works, so getting in the source is actually a benefit for me.</p>
+
+<p><strong>Six of one, half-dozen of the other:</strong></p>
+
+<ul>
+<li>Dependency DSL vs <code>Batman.{DataStructure}</code></li>
+<li>Calling super: <code>this._super</code> vs. <code>@wrapAccessor</code></li>
+<li>External API with <code>get</code> and <code>set</code></li>
+<li>Cached values in computed properties</li>
+<li>In batman.js, you can opt out of tracking with <code>Batman.Property.withoutTracking</code>. It&rsquo;s obscure, but I think it&rsquo;s ok because batman.js always covers the more common case.</li>
+</ul>
+
+
+<p>One thing that I found in neither framework was rate-limited properties, a la Knockout. I&rsquo;d love to have a built-in option for this in batman.js.</p>
+]]></content>
+  </entry>
+  
+</feed>

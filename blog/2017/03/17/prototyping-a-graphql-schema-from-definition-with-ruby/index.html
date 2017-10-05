@@ -1,0 +1,403 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Prototyping a GraphQL Schema From Definition With Ruby - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="GraphQL 1.5.0 includes a new way to define a schema: from a GraphQL definition. In fact, loading a schema this way has been supported for while, but &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2017/03/17/prototyping-a-graphql-schema-from-definition-with-ruby">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Prototyping a GraphQL Schema From Definition With Ruby</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-03-17T15:49:00-04:00" pubdate data-updated="true">Mar 17<span>th</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>GraphQL 1.5.0 includes a new way to define a schema: from a GraphQL definition.</p>
+
+<!-- more -->
+
+
+<p>In fact, loading a schema this way has been supported for while, but 1.5.0 adds the ability to specify field resolution behavior.</p>
+
+<h2>GraphQL IDL</h2>
+
+<p>Besides queries, GraphQL has an <em>interface definition language</em> (IDL) for expressing a schema’s structure. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">schema</span> <span class="p">{</span>
+</span><span class='line'>  <span class="ss">query</span><span class="p">:</span> <span class="no">Query</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">type</span> <span class="no">Query</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">post</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span> <span class="no">ID</span><span class="o">!</span><span class="p">):</span> <span class="no">Post</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">type</span> <span class="no">Post</span> <span class="p">{</span>
+</span><span class='line'>  <span class="ss">title</span><span class="p">:</span> <span class="nb">String</span><span class="o">!</span>
+</span><span class='line'>  <span class="ss">comments</span><span class="p">:</span> <span class="o">[</span><span class="no">Comment</span><span class="o">!]</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You can turn a definition into a schema with <code>Schema.from_definition</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">schema_defn</span> <span class="o">=</span> <span class="s2">&quot;...&quot;</span>
+</span><span class='line'><span class="n">schema</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Schema</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="n">schema_defn</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(By the way, the IDL is technically in <a href="https://github.com/facebook/graphql/pull/90">RFC stage</a>.)</p>
+
+<h2>Resolvers</h2>
+
+<p><code>Schema.from_definition</code> also accepts <code>default_resolve:</code> argument. It expects one of two inputs:</p>
+
+<ul>
+<li>A nested hash of type <code>Hash&lt;String =&gt; Hash&lt;String =&gt; #call(obj, args, ctx)&gt;&gt;</code>; or</li>
+<li>An object that responds to <code>#call(type, field, obj, args, ctx)</code></li>
+</ul>
+
+
+<h4>Resolving with a Hash</h4>
+
+<p>When you’re using a hash:</p>
+
+<ul>
+<li>The first key is a <em>type name</em></li>
+<li>The second key is a <em>field name</em></li>
+<li>The last value is a <em>resolve function</em> (<code>#call(obj, args, ctx)</code>)</li>
+</ul>
+
+
+<p>To get started, you can write the hash manually:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="s2">&quot;Query&quot;</span> <span class="o">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="s2">&quot;post&quot;</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="no">Post</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">args</span><span class="o">[</span><span class="ss">:id</span><span class="o">]</span><span class="p">)</span> <span class="p">},</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>  <span class="s2">&quot;Post&quot;</span> <span class="o">=&gt;</span> <span class="p">{</span>
+</span><span class='line'>    <span class="s2">&quot;title&quot;</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span> <span class="p">},</span>
+</span><span class='line'>    <span class="s2">&quot;body&quot;</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">body</span> <span class="p">},</span>
+</span><span class='line'>    <span class="s2">&quot;comments&quot;</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">comments</span> <span class="p">},</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But you can also reduce a lot of boilerplate by using a hash with default values:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># This hash will fall back to default implementation if another value isn&#39;t provided:</span>
+</span><span class='line'><span class="n">type_hash</span> <span class="o">=</span> <span class="no">Hash</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">type_name</span><span class="o">|</span>
+</span><span class='line'>  <span class="c1"># Each type gets a hash of fields:</span>
+</span><span class='line'>  <span class="n">h</span><span class="o">[</span><span class="n">type_name</span><span class="o">]</span> <span class="o">=</span> <span class="no">Hash</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">h2</span><span class="p">,</span> <span class="n">field_name</span><span class="o">|</span>
+</span><span class='line'>    <span class="c1"># Default resolve behavior is `obj.public_send(field_name, args, ctx)`</span>
+</span><span class='line'>    <span class="n">h2</span><span class="o">[</span><span class="n">field_name</span><span class="o">]</span> <span class="o">=</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="n">obj</span><span class="o">.</span><span class="n">public_send</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">type_hash</span><span class="o">[</span><span class="s2">&quot;Query&quot;</span><span class="o">][</span><span class="s2">&quot;post&quot;</span><span class="o">]</span> <span class="o">=</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="no">Post</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">args</span><span class="o">[</span><span class="ss">:id</span><span class="o">]</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">schema</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Schema</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="n">schema_defn</span><span class="p">,</span> <span class="n">default_resolve</span><span class="p">:</span> <span class="n">type_hash</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Isn’t that a nice way to set up a simple schema?</p>
+
+<h4>Resolving with a Single Function</h4>
+
+<p>You can provide a single callable that responds to <code>#call(type, field, obj, args, ctx)</code>. What a mouthful!</p>
+
+<p>The <em>advantage</em> of that hefty method signature is that it’s enough to specify any resolution behavior you can imagine. For example, you could create a system where type modules were found by name, then methods were called by name:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">module</span> <span class="nn">ExecuteGraphQLByConvention</span>
+</span><span class='line'>  <span class="kp">module_function</span>
+</span><span class='line'>  <span class="c1"># Find a Ruby module corresponding to `type`,</span>
+</span><span class='line'>  <span class="c1"># then call its method corresponding to `field`.</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">type_module</span> <span class="o">=</span> <span class="no">Object</span><span class="o">.</span><span class="n">const_get</span><span class="p">(</span><span class="n">type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">type_module</span><span class="o">.</span><span class="n">public_send</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">schema</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Schema</span><span class="o">.</span><span class="n">from_definition</span><span class="p">(</span><span class="n">schema_defn</span><span class="p">,</span> <span class="n">default_resolve</span><span class="p">:</span> <span class="no">ExecuteGraphQLByConvention</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, a single function combined with Ruby’s flexibility and power opens a lot of doors!</p>
+
+<p>Doesn’t it remind you a bit of method dispatch? The arguments are:</p>
+
+<table>
+<thead>
+<tr>
+<th>GraphQL Field Resolution </th>
+<th> Method Dispatch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code> </td>
+<td> class</td>
+</tr>
+<tr>
+<td><code>field</code> </td>
+<td> method</td>
+</tr>
+<tr>
+<td><code>obj</code> </td>
+<td> receiver</td>
+</tr>
+<tr>
+<td><code>args</code> </td>
+<td> method arguments</td>
+</tr>
+<tr>
+<td><code>ctx</code> </td>
+<td> runtime state (cf <a href="https://github.com/mruby/mruby/blob/master/include/mruby.h#L257"><code>mrb_state</code></a>, <a href="https://github.com/antirez/redis/blob/unstable/src/modules/INTRO.md"><code>RedisModuleCtx</code></a>, or <a href="http://erlang.org/doc/tutorial/nif.html"><code>ErlNifEnv</code></a>)</td>
+</tr>
+</tbody>
+</table>
+
+
+<h2>Special Configurations</h2>
+
+<p>Some schemas need other configurations in order to run:</p>
+
+<ul>
+<li><code>resolve_type</code> to support union and interface types</li>
+<li>schema plugins like <a href="https://rmosolgo.github.io/graphql-ruby/pro/monitoring">monitoring</a> or custom <a href="https://rmosolgo.github.io/graphql-ruby/schema/instrumentation">instrumentation</a></li>
+</ul>
+
+
+<p>To add these to a schema, use <code>.redefine</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Extend the schema with new definitions:</span>
+</span><span class='line'><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">redefine</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">resolve_type</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="p">}</span>
+</span><span class='line'>  <span class="n">monitoring</span> <span class="ss">:appsignal</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>What’s Next?</h2>
+
+<p>Rails has proven that “Convention over Configuration” can be a very productive way to start new projects, so I’m interested in exploring convention-based APIs on top of this feature.</p>
+
+<p>In the future, I’d like to add support for schema annotations in the form of directives, for example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">type</span> <span class="no">Post</span> <span class="p">{</span>
+</span><span class='line'>  <span class="ss">comments</span><span class="p">:</span> <span class="o">[</span><span class="no">Comment</span><span class="o">!]</span> <span class="vi">@relation</span><span class="p">(</span><span class="ss">hasMany</span><span class="p">:</span> <span class="s2">&quot;comments&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>These could be used to customize resolution behavior. Cool!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-03-17T15:49:00-04:00" pubdate data-updated="true">Mar 17<span>th</span>, 2017</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/graphql/'>GraphQL</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2017/03/16/tracking-schema-changes-with-graphql-ruby/" title="Previous Post: Tracking Schema Changes with GraphQL-Ruby">&laquo; Tracking Schema Changes with GraphQL-Ruby</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2017/04/12/watching-files-during-rails-development/" title="Next Post: Watching files during Rails development">Watching files during Rails development &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

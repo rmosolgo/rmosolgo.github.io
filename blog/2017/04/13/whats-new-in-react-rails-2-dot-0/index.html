@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>What's new in React-Rails 2.0? - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="For Planning Center free week, I cooked up react-rails 2.0 🎊. Here are a few highlights. For the full list, see the changelog! Webpacker support &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2017/04/13/whats-new-in-react-rails-2-dot-0">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">What's New in React-Rails 2.0?</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-04-13T11:59:00-04:00" pubdate data-updated="true">Apr 13<span>th</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>For <a href="http://planning.center">Planning Center</a> free week, I cooked up <a href="https://github.com/reactjs/react-rails"><code>react-rails</code></a> 2.0 🎊.</p>
+
+<!-- more -->
+
+
+<p>Here are a few highlights. For the full list, see the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a>!</p>
+
+<h2>Webpacker support</h2>
+
+<p><a href="https://github.com/rails/webpacker">Webpacker</a> was great to work with. <code>react-rails</code> now supports webpacker for:</p>
+
+<ul>
+<li>Mounting components with <code>&lt;%= react_component(...) %&gt;</code> via <code>require</code></li>
+<li>Server rendering from a webpacker pack (<code>server_rendering.js</code>)</li>
+<li>Loading the unobtrusive JavaScript (UJS)</li>
+<li>Installation and component generators</li>
+</ul>
+
+
+<p>A nice advantage of using webpacker is that you can load React.js from NPM instead of the <code>react-rails</code> gem. This way, you aren&rsquo;t bound to the React.js version which is included with the Ruby gem. You can pick any version you want!</p>
+
+<h2>UJS on npm</h2>
+
+<p>To support frontends built with Node.js, <code>react-rails</code>&rsquo;s  UJS driver is available on NPM as <a href="https://www.npmjs.com/package/react_ujs"><code>react_ujs</code></a>. It performs setup during <code>require</code>, so these two are equal:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Sprockets:</span>
+</span><span class='line'><span class="c1">//= require react_ujs</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Node, etc:</span>
+</span><span class='line'><span class="nx">require</span><span class="p">(</span><span class="s2">&quot;react_ujs&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Request-based prerender context</h2>
+
+<p>If you&rsquo;re prerendering your React components on the server, you can perform setup and teardown in your Rails controller. For example, you might use these hooks to populate a flux store.</p>
+
+<p>First, add the <code>per_request_react_rails_prerenderer</code> helper to your controller:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">PagesController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="n">per_request_react_rails_prerenderer</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, you can access <code>react_rails_prerenderer</code> in the controller action:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">show</span>
+</span><span class='line'>  <span class="n">js_context</span> <span class="o">=</span> <span class="n">react_rails_prerenderer</span><span class="o">.</span><span class="n">context</span>
+</span><span class='line'>  <span class="n">js_context</span><span class="o">.</span><span class="n">exec</span><span class="p">(</span><span class="n">js_setup_code</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">render</span> <span class="ss">:show</span>
+</span><span class='line'>  <span class="n">js_context</span><span class="o">.</span><span class="n">exec</span><span class="p">(</span><span class="n">js_teardown_code</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That way, you can properly prepare &amp; clean up a JS VM for server rendering.</p>
+
+<h2>Re-detect events</h2>
+
+<p>Previously, <code>ReactRailsUJS</code> &ldquo;automatically&rdquo; detected which libraries you were using and hooked up to their events for rendering components.</p>
+
+<p>It still checks for libraries during its initial load, but you can <em>also</em> re-check as needed:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="c1">// Check the global context for libraries like Turbolinks and hook up to them:</span>
+</span><span class='line'><span class="nx">ReactRailsUJS</span><span class="p">.</span><span class="nx">detectEvents</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This function removes previous event handlers, so it&rsquo;s safe to call anytime. (This was added in <code>2.0.2</code>.)</p>
+
+<h2>Other Takeaways</h2>
+
+<p>See the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a> for bug fixes and a new default server rendering configuration.</p>
+
+<p>Webpacker is great! Setup was smooth and the APIs were clear and convenient. I&rsquo;m looking forward to using it more.</p>
+
+<p>🍻 Here&rsquo;s to another major version of <code>react-rails</code>!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-04-13T11:59:00-04:00" pubdate data-updated="true">Apr 13<span>th</span>, 2017</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/rails/'>Rails</a>, <a class='category' href='/blog/categories/react-dot-js/'>React.js</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2017/04/12/watching-files-during-rails-development/" title="Previous Post: Watching files during Rails development">&laquo; Watching files during Rails development</a>
+        </div>
+      
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

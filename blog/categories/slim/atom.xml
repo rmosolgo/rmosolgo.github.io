@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Slim | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/slim/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Slim Templates with Batman.js and the Rails Asset Pipeline]]></title>
+    <link href="http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline/"/>
+    <updated>2013-11-25T13:28:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2013/11/25/slim-templates-with-batmanjs-and-the-rails-asset-pipeline</id>
+    <content type="html"><![CDATA[<p>You can use <a href="http://slim-lang.com/">Slim</a> (or Haml) to serve your <a href="http://batmanjs.org">Batman.js</a> templates in the Rails Asset Pipeline.</p>
+
+<!-- more -->
+
+
+<h1>1. Include Slim in your gemfile</h1>
+
+<p>Add this line to your <code>Gemfile</code>:</p>
+
+<pre><code class="ruby Gemfile">gem "slim"
+</code></pre>
+
+<h1>2. Register the Slim engine with Rails</h1>
+
+<p>Make a new initializer (eg, <code>config/initializers/slim_assets.rb</code>) and put this in it:</p>
+
+<pre><code class="ruby config/initializers/slim_assets.rb">Rails.application.assets.register_engine('.slim', Slim::Template)
+</code></pre>
+
+<p>Credit: <a href="http://www.dillonbuchanan.com/programming/rails-slim-templates-in-the-asset-pipeline/">Dillon Buchanan</a></p>
+
+<h3>Update: Serving compiled Slim (or Haml) assets in production</h3>
+
+<p>When you deploy to production, if you have <code>config.initialize_on_precompile = false</code>, an initializer isn&rsquo;t going to work. You&rsquo;ll have to register the Sprockets engine another way. Add it to the application config in <code>config/application.rb</code>:</p>
+
+<pre><code class="ruby config/application.rb">module MyApp
+  class Application &lt; Rails::Application
+    # ... config stuff ...
+    config.before_initialize do |app|
+      require 'sprockets'
+      require 'slim'
+      # require 'tilt' # for Haml
+      Sprockets::Engines #force autoloading
+      Sprockets.register_engine '.slim', Slim::Template
+      # Sprockets.register_engine '.haml', Tilt::HamlTemplate # for Haml
+    end
+    # ... more config stuff ...
+  end
+end
+</code></pre>
+
+<p>Now, you&rsquo;ll have the Slim template engine available even if your app doesn&rsquo;t intialize, which is most notably the case for <code>bundle exec rake assets:precompile</code>. Nice!</p>
+
+<h1>3. Beef up your BatmanController</h1>
+
+<p>At time of writing, the <code>batman-rails</code>-generated BatmanController won&rsquo;t work right in production. There&rsquo;s an <a href="https://github.com/batmanjs/batman-rails/pull/46">outstanding PR</a> with a fix. If that&rsquo;s closed, then we&rsquo;re good to go. In the mean time, Make your <code>app/controllers/batman_controller.rb</code> look like this:</p>
+
+<pre><code class="ruby app/controllers/batman_controller.rb">class BatmanController &lt; ApplicationController
+  def index
+    if request.xhr?
+      prefix_length = Rails.application.config.assets.prefix.length + 1
+      path = request.path[prefix_length..-1]
+      render :text =&gt; Rails.application.assets[path]
+    else
+      render nothing: true, layout: 'batman'
+    end
+  end
+end
+</code></pre>
+
+<p>When this is done, any files ending in <code>.html.slim</code> in <code>assets</code> will be served as rendered HTML in response to XHR (Ajax) requests. Note that <em>all non-XHR</em> requests will still receive the <code>batman</code> layout (but then Batman will respond to the request, so you&rsquo;re all good).</p>
+]]></content>
+  </entry>
+  
+</feed>

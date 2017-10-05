@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: mruby | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/mruby/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Defining mruby Methods with C]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c/"/>
+    <updated>2014-11-21T10:25:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/21/defining-mruby-methods-with-c</id>
+    <content type="html"><![CDATA[<p>You can use C code to prepare methods for <a href="http://www.mruby.org">mruby</a> scripts.</p>
+
+<!-- more -->
+
+
+<p>The steps are:</p>
+
+<ul>
+<li>Defining a method</li>
+<li>Getting argument values</li>
+<li>Adding the method to the <code>mrb_state</code></li>
+</ul>
+
+
+<h2>Defining a Method</h2>
+
+<p>To define a Ruby function, make a C function that:</p>
+
+<ul>
+<li>accepts two arguments, a <code>mrb_state</code> and a <code>mrb_value</code></li>
+<li>returns a <code>mrb_value</code>.</li>
+</ul>
+
+
+<p>Here&rsquo;s a minimal method definition:</p>
+
+<pre><code class="c">mrb_value
+ruby_method(mrb_state *mrb, mrb_value self)
+{
+  return mrb_nil_value();
+}
+</code></pre>
+
+<p>The <strong>arguments</strong> are:</p>
+
+<ol>
+<li><code>mrb_state</code>, the current mruby VM instance</li>
+<li><code>mrb_value</code>, the current <code>self</code> (caller of this method)</li>
+</ol>
+
+
+<p>Notice that you don&rsquo;t define the Ruby arguments here. You&rsquo;ll handle those later by getting them from the <code>mrb_state</code>.</p>
+
+<p>The <strong>return type</strong> must be <code>mrb_value</code>. If it&rsquo;s not, your program will crash (<code>Segmentation Fault</code> :( ) when the return value is accessed (no compile-time error). If your method shouldn&rsquo;t return anything, use <code>return mrb_nil_value();</code></p>
+
+<p>mruby implements a lot of the built-in classes' instance methods this way, for example: <code>String#capitalize!</code>(<a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L855">src</a>).</p>
+
+<h2>Getting Arguments</h2>
+
+<p>You might have noticed that your C function definition <em>didn&rsquo;t</em> define any arguments. Instead, you get your arguments by extracting them from <code>mrb_state</code>.</p>
+
+<pre><code class="c">mrb_value
+ruby_method(mrb_state *mrb, mrb_value self)
+{
+  // Initialize a variable
+  mrb_int some_integer;
+  // Extract a value
+  mrb_get_args(mrb, "i", &amp;mrb_int);
+
+  return mrb_nil_value();
+}
+</code></pre>
+
+<p><code>mrb_get_args</code> takes a string whose letters say what kind of arguments and how many arguments to extract. The <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/src/class.c#L437"><code>mrb_get_args</code> source</a> documents the different possibilities.</p>
+
+<p>Notably, anything after a <code>|</code> is <strong>optional</strong>.</p>
+
+<p>For a <strong>default value</strong>, assign a value to the variable and make the argument optional. In this example, <code>inherit</code> defaults to <code>TRUE</code>:</p>
+
+<pre><code class="c">  mrb_bool inherit = TRUE;
+  mrb_get_args(mrb, "|b", &amp;inherit);
+</code></pre>
+
+<p>That&rsquo;s from <a href="https://github.com/mruby/mruby/blob/b28ec1bc88d29d8e7205401a6e323f20581d642f/src/variable.c#L988">C implementation of <code>Module#constants</code></a>. Another nice example is <a href="https://github.com/mruby/mruby/blob/e77ea4e5f2b823181020bb3a337509ba028b6dc4/src/string.c#L831">the <code>String#[]</code> source</a>.</p>
+
+<h2>Adding Methods to mruby State</h2>
+
+<p>To add a method to the mruby state, you must attach it to some object. To make a method global, you can define it on <code>Object</code>. Let&rsquo;s do that.</p>
+
+<p>We&rsquo;ll use <code>mrb_define_method</code>, which accepts five arguments:</p>
+
+<pre><code class="c">mrb_define_method(mrb_state *mrb, struct RClass *c, const char *name, mrb_func_t func, mrb_aspec aspec)
+</code></pre>
+
+<ul>
+<li><code>mrb_state *mrb</code>: the open mruby VM instance</li>
+<li><code>struct RClass *c</code>: the mruby class to attach the method to</li>
+<li><code>const char *name</code>: the Ruby name for this method</li>
+<li><code>mrb_func_t func</code>: the C function to execute for this Ruby method</li>
+<li><code>mrb_aspec aspec</code>: the number &amp; types of arguments for this method</li>
+</ul>
+
+
+<p>In fact, <strong>specifying arguments</strong> is not currently used (<a href="https://github.com/mruby/mruby/issues/791">github issue</a>). To pass some value here, you can use some <a href="https://github.com/mruby/mruby/blob/5c6d6309b6b5e01ef3ff38f772e0fdd3fc5dd372/include/mruby.h#L232-L251">convenient macros from <code>mruby.h</code></a>.</p>
+
+<p>So, let&rsquo;s add a global method, <code>greet!</code>. Here&rsquo;s the method:</p>
+
+<pre><code class="c">static mrb_value
+mrb_greet(mrb_state *mrb, mrb_value self) {
+  printf("Hello, mruby!\n");
+  return mrb_nil_value();
+}
+</code></pre>
+
+<p>Then, attach it to <code>Object</code>, which will make it global:</p>
+
+<pre><code class="c">mrb_define_method(mrb, mrb-&gt;object_class, "greet!", mrb_greet, MRB_ARGS_NONE());
+</code></pre>
+
+<p>Now, you can run in your Ruby script:</p>
+
+<pre><code class="ruby">greet!
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA["Hello World" with mruby]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby/"/>
+    <updated>2014-11-15T19:38:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby</id>
+    <content type="html"><![CDATA[<p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
+
+<!-- more -->
+
+
+<p>&ldquo;Hello World&rdquo; with mruby looks like this:</p>
+
+<ul>
+<li>Set up a new project and include mruby as a submodule</li>
+<li>Write some C code that loads mruby and executes some Ruby code</li>
+<li>Compile the C code &amp; run the resulting binary</li>
+</ul>
+
+
+<p>You can find an example similar to this one <a href="https://github.com/rmosolgo/mruby-examples/tree/master/01_hello_world">on GitHub</a>.</p>
+
+<h2>Start a project</h2>
+
+<p>Make a directory for your new project and enter it:</p>
+
+<pre><code>$ mkdir ~/hello-mruby
+$ cd ~/hello-mruby
+</code></pre>
+
+<p>Clone mruby source and compile mruby:</p>
+
+<pre><code>$ git clone git@github.com:mruby/mruby.git
+$ cd mruby
+$ make
+$ cd ..
+</code></pre>
+
+<p>(You need bison and Ruby to compile mruby, see the <a href="https://github.com/mruby/mruby/blob/master/INSTALL">install guide</a> for more information.)</p>
+
+<p>You can check if compilation was successful by running <code>mirb</code> (interactive mruby):</p>
+
+<pre><code>$ mruby/bin/mirb
+mirb - Embeddable Interactive Ruby Shell
+
+&gt; 1 + 1
+ =&gt; 2
+</code></pre>
+
+<h2>Write the program</h2>
+
+<p>Here&rsquo;s the whole of <code>hello_world.c</code>:</p>
+
+<pre><code class="c">/* include mruby VM &amp; compiler */
+#include "mruby.h"
+#include "mruby/compile.h"
+
+int main(void)
+{
+  /* make a mruby instance */
+  mrb_state *mrb = mrb_open();
+
+  /* write some code */
+  char code[] = "p 'Hello world!'";
+
+  /* use mruby to execute code from string */
+  mrb_load_string(mrb, code);
+
+  return 0;
+}
+</code></pre>
+
+<p>Let&rsquo;s break that down:</p>
+
+<ul>
+<li><p><strong>Include mruby &amp; compiler</strong>. The mruby VM takes bytecode instructions. The compiler is used to turn a string of Ruby code into mruby bytecode. <code>mrb_load_string</code> handles both steps: Parse &amp; compile Ruby code, then execute with the mruby VM.</p></li>
+<li><p><strong>Make a mruby instance</strong>. Create an instance of the mruby VM. This object contains the state of the Ruby evnironment. Besides using it to execute code, you can inject values into the Ruby environment or call Ruby code from C.</p></li>
+<li><p><strong>Use mruby to execute code from string</strong>. As described above, in this case, the string will be turned into VM instructions first, then executed by mruby.</p></li>
+</ul>
+
+
+<h2>Compile &amp; run</h2>
+
+<p>Compile your C application, referencing the necessary mruby files:</p>
+
+<pre><code>$ gcc hello_world.c -o hello_world -Imruby/include  -lmruby  -Lmruby/build/host/lib
+</code></pre>
+
+<p>Then, execute the resulting binary:</p>
+
+<pre><code>$ ./hello_world
+"Hello world!"
+</code></pre>
+
+<p>You did it!</p>
+
+<h2>What next?</h2>
+
+<ul>
+<li>Use <code>mrbc</code> to precompile <code>.rb</code> into mruby bytecode.</li>
+<li>Modify <code>mrb_state</code> from C with things like <code>mrb_define_class</code>, <code>mrb_define_method</code> and <code>mrb_define_const</code>.</li>
+<li>Call Ruby methods from C with <code>mrb_funcall</code>.</li>
+</ul>
+
+
+<p>However, I don&rsquo;t know of any English documentation for these things yet!</p>
+]]></content>
+  </entry>
+  
+</feed>

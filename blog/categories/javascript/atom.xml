@@ -1,0 +1,1212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: JavaScript | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/javascript/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Finding a Browser-Ready File for Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/"/>
+    <updated>2016-05-19T22:00:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets</id>
+    <content type="html"><![CDATA[<p>I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser-ready JavaScript files.</p>
+
+<!-- more -->
+
+
+<p>There are a few good options for getting browser-ready files for JavaScript libraries:</p>
+
+<ul>
+<li>Download a file from the project&rsquo;s website</li>
+<li>Download a file from the project&rsquo;s source code repository</li>
+<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
+<li>Build the file yourself, following the project&rsquo;s documentation</li>
+</ul>
+
+
+<p><strong>Don&rsquo;t</strong> get a minified version. Sprockets will minify it for us later. In the meantime, the unminified version will help us during development.</p>
+
+<h3>From a Website</h3>
+
+<p>This is the good ol' way of getting JavaScript files. Because we still use browsers, you can still download these files.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/website_download_d3.png" width="300"></p>
+
+<p><img src="/images/sprockets/website_download_react.png" width="500"></p>
+
+<p><img src="/images/sprockets/website_download_moment.png" width="300"></p>
+
+<h3>From the Repo</h3>
+
+<p>Many projects maintain a browser build in the project&rsquo;s source. You may have to poke around a bit, but likely places are the project&rsquo;s root folder, the <code>dist/</code> folder, or the <code>build/</code> folder.</p>
+
+<p>As you explore the repo, remember to examine a stable ref, such as a release or a stable branch.</p>
+
+<p>Here are some examples:</p>
+
+<p><img src="/images/sprockets/repo_download_c3.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_immutable.png" width="300"></p>
+
+<p><img src="/images/sprockets/repo_download_three.png" width="300"></p>
+
+<h3>From a CDN</h3>
+
+<p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
+
+<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
+
+<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
+
+<ul>
+<li>Check the &ldquo;main&rdquo; file</li>
+<li>Check the &ldquo;dist&rdquo; or &ldquo;build&rdquo; directories</li>
+</ul>
+
+
+<h3>Build it from Source</h3>
+
+<p>If a pre-built, browser-ready file is not available, you may have to build it yourself! The project&rsquo;s readme will contain instructions to do so. If it doesn&rsquo;t &hellip; you may want to reconsider adding this dependency! (Even if it&rsquo;s well-maintained, it&rsquo;s not a good match for this asset bundling approach.)</p>
+
+<h2>Summary</h2>
+
+<p>Hopefully these will work well for you!</p>
+
+<p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using GraphQL without Relay]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/03/03/using-graphql-without-relay/"/>
+    <updated>2016-03-03T10:01:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/03/03/using-graphql-without-relay</id>
+    <content type="html"><![CDATA[<p>Although <a href="http://facebook.github.io/relay/">Relay</a> made <a href="facebook.github.io/graphql">GraphQL</a> famous, GraphQL was in use at Facebook for years before Relay took the scene. You can use plain AJAX requests to interact with a GraphQL server, too.</p>
+
+<!-- more -->
+
+
+<p><strong>Update 18 Feb 2017:</strong> For a zero-dependency improvement of this concept, see <a href="https://github.com/f/graphql.js">f/graphql-js</a>.</p>
+
+<p>GraphQL servers like <a href="https://github.com/graphql/express-graphql"><code>express-graphql</code></a> or <a href="https://github.com/rmosolgo/graphql-ruby-demo"><code>graphql-ruby</code> on Rails</a> expose a single endpoint which responds to queries.</p>
+
+<p>The endpoint accepts a few parameters:</p>
+
+<ul>
+<li><code>query</code>: The GraphQL query string to execute</li>
+<li><code>variables</code>: Runtime values for variables in the GraphQL query</li>
+<li><code>operationName</code>: if <code>query</code> contains multiple operations, you must tell the server which <em>one</em> to execute</li>
+</ul>
+
+
+<p>Given this interface, you can even use jQuery as a GraphQL client! Here&rsquo;s how you would use <code>$.post</code> to interact with the server.</p>
+
+<h2>1. Build and send query strings</h2>
+
+<p>In your JavaScript, you could dynamically build a GraphQL query, then post it to the server.</p>
+
+<p>For example, if you were searching users by name, you might use this function to build a query string:</p>
+
+<pre><code class="javascript">function usersByNameQuery(searchTerm) {
+  // GraphQL requires double-quoted strings in the query:
+  return '{ users(search: "' + searchTerm + '") { name, id }  }'
+}
+
+usersByNameQuery("bob")
+// "{ users(search: "bob") { name, id }  }"
+</code></pre>
+
+<p>Then, you can post the query with <code>$.post</code>:</p>
+
+<pre><code class="javascript">var query = usersByNameQuery("bob")
+$.post("/graphql", {query: query}, function(response) {
+  if (response.errors) {
+    // handle errors
+  } else {
+    // use response.data
+  }
+})
+</code></pre>
+
+<p>In the callback, you can check for errors and use the response&rsquo;s <code>data</code>.</p>
+
+<h2>2. Send query <em>and</em> variables</h2>
+
+<p>Often, we know our data requirements ahead of time. That is, we know what values we need to render our UI. In this case, we can <em>separate</em> the query structure and runtime values into <code>query</code> and <code>variables</code>.</p>
+
+<p>Here&rsquo;s how we could adapt our previous example to separate the query from its values:</p>
+
+<pre><code class="javascript">// ES6 backtick-quoted string
+var searchByNameQuery = `
+query searchByName($searchTerm: String!) {
+  users(search: $searchTerm) {
+    name
+    id
+  }
+}`
+
+function fetchUsersByName(searchTerm) {
+  var payload = {
+    query: searchByNameQuery,
+    variables: {
+      // This will be used as `$searchTerm` by the server:
+      searchTerm: searchTerm,
+    }
+  }
+
+  $.post("/graphql", payload, function(response) {
+    if (response.errors) {
+      // handle errors ...
+    } else {
+      // use response.data
+    }
+  })
+}
+</code></pre>
+
+<p>In this case, we always send the <em>same</em> query string, but we change the <code>variables</code> for each request.</p>
+
+<p>This setup is easier to maintain because the query string is so easy to read. Any changes to it will be easy to see in a pull request.</p>
+
+<h1>3. (future) Store query strings on the server</h1>
+
+<p>Maybe you noticed an optimization waiting to happen: since we always send the same query string, why send it at all? We could store it on the server ahead of time, then call it by name at runtime.</p>
+
+<p><del>I heard that Facebook&rsquo;s GraphQL server had this behavior, but I don&rsquo;t know that any of the open implementations have it yet. I&rsquo;m <a href="https://github.com/rmosolgo/graphql-ruby/pull/76">considering it for <code>graphql-ruby</code></a>.</del></p>
+
+<p>Update: this behavior is called &ldquo;persisted queries&rdquo; and is supported by <a href="http://graphql.pro"><code>GraphQL::Pro</code></a>, read more in <a href="#">this introductory blog post</a>.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Build a Blog with Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js/"/>
+    <updated>2014-06-06T08:38:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/06/build-a-blog-with-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>In this whirlwind tutorial, we&rsquo;ll build a blog with <a href="http://batmanjs.org">batman.js</a> and <a href="http://firebase.com">Firebase</a>.</p>
+
+<!-- more -->
+
+
+<p>To get a feel for batman.js, let&rsquo;s build an blog where:</p>
+
+<ul>
+<li>People may sign in (with Github)</li>
+<li>The owner may create, edit and destroy posts</li>
+<li>Other signed-in users may leave comments and delete their own comments</li>
+<li>The owner may destroy comments</li>
+</ul>
+
+
+<p>If you run into any problems on the way, just let me know in the comments section at the bottom of this page! Also, the <a href="https://github.com/rmosolgo/batmanjs-blog">completed source of this tutorial is available on Github</a>.</p>
+
+<h1>Preface: Batman.js Objects and Properties</h1>
+
+<p>If you&rsquo;re brand new to batman.js, here&rsquo;s the quick-and-dirty:</p>
+
+<p><code>Batman.Object</code> is the superclass of (almost) all objects in batman.js. Properties of <code>Batman.Object</code>s are also called <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><strong>accessors</strong></a>, becuase they&rsquo;re <em>always</em> defined with <code>@accessor</code> in the class definition.</p>
+
+<p>There are 2 possible syntaxes:</p>
+
+<ul>
+<li><strong>Read and write</strong> accessors:</li>
+</ul>
+
+
+<pre><code class="coffeescript">class App.Comment extends Batman.Model
+  @accessor 'mood',
+    get: (key)        -&gt; # getter function
+    set: (key, value) -&gt; # setter function
+</code></pre>
+
+<ul>
+<li><strong>Read-only</strong> accessors:</li>
+</ul>
+
+
+<pre><code class="coffeescript">  @accessor 'isPositive', (key) -&gt; # getter function only
+</code></pre>
+
+<p><code>@accessor</code> is your friend. Use <code>@accessor</code> whenever you can (it can often replace functions, too). Accessors are <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a> by batman.js, so view bindings and other accessors are automatically updated. You can defined accessors in your <code>Batman.Model</code>, <code>Batman.Controller</code> and <code>Batman.View</code> subclasses.</p>
+
+<p>Accessors are <em>always</em> <strong>accessed via <code>get</code> and <code>set</code></strong>:</p>
+
+<pre><code class="coffeescript">myComment.set("mood", "pensive")
+myComment.get("mood")
+</code></pre>
+
+<p>These property names are also called <em>keypaths</em> and maybe be &ldquo;deep&rdquo;, chained with <code>.</code>:</p>
+
+<pre><code class="coffeescript">myComment.get('post.name') # equivalent to myComment.get('post').get('name')
+</code></pre>
+
+<p>Under the hood, accessors power batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a> and view bindings. Now, back to your regularly scheduled programming!</p>
+
+<h1>Setup</h1>
+
+<p>To build this blog, you&rsquo;ll need:</p>
+
+<ul>
+<li>A <a href="http://github.com">Github account</a></li>
+<li><a href="http://nodejs.org/">node.js</a></li>
+<li>A <a href="http://firebase.com">Firebase account</a></li>
+</ul>
+
+
+<p>Also, you&rsquo;ll need a copy of <a href="http://github.com/rmosolgo/batmanjs-starter">rmosolgo/batmanjs-starter</a>, which can be installed with:</p>
+
+<pre><code class="bash">cd ~/code # or wherever you keep it
+git clone git@github.com:rmosolgo/batman-starter.git batmanjs_blog
+cd batmanjs_blog
+npm install
+</code></pre>
+
+<p>You can make sure it&rsquo;s all ready-to-go with:</p>
+
+<pre><code>npm install -g gulp
+gulp
+</code></pre>
+
+<p>Then visit <a href="http://localhost:9000">localhost:9000</a>. If you see <code>Welcome to batman.js!</code>, then you&rsquo;re all set!</p>
+
+<h1>Storage and Authentication</h1>
+
+<p>We don&rsquo;t have a server for this app, but we do have to set up Firebase!</p>
+
+<h3>Set Up Firebase</h3>
+
+<p>First, open <a href="http://firebase.com">Firebase</a> and click <code>Login</code> and click the Github logo. Then, create a new app. Any name will work, for example <code>rm-batmanjs-blog</code>. Ok, you have a firebase!</p>
+
+<h3>Register Your App with Github</h3>
+
+<p>Then, in another tab, sign into <a href="http://github.com">Github</a>, and click: <code>Account Settings</code> (top right) > <code>Applications</code> (in the sidebar) > <code>Register New Application</code>. Add this information:</p>
+
+<ul>
+<li>Application name: firebase name (eg, <code>rm-batmanjs-blog</code>)</li>
+<li>Application URL: <code>http://#{firebase name}.firebaseapp.com</code> (eg, <code>http://rm-batmanjs-blog.firebaseapp.com</code>)</li>
+<li>Callback URL: <code>https://auth.firebase.com/auth/github/callback</code> (<a href="https://www.firebase.com/docs/security/simple-login-github.html">provided by Firebase</a>)</li>
+</ul>
+
+
+<p>Click <code>Register Application</code>. Ok, you have your Client ID and Client Secret!</p>
+
+<p>Now, provide the Client ID and Client Secret to Firebase. In your Firebase app manangement tab, click <code>Manage App</code> > <code>Simple Login</code> > <code>Github</code>:</p>
+
+<ul>
+<li>Check <code>Enabled</code></li>
+<li>Paste in Client ID and Client Secret</li>
+</ul>
+
+
+<p>(Firebase automatically saves your input.)</p>
+
+<h3>Configure Your Batman.js App</h3>
+
+<p>Now, configure your app to use your firebase. Open <code>app.coffee</code>, then replace the <code>@syncsWithFirebase</code> name and add <code>@authorizesWithFirebase()</code>. For example, it should look like:</p>
+
+<pre><code class="coffeescript">  @syncsWithFirebase "rm-batmanjs-blog"
+  @authorizesWithFirebase()
+</code></pre>
+
+<p>Also in <code>app.coffee</code>, make a app accessor <code>isAdmin</code>, looking up your github ID from <code>https://api.github.com/users/#{yourUserId}</code>:</p>
+
+<pre><code class="coffeescript">  @classAccessor 'isAdmin', -&gt; @get('currentUser.uid') is "github:{yourGitHubId}"
+</code></pre>
+
+<p>To show the <code>Log In</code>/<code>Log Out</code> buttons, remove the <code>&lt;!-- requires @authorizesWithFirebase</code> / <code>--&gt;</code> comment wrapper in <code>index.html</code>.</p>
+
+<p>Now, you will see the <code>Log In</code> button, and it will log you in with Github!</p>
+
+<p><em>At the end of this post, we&rsquo;ll use Firebase Security Rules to provide &ldquo;server-side&rdquo; authentication, which is a must-have!</em></p>
+
+<h1>Posts</h1>
+
+<p>To add posts to our blog, we will:</p>
+
+<ul>
+<li>define the <code>App.Post</code> model</li>
+<li>define <code>App.PostsController</code> and make routes to it</li>
+<li>write some HTML for the controller to render</li>
+</ul>
+
+
+<h2>Post Model</h2>
+
+<p>In a batman.js project, models go in the <code>models/</code> directory. In the starter package, you&rsquo;ll find the <code>App.Greeting</code> model in <code>greeting.coffee</code>. Remove it. Then, add <code>post.coffee</code>. Here&rsquo;s the <code>Post</code> model:</p>
+
+<pre><code class="coffeescript">class App.Post extends Batman.Model
+  @resourceName: 'post'
+  @persist BatFire.Storage
+  @encode 'title', 'content'
+
+  @validate 'title', presence: true
+  @validate 'content', minLength: 25
+  @belongsToCurrentUser(ownership: true)
+  @encodesTimestamps()
+
+  @accessor 'createdAtFormatted', -&gt;
+    @get('created_at')?.toDateString()
+</code></pre>
+
+<p>Let&rsquo;s break that down:</p>
+
+<h3>Class Definition</h3>
+
+<pre><code class="coffeescript">class App.Post extends Batman.Model
+</code></pre>
+
+<p>In a batman.js app, all models are children of <a href="http://batmanjs.org/docs/api/batman.model.html"><code>Batman.Model</code></a>. Since we&rsquo;re using CoffeeScript&rsquo;s <code>extend</code>, you can extend your own models, too &ndash; the inheritance hierarchy will be maintained.</p>
+
+<h3>Persistence</h3>
+
+<pre><code class="coffeescript">  @resourceName: 'post'
+  @persist BatFire.Storage
+  @encode 'title', 'content'
+</code></pre>
+
+<p>These define how the model is persisted:</p>
+
+<ul>
+<li><code>@resourceName</code> is a minification-safe model name. It may also define &ldquo;where&rdquo; to save the model (for example, a URL segment).</li>
+<li><code>@persist</code> says which <a href="http://batmanjs.org/docs/api/batman.storageadapter.html"><code>Batman.StorageAdapter</code></a> will connect this model to a storage backend. We&rsquo;re using a Firebase adapter, but batman.js also ships with <code>Batman.LocalStorage</code> and <code>Batman.RestStorage</code>. <code>Batman.RailsStorage</code> is in the <code>batman.rails</code> extra.</li>
+<li><code>@encode</code> tells batman.js which attributes will be persisted with the storage adapter.</li>
+</ul>
+
+
+<h3>Validations</h3>
+
+<pre><code class="coffeescript">  @validate 'title', presence: true
+  @validate 'content', minLength: 25
+</code></pre>
+
+<p>Batman.js models may validate their attributes. See the docs for <a href="http://batmanjs.org/docs/api/batman.model_validations.html">all supported validators</a> and the custom validation API.</p>
+
+<h3>Special BatFire.Storage Functions</h3>
+
+<pre><code class="coffeescript">  @belongsToCurrentUser(ownership: true)
+  @encodesTimestamps()
+</code></pre>
+
+<p>These are provided by <a href="http://github.com/rmosolgo/batfire"><code>BatFire.Storage</code></a> as conveniences.</p>
+
+<ul>
+<li><code>@belongsToCurrentUser(ownership: true)</code> adds <code>created_by_uid</code> to our model and provides client-side validation that only the creator may alter any persisted records</li>
+<li><code>@encodesTimestamps()</code> defines and encodes <code>created_at</code> and <code>updated_at</code> attributues.</li>
+</ul>
+
+
+<h3>Accessors</h3>
+
+<pre><code class="coffeescript">  @accessor 'createdAtFormatted', -&gt;
+    @get('created_at')?.toDateString()
+</code></pre>
+
+<p>This shows how you can define properties on your models. Now, <code>post.get('createdAtFormatted')</code> will return a (slightly) prettier version of the <code>created_at</code> date string. Since it&rsquo;s a <a href="http://batmanjs.org/docs/api/batman.object_accessors.html"><code>Batman.Object</code> accessor</a>, if <code>created_at</code> somehow changed, <code>createdAtFormatted</code> would also be updated.</p>
+
+<h2>PostsController</h2>
+
+<p><code>Batman.Controller</code> is modeled after Rails controllers. It has actions that are invoked by routes and are responsible for rendering views. They belong in <code>controllers/</code>, so create <code>controllers/posts_controller.coffee</code>. Let&rsquo;s define a controller to render our posts:</p>
+
+<pre><code class="coffeescript">class App.PostsController extends App.ApplicationController
+  routingKey: 'posts'
+  index: -&gt;
+    @set 'posts', App.Post.get('all.sortedByDescending.created_at')
+
+  new: -&gt;
+    @set 'post', new App.Post
+
+  show: (params) -&gt;
+    App.Post.find params.id, (err, record) =&gt;
+      throw err if err?
+      @set 'post', record
+
+  edit: (params) -&gt;
+    App.Post.find params.id, (err, record) =&gt;
+      throw err if err?
+      @set 'post', record.transaction()
+
+  savePost: (post) -&gt;
+    post.save (err, record) =&gt;
+      if err
+        if !(err instanceof Batman.ErrorsSet)
+          throw err
+      else
+        @redirect(action: "index")
+
+  destroyPost: (post) -&gt;
+    post.destroy (err, record) =&gt;
+      @redirect(action: "index")
+</code></pre>
+
+<p>Here, you can see:</p>
+
+<ul>
+<li><code>App.PostsController extends App.ApplicationController</code>: all controllers extends a base controller. In big apps, <code>ApplicationController</code> is home to things like <a href="http://batmanjs.org/docs/api/batman.controller.html#error_handling">error handling</a> and <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-render_into_modal">dialog render helpers</a>.</li>
+<li>Controllers must have a <code>routingKey</code>. This is a <a href="http://batmanjs.org/docs/api/batman.controller.html#routingkey_and_minification">minification-safe name</a> which is used by the router.</li>
+<li>Controllers have <a href="http://batmanjs.org/docs/api/batman.controller.html#actions"><strong>actions</strong></a> which fetch data and render views. In <code>PostsController</code>, the <em>actions</em> are <code>index</code>, <code>new</code>, <code>show</code>, and <code>edit</code>.</li>
+<li><code>savePost</code> and <code>destroyPost</code> will be invoked by user input (described in the HTML section, next)</li>
+</ul>
+
+
+<p>Let&rsquo;s also add routes for this controller. In <code>app.coffee</code>, remove any <code>@root</code> or <code>@resources</code> declarations and add:</p>
+
+<pre><code class="coffeescript">  @root 'posts#index'
+  @resources 'posts'
+</code></pre>
+
+<p>This sets up <code>/</code> to dispatch <code>PostsController</code>&rsquo;s <code>index</code> action and sets up <a href="http://batmanjs.org/docs/api/batman.app_routing.html#class_function_resources">resource-based routes</a> for <code>PostsController</code>.</p>
+
+<p>There are a few other things to point out:</p>
+
+<ul>
+<li>We didn&rsquo;t call <code>@render</code> in any of our actions. This is because batman.js <em>automatically renders</em> after any controller actions that didn&rsquo;t explicitly render. This is called the <em>implicit render</em> and may be overriden, for example, if you want to <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-defer_render">wait for data to load before rendering views</a>.</li>
+<li><em>Actions</em> and <em>event handlers</em> are both functions on the controller. This is possible because the controller is in the binding context of the view (see &ldquo;Render Context&rdquo; in the <a href="http://batmanjs.org/docs/bindings.html">bindings guide</a>).</li>
+</ul>
+
+
+<p>Also, since we have routes, let&rsquo;s update the navbar <code>&lt;ul&gt;</code> in <code>index.html</code> to look like this:</p>
+
+<p>```html</p>
+
+<ul class="nav navbar-nav">
+  <li><a data-route='routes.posts'>Blog Posts</a></li>
+  <li data-showif='isAdmin'><a data-route='routes.posts.new'>New Post</a></li>
+</ul>
+
+
+<pre><code>
+(More about those `data-` attributes to follow...)
+
+## Posts HTML
+
+We need HTML to be rendered in by our controller. _HTML templates_ are distinct from _views_, but may be used together. This is described in detail below. For now, let's add some HTML. In a batman.js project, HTML for a controller action belongs in `html/#{routingKey}/#{action}.html`.
+
+### show.html
+
+Let's define `html/posts/show.html`. It will be loaded by `posts#show` to display a post instance:
+</code></pre>
+
+<div class='row'>
+  <div class='col-sm-12'>
+    <h1 class='page-header'>
+      <span data-bind='post.title'></span>
+      <small data-bind='post.createdAtFormatted'></small>
+    </h1>
+  </div>
+</div>
+
+
+
+
+<div class='row'>
+  <p class='col-sm-12' data-bind='post.content'></p>
+</div>
+
+
+<pre><code>
+Besides the [bootstrap boilerplate](http://getbootstrap.com), you might notice `data-bind` on some of these HTML tags. `data-*` attributes is how batman.js binds data to the DOM. Those attributes are called __[data bindings](http://batmanjs.org/docs/bindings.html)__.
+
+The [`data-bind` binding](http://batmanjs.org/docs/api/batman.view_bindings.html#data-bind) is the simplest data binding: it simply connects the node to the property which is passed to it.
+
+When combining data and text, it's common to use `&lt;span data-bind="..."&gt;&lt;/span&gt;`, as in the `&lt;h1/&gt;` above.
+
+### index.html
+
+Let's define `html/posts/index.html`:
+</code></pre>
+
+<div class='row'>
+  <h1 class='col-sm-12'>
+    <span data-bind='"Post" | pluralize posts.length'></span>
+  </h1>
+</div>
+
+
+<ul class='list-unstyled'>
+  <li data-foreach-post='posts'>
+    <div class='row'>
+      <a data-route='routes.posts[post]'>
+        <p class='lead col-sm-4' data-bind='post.title'></p>
+      </a>
+      <div class='col-sm-2'>
+        <a data-showif='post.isOwnedByCurrentUser' class='btn btn-warning pull-right' data-route='routes.posts[post].edit'>Edit</a>
+      </div>
+      <div class='col-sm-2'>
+        <a data-showif='post.isOwnedByCurrentUser' class='btn btn-danger pull-right' data-event-click='destroyPost | withArguments post'>Delete</a>
+      </div>
+      <span class='text-muted col-sm-4'>
+        Posted on
+        <span data-bind="post.createdAtFormatted"></span>
+      </span>
+    </div>
+    <div class='row'>
+      <p class='col-sm-12' data-bind='post.content | truncate 100'></p>
+    </div>
+  </li>
+</ul>
+
+
+<div class='row' data-showif='isAdmin'>
+  <div class='col-sm-2'>
+    <a class='btn btn-default' data-route='routes.posts.new'>New Post</a>
+  </div>
+</div>
+
+
+<pre><code>
+Let's look at some interesting parts:
+
+#### View Filters
+</code></pre>
+
+<p><span data-bind='"Post" | pluralize posts.length'></span>
+```</p>
+
+<p>This will output things like <code>3 Posts</code>. It takes a plain string, then passes it to the <a href="http://batmanjs.org/docs/api/batman.view_filters.html#pluralize(value%2C_count)_%3A_string">pluralize view filter</a>, with <code>posts.length</code> as an argument. Since it&rsquo;s bound to <code>posts.length</code>, it will automatically update whenever the number of <code>Post</code>s change.</p>
+
+<p>There are quite a lot of batman.js view filters, be sure to <a href="http://batmanjs.org/docs/api/batman.view_filters.html">check out the documentation</a>.</p>
+
+<h4>Iterator Binding</h4>
+
+<p>```html</p>
+
+<ul class='list-unstyled'>
+  <li data-foreach-post='posts'>
+    <!-- ... -->
+  </li>
+</ul>
+
+
+<pre><code>
+The [`data-foreach-#{item}="collection"` binding](http://batmanjs.org/docs/api/batman.view_bindings.html#data-foreach) is how you bind to a collection. The `&lt;li /&gt;` is called the "prototype node", and one will be rendered for each item in the collection. As long as `"collection"` is a batman.js data structure (ie, not a plain JS array), the binding will be automatically updated when items are added and removed. (Unless you explicitly make arrays yourself, you don't have to worry; batman.js always uses observable data structures like [Batman.Set](http://batmanjs.org/docs/api/batman.set.html) and [Batman.Hash](http://batmanjs.org/docs/api/batman.hash.html).)
+
+#### Named Routes
+</code></pre>
+
+<p><a data-route='routes.posts[post]'>
+  <!-- ... -->
+</a>
+```</p>
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-route"><code>data-route</code> binding</a> is how you link to other routes in your app. The &ldquo;route query&rdquo; passed to the binding is based on your declared routes. Here are a few other valid routes:</p>
+
+<pre><code>data-route="routes.posts"               # =&gt; goes to `posts#index`
+data-route="routes.posts.new"           # =&gt; goes to `posts#new`
+data-route="routes.posts[myPost]"       # =&gt; goes to `posts#show` for a post instance `myPost`
+data-route="routes.posts[myPost].edit"  # =&gt; goes to `posts#edit` for a post instance `myPost`
+</code></pre>
+
+<p>In the binding above, <code>post</code> refers to a post instance, so the <code>&lt;a/&gt;</code> will point to that post&rsquo;s <code>show</code> page.</p>
+
+<h4>Showif / Event</h4>
+
+<pre><code class="html">&lt;a data-showif='post.isOwnedByCurrentUser' class='btn btn-danger pull-right' data-event-click='destroyPost | withArguments post'&gt;Delete&lt;/a&gt;
+</code></pre>
+
+<p>This has two bindings:</p>
+
+<ul>
+<li><code>data-showif</code> shows the node if the keypath returns truthy. <code>isOwnedByCurrentUser</code> is provided by <code>BatFire.Storage</code>.</li>
+<li><code>data-event-click</code> points to a function to call when the node is clicked, in this case <code>AppPostsController::destroyPost</code>, which we defined above</li>
+</ul>
+
+
+<h3>new.html</h3>
+
+<p>For <code>new.html</code>, let&rsquo;s plan ahead: we&rsquo;ll make <code>new.html</code> include a reusable form, <code>form.html</code>. So, <code>new.html</code> is very simple:</p>
+
+<p>```html</p>
+
+<div class='row'>
+  <h1 class='col-sm-12'>
+    New Post
+  </h1>
+</div>
+
+
+
+
+<div data-partial='posts/form'></div>
+
+
+<pre><code>
+#### Partial
+</code></pre>
+
+<div data-partial='posts/form'></div>
+
+
+<pre><code>This will render `html/posts/form.html` inside that node.
+
+Let's add `form.html`:
+</code></pre>
+
+<p><form data-formfor-post='post' data-event-submit='savePost | withArguments post'>
+  <div class='errors alert alert-warning' data-showif='post.errors.length'>
+  </div>
+  <div class='form-group'>
+    <label>Title</label>
+    <input type='text' class='form-control' data-bind='post.title' />
+  </div>
+  <div class='form-group'>
+    <label>Content</label>
+    <textarea class='form-control' data-bind='post.content'></textarea>
+  </div>
+  <div class='form-group'>
+    <input type='submit' class='btn btn-primary' value='Save' />
+    <a class='btn btn-danger' data-route='routes.posts'>Cancel</a>
+  </div>
+</form>
+```</p>
+
+<p>Let&rsquo;s examine some of the details:</p>
+
+<h4>Form Binding</h4>
+
+<pre><code>&lt;form data-formfor-post='post' data-event-submit='savePost | withArguments post'&gt;
+  &lt;!-- ... --&gt;
+&lt;/form&gt;
+</code></pre>
+
+<p>The <a href="http://batmanjs.org/docs/api/batman.view_bindings.html#data-formfor"><code>data-formfor-#{formName}="item"</code> binding</a> will automatically bind validation errors to the element matching <code>.errors</code>:</p>
+
+<pre><code>  &lt;div class='errors alert alert-warning' data-showif='post.errors.length'&gt;
+</code></pre>
+
+<p>Also, the <code>data-event-submit</code> will invoke <code>App.PostsController::savePost</code> when the form is submitted.</p>
+
+<h4>Input Bindings</h4>
+
+<pre><code>&lt;input type='text' class='form-control' data-bind='post.title' /&gt;
+</code></pre>
+
+<p>When you use <code>data-bind</code> on an <code>&lt;input /&gt;</code> (or <code>&lt;select /&gt;</code>, etc), you create a two-way binding. Any changes to the input will change the attribute of the model.
+You can <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/html#sec-input_bindings">bind to all different kinds of inputs</a>.</p>
+
+<h3>edit.html</h3>
+
+<p>In <code>edit.html</code>, let&rsquo;s reuse our <code>form.html</code> partial:</p>
+
+<p>```html</p>
+
+<div class='row'>
+  <h1 class='col-sm-12'>
+    Edit Post
+  </h1>
+</div>
+
+
+<div data-partial='posts/form'>
+</div>
+
+
+<pre><code>
+## Where were the views?
+
+In batman.js, _views_ are CoffeeScript classes that render templates and maintain bindings. They're intantiated and destroyed when controller actions are rendered. It's a bit like this:
+</code></pre>
+
+<p>ROUTER                      &ndash;>  CONTROLLER        &ndash;>  VIEW                      &ndash;>  HTML TEMPLATE
+- responds to URL change         - executes action      - parses bindings from HTML    - copied into views
+- dispatches controller action   - renders view         - inserts HTML into DOM        - just sits there
+                                                        - maintains bindings</p>
+
+<pre><code>You might have noticed that we made a _controller_ and a _template_, but no `Batman.View`. Why not?
+
+This is because `Batman.Controller` will use a vanilla `Batman.View` to render your HTML unless you define one by hand. Custom views a great for a ton of things:
+
+- Rendering [specialized UI components](http://rmosolgo.github.io/blog/2013/11/23/dynamic-navigation-view-with-batman-dot-js/)
+- Integrating other librarires, like [jQuery plugins](https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/view#sec-jquery_initialization) or [leaflet.js](http://rmosolgo.github.io/blog/2014/04/30/integrate-batman-dot-js-and-leaflet-with-a-custom-view/)
+- [Animating page changes](https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/view#sec-view_transitions)
+
+But we didn't need one, so we didn't make one!
+
+(PS: Learn more about [controllers' default views](https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-default_views) or [custom views](http://batmanjs.org/docs/views.html).)
+
+# Comments
+
+Let's allow other signed-in users to comment on our blog posts. We'll need to:
+
+- define the model, `App.Comment`
+- associate it to `App.Post`
+- add a comment form to `posts/show`
+
+## App.Comment
+
+Open up `models/comment.coffee` and define `App.Comment`:
+</code></pre>
+
+<p>class App.Comment extends Batman.Model
+  @resourceName: &lsquo;comment&rsquo;
+  @persist BatFire.Storage
+  @encode &lsquo;content&rsquo;
+  @belongsTo &lsquo;post&rsquo;
+  @validate &lsquo;content&rsquo;, presence: true
+  @belongsToCurrentUser()
+  @encodesTimestamps()</p>
+
+<p>  @accessor &lsquo;createdAtFormatted&rsquo;, ->
+    @get(&lsquo;created_at&rsquo;)?.toDateString()</p>
+
+<p>  @accessor &lsquo;canBeDeleted&rsquo;, ->
+    @get(&lsquo;isOwnedByCurrentUser&rsquo;) || App.get(&lsquo;isAdmin&rsquo;)
+```</p>
+
+<p>Most of this looks familiar: persistence, encoding, validations, accessors. There is one new thing:</p>
+
+<h3>Model Association</h3>
+
+<pre><code>@belongsTo 'post'
+</code></pre>
+
+<p>This defines a <a href="http://batmanjs.org/docs/api/batman.model_associations.html">model association</a> between <code>Comment</code> and <code>Post</code>. In this case, we defined a <code>belongsTo</code> association, so:</p>
+
+<ul>
+<li>A <code>Comment</code> has a <code>post</code> attribute:</li>
+</ul>
+
+
+<pre><code class="coffeescript">  myComment.get('post') # =&gt; &lt;Post instance&gt;
+</code></pre>
+
+<ul>
+<li>A <code>Comment</code> will encode <code>post_id</code>, which is the <code>id</code> of its associated <code>Post</code>.</li>
+</ul>
+
+
+<p>We also need to add this concern to our <code>Post</code>-related code. Open <code>models/post.coffee</code>, and after your <code>@encode</code> call, add:</p>
+
+<pre><code class="coffeescript">class App.Post extends Batman.Model
+  # ...
+  @hasMany 'comments', inverseOf: 'post'`
+</code></pre>
+
+<p>We have defined a <code>hasMany</code> relation from Post to Comment. So, a Post has a <code>comments</code> attribute, which returns a <code>Batman.Set</code> full of Comments:</p>
+
+<pre><code class="coffeescript">myPost.get('comments') # =&gt; &lt;Batman.Set [Comment, Comment...]&gt;
+</code></pre>
+
+<p>Since <code>Post</code> and <code>Comment</code> are associated, we have to make sure that a <code>Post</code>&rsquo;s <code>Comment</code>s are destroyed when the <code>Post</code> is destroyed. So, update <code>App.PostsController::destroyPost</code>:</p>
+
+<pre><code class="coffeescript">  destroyPost: (post) -&gt;
+    post.get('comments').forEach (c) -&gt; c.destroy()
+    post.destroy (err, record) =&gt;
+      @redirect(action: "index")
+</code></pre>
+
+<p>Now, whenever you destroy a <code>Post</code>, you&rsquo;ll also destroy its comments, so you don&rsquo;t end up with orphaned comments. We used <code>Batman.Set::forEach</code> &ndash; see <a href="http://rmosolgo.github.io/blog/2014/04/30/getting-to-know-batman-dot-set/">this blog post</a> for an introduction to <code>Batman.Set</code>!</p>
+
+<h2>Comment Form</h2>
+
+<p>Let&rsquo;s add comment form to <code>posts/show</code> so that users can log in. Append each of these blocks of HTML to the bottom of <code>html/posts/show.html</code>.</p>
+
+<h3>Heading</h3>
+
+<p>```html</p>
+
+<div class='row'>
+  <div class='col-sm-12'>
+    <h3> Comments </h3>
+  </div>
+</div>
+
+
+<pre><code>
+Nothing to see here, move along ...
+
+### List of Comments
+
+This will render existing comments for a post:
+</code></pre>
+
+<div class='row'>
+  <ul class='list-unstyled'>
+    <!-- render comments: -->
+    <li data-foreach-comment='post.comments' >
+      <p class='col-sm-4'>
+        <strong class='pull-right'>
+          On <span data-bind='comment.createdAtFormatted'></span>, <span data-bind='comment.created_by_username'></span> said:
+        </strong>
+      </p>
+      <p class='col-sm-6' data-bind='comment.content'></p>
+      <div class='col-sm-2' data-showif='comment.canBeDeleted'>
+        <a class='btn btn-danger btn-xs' data-event-click='destroyComment | withArguments comment'> Delete </a>
+      </div>
+    </li>
+    <!-- "design" for empty state -->
+    <li class='col-sm-12' data-showif='post.comments.isEmpty'>
+      <p class='text-muted'>No comments yet!</p>
+    </li>
+  </ul>
+</div>
+
+
+<pre><code>
+A few things of note:
+
+- There's a `data-foreach` binding with a `&lt;li/&gt;` prototype node. I included another `&lt;li/&gt;` with `data-showif='post.comments.isEmpty'`, just in case there aren't any comments yet.
+- `data-showif='comment.canBeDeleted'` is using the accessor we defined in the model definition.
+- We're using `data-event-click='destroyComment | withArguments comment'` but we haven't defined `destroyComment` yet. We'll do that next!
+
+### Comment Form
+
+Notice that there are actually two parts of the HTML: one to show if `loggedOut`, the other to show if `loggedIn`:
+</code></pre>
+
+<div class='row' data-showif='loggedOut'>
+  <div class='col-sm-12'>
+    <div class='well'>
+      <p>You must be <a data-event-click='login'>logged in</a> to leave a comment!</p>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div class='row' data-showif='loggedIn'>
+  <div class='col-sm-12'>
+    <form data-formfor-comment='newComment' data-event-submit='saveComment | withArguments newComment'>
+      <div class='form-group'>
+        <label>New Comment:</label>
+        <textarea
+          class='form-control'
+          data-bind='newComment.content'
+          data-bind-placeholder='"Leave a comment as " | append currentUser.username | append "..."'
+          >
+        </textarea>
+      </div>
+      <input type='submit' class='btn btn-primary' value='Leave a comment' />
+    </form>
+  </div>
+</div>
+
+
+<pre><code>
+#### Conditionals in HTML
+</code></pre>
+
+<div data-showif='loggedOut'>
+  <!-- show this to logged-out users -->
+</div>
+
+
+<div data-showif='loggedIn'>
+  <!-- show this to logged-in users -->
+</div>
+
+
+<pre><code>
+Using multiple `data-showif`/`data-hideif` bindings is a common way of expressing conditional logic in batman.js templates.
+
+
+#### Binding to Attributes
+</code></pre>
+
+<p><textarea data-bind-placeholder='"Leave a comment as " | append currentUser.username | append "..."' ></textarea>
+```</p>
+
+<p>Here, we have bound data to the <code>&lt;textarea /&gt;</code>&rsquo;s <code>placeholder</code> attribute. You can use <code>data-bind-#{attr}</code> to bind to any HTML attribute.</p>
+
+<h2>Use a Custom View</h2>
+
+<p><a href="http://batmanjs.org/docs/views.html">Views</a> inject new accessors and functions into the render context. They also have <a href="http://batmanjs.org/docs/api/batman.view_lifecycle.html">lifecycle hooks</a> that can be used for initialization, etc.</p>
+
+<p>To handle some actions with the comment form, we&rsquo;ll <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-default_views">implement the default view</a> for the <code>posts#show</code> action. Open <code>views/posts/posts_show_view.coffee</code> and add:</p>
+
+<pre><code class="coffeescript">class App.PostsShowView extends Batman.View
+  viewWillAppear: -&gt;
+    @_resetComment()
+
+  saveComment: (comment) -&gt;
+    # set up the association:
+    comment.set 'post', @get('controller.post')
+    comment.save (err, record) =&gt;
+      throw err if err?
+      @_resetComment()
+
+  _resetComment: -&gt;
+    @set('newComment', new App.Comment)
+
+  destroyComment: (comment) -&gt;
+    comment.destroy (err, r) -&gt;
+      throw err if err?
+</code></pre>
+
+<p>Because our view is named <code>App.PostsShowView</code>, it will automatically be used by the <code>posts#new</code> controller action. It&rsquo;s called the &ldquo;default view&rdquo; of <code>posts#show</code>.</p>
+
+<p>Notably:</p>
+
+<ul>
+<li><code>data-event</code> handlers may be on controllers <em>or</em> views; both of them are in the &ldquo;render context&rdquo;.</li>
+<li>we used a lifecycle hook, <code>viewWillAppear</code>, to initialize our empty form.</li>
+<li>we set the comment&rsquo;s <code>post</code> during <code>saveComment</code> because it might not have loaded yet when the view is rendered. You can also avoid this problem by <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook/controller#sec-defer_render">waiting until data is loaded to render the view</a>.</li>
+</ul>
+
+
+<h1>Firebase Security Rules</h1>
+
+<p>You <strong>always</strong> need server-side validation to accompany client-side validations. Otherwise, a mean-spirited user could wreck your data from the JS console.</p>
+
+<p>It&rsquo;s beyond the scope of this post to explain <a href="https://www.firebase.com/docs/security/security-rules.html">Firebase security rules</a>, but here are some to go with this app (be sure to insert your Github ID instead of mine!) :</p>
+
+<pre><code class="javascript">/* These rules are provided for imformational purposes only :) */
+{
+  "rules": {
+    /* All items are namespaced by `BatFire` */
+    "BatFire" : {
+      /* Make `@syncs` accessors read-only */
+      "syncs" : {
+        ".read" : true,
+        ".write" : false
+      },
+      /* All records namespaced by `records` */
+      "records" : {
+        "scoped" : {
+          /* "Server-side" validation for @belongsToCurrentUser(scoped: true) */
+          "$uid" : {
+            ".write" : "$uid == auth.uid",
+            ".read" : "$uid == auth.uid"
+          }
+        },
+        "posts" : {
+          ".read" : true,
+          ".write" : "'github:2231765' == auth.uid " /* that's me */
+        },
+        "comments" : {
+          ".read" : true,
+          "$recordId" : {
+            /* can be deleted by creator or by admin ... me */
+            ".write" :  "!data.exists() || auth.uid == data.child('created_by_uid').val() || 'github:2231765' == auth.uid"
+          }
+        },
+        "$resourceName" : {
+          /* "Server-side" validation for @belongsToCurrentUser(ownership: true) */
+          "$recordId" : {
+            /* Allows non-belongsToCurrentUser records to be written but protect owned ones */
+            ".write" : "!data.hasChild('has_user_ownership') || data.child('created_by_uid').val() == auth.uid"
+          },
+          ".read" : true
+          /* nothing gets written here -- everything gets an ID _before_ create */
+        }
+      }
+    },
+    /* Everything else is fair game */
+    "$other" : {
+      ".read" : true,
+      ".write" : true
+    }
+  }
+}
+</code></pre>
+
+<h1>Wrap Up</h1>
+
+<p>Congratulations, you have a beautiful new blog! You can let the whole world see it by deploying it to Firebase:</p>
+
+<ul>
+<li>update <code>firebase.json</code> to have your Firebase name (eg, <code>"rm-batmanjs-blog"</code>)</li>
+<li><code>npm install -g firebase-tools</code></li>
+<li><code>firebase deploy</code></li>
+<li><code>firebase open</code></li>
+</ul>
+
+
+<p>And you&rsquo;re live!</p>
+
+<p>I hope you have enjoyed this tour of batman.js! For more information:</p>
+
+<ul>
+<li>check out the <a href="http://batmanjs.org">batman.js website</a> or the <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">Batman.js MVC Cookbook</a></li>
+<li>join the <a href="https://groups.google.com/forum/#!forum/batmanjs">mailing list</a></li>
+<li>drop by the IRC channel (#batmanjs)</li>
+<li>leave a comment here or open an issue on the <a href="http://github.com/batmanjs/batman">github repo</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Client-Side Image Preview with Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/"/>
+    <updated>2014-06-05T07:26:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/06/05/client-side-image-preview-with-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Implementing image preview is breeze thanks to <a href="http://batmanjs.org">batman.js</a> observers and JavaScript APIs.</p>
+
+<!-- more -->
+
+
+<p><strong>The goal</strong> is to have a user add an image to a file input and <em>immediately</em> preview that image. To accomplish this, we&rsquo;ll turn the uploaded file into a data URI, then set that to the <code>src</code> of our <code>&lt;img/&gt;</code>.</p>
+
+<p>First, set up the observer in the model:</p>
+
+<pre><code class="coffeescript">class App.ModelWithImage extends Batman.Model
+  @encode 'imageDataURI'
+
+  constructor: -&gt;
+    super
+    @observe 'imageFile', (newVal, oldVal) -&gt;
+      if newVal?
+        @_setImageDataURIFromFile()
+      else
+        @set 'imageDataURI', ""
+</code></pre>
+
+<p>This says: &ldquo;whenever <code>imageFile</code> changes, if there is a new value, use it to set the data URI, otherwise, set the data URI to <code>""</code>.&rdquo;</p>
+
+<p>Now, implement <code>_setImageDataURIFromFile</code>:</p>
+
+<pre><code class="coffeescript">  _setImageDataURIFromFile: -&gt;
+    file = @get('imageFile')
+    reader = new FileReader
+    reader.onload = (e) =&gt;
+      dataURI = e.target.result
+      @set 'imageDataURI', dataURI
+    reader.readAsDataURL(file)
+</code></pre>
+
+<p>You can use it in a template like this:</p>
+
+<pre><code class="html">  &lt;img data-bind-src='component.imageDataURI' /&gt;
+  &lt;input type='file' data-bind='component.imageFile' /&gt;
+</code></pre>
+
+<p>When a user uploads a file, the <code>&lt;img&gt;</code> will be automatically updated!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Using Gulp.js to build Batman.js apps without Rails]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails/"/>
+    <updated>2014-03-22T10:39:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/03/22/using-gulp-dot-js-to-build-batman-dot-js-without-rails</id>
+    <content type="html"><![CDATA[<p>If the <a href="https://github.com/batmanjs/batman-rails">batman-rails gem</a> isn&rsquo;t an option, <a href="http://gulpjs.com">gulp.js</a> is a good candidate for compiling batman.js apps for production.</p>
+
+<!-- more -->
+
+
+<p>To prepare your app for production, you need to:</p>
+
+<ul>
+<li>compile your CoffeeScript files into a JavaScript file</li>
+<li>preload your HTML into <code>Batman.View.store</code>.</li>
+</ul>
+
+
+<p>These can both be accomplished with gulp.js tasks.</p>
+
+<h2>Setup</h2>
+
+<p>Let&rsquo;s assume your batman.js project has the folder structure:</p>
+
+<pre><code>my_app/
+├── batman/
+|   ├── my_app.coffee
+|   ├── models/
+|   |   └── my_model.coffee
+|   ├── controllers/
+|   |   └── my_models_controller.cofee
+|   ├── views/
+|   |   └── my_models/
+|   |       └── my_models_show_view.coffee
+|   └── html/
+|       └── my_models/
+|           ├── show.jade
+|           └── index.jade
+├── javascripts/
+|   └── batman.js
+└── Gulpfile.js
+</code></pre>
+
+<p>Notice that the <code>html</code> folder actually contains <code>.jade</code> files. We&rsquo;ll use gulp.js to compile those, but you can skip that step if you&rsquo;re using plain HTML.</p>
+
+<p><strong>Install gulp</strong> with <code>npm install -g gulp</code>. All gulp plugins required below must also be installed &ldquo;by hand&rdquo; with <code>npm install &lt;gulp-plugin&gt;</code></p>
+
+<h2>Compiling your application code</h2>
+
+<p>Here&rsquo;s a gulp.js task that takes the <code>batman/</code> directory above and compiles it to one Javascript file, <code>javascripts/application.js</code>:</p>
+
+<pre><code class="javascript Gulpfile.js">var gulp = require('gulp');
+var coffee = require('gulp-coffee');
+var concat = require('gulp-concat');
+
+// include top-level .coffee files (`my_app.coffee`) first:
+var appSources = ["./batman/*.coffee", "./batman/*/*.coffee"]
+
+gulp.task("build", function(){
+  gulp.src(appSources)
+    .pipe(concat("application.coffee")) // so CoffeeScript will compile all together
+    .pipe(coffee())
+    .pipe(concat("application.js"))
+    .pipe(gulp.dest("./javascripts/"))
+})
+</code></pre>
+
+<p>Now, you can run:</p>
+
+<pre><code>gulp build
+</code></pre>
+
+<h2>Preloading your templates</h2>
+
+<p>Batman.js&rsquo;s fetch-html-as-needed approach is great for develoment, but not for production. Here&rsquo;s a task that will load files from the <code>html/</code> directory, convert them from jade to HTML, then inline them as JavaScript code that preloads the app with the HTML it needs.</p>
+
+<pre><code class="javascript Gulpfile.js">var gulp = require('gulp');
+var concat = require('gulp-concat');
+var jade = require('gulp-jade');
+var batmanTemplates = require("gulp-batman-templates")
+
+gulp.task("html", function(){
+  gulp.src(["./batman/html/**/*.jade"])
+    .pipe(jade())
+    .pipe(batmanTemplates())
+    .pipe(concat('templates.js'))
+    .pipe(gulp.dest("./javascripts/"))
+})
+</code></pre>
+
+<h2>Finishing Up</h2>
+
+<p>Let&rsquo;s join the to javascript files together:</p>
+
+<pre><code class="javascript Gulpfile.js">gulp.task("finalize", function() {
+  gulp.src(["./javascripts/application.js", "./javascripts/templates.js"])
+    .pipe(concat("application.js"))
+    .pipe(gulp.dest("./javascripts/"))
+});
+</code></pre>
+
+<p>And make our <code>default</code> gulp task to watch the project and build whenever it changes:</p>
+
+<pre><code class="javascript Gulpfile.js">gulp.task('default', function(){
+  gulp.watch('./batman/**/*', ["build", "html", "finalize"])
+});
+</code></pre>
+
+<p>So now, all we need to do is:</p>
+
+<pre><code>gulp
+</code></pre>
+
+<p>And in the layout:</p>
+
+<pre><code class="html">  &lt;script src='http://rmosolgo.github.io/javascripts/batman.js'&gt;&lt;/script&gt;
+  &lt;script src='http://rmosolgo.github.io/javascripts/application.js'&gt;&lt;/script&gt;
+</code></pre>
+
+<p>Voila! Your app is compiled and HTML will be preloaded!</p>
+]]></content>
+  </entry>
+  
+</feed>

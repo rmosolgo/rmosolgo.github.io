@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: CSS | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/css/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Parameterized styles with React, Rails and Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/10/18/parameterized-styles-with-react-rails-and-sprockets/"/>
+    <updated>2016-10-18T15:05:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/10/18/parameterized-styles-with-react-rails-and-sprockets</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/rmosolgo/css_modules"><code>css_modules</code></a> provides an approach to styling UI components in a local-first way.</p>
+
+<!-- more -->
+
+
+<p>Let&rsquo;s say you have the same component to render in two contexts:</p>
+
+<p>```html</p>
+
+<div className="resources">
+  <DetailPane />
+</div>
+
+
+<p>// later &hellip;</p>
+
+<div className="rooms">
+  <DetailPane />
+</div>
+
+
+<pre><code>
+To style `DetailPane`, you probably want:
+
+- A set of shared styles to apply by default
+- A way to customize styles for each context
+
+How can we accomplish that? The [`css_modules`](https://github.com/rmosolgo/css_modules) gem provides a solution.
+
+(This example uses React components, but see below for a brief analogy to Rails partials.)
+
+## CSS Modules
+
+Let's treat each context as a module in CSS:
+</code></pre>
+
+<p>// in views/resources.scss
+:module(resources) {
+  // &hellip;
+}</p>
+
+<p>// in views/rooms.scss
+:module(rooms) {
+  // &hellip;
+}
+```</p>
+
+<p>Since each context has a <code>DetailPane</code>, let&rsquo;s define a mixin and share it between the two:</p>
+
+<pre><code class="scss">// in shared/detail_pane.scss
+@mixin detail-pane {
+  .detail-pane {
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid #777;
+
+    .description {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+// in views/resources.css
+:module(resources) {
+  @include detail-pane;
+}
+
+// in views/rooms.css
+:module(rooms) {
+  @include detail-pane;
+}
+</code></pre>
+
+<h3>Why a mixin?</h3>
+
+<p>Using a mixin makes it easier to track usage within the application: you only need to search for <code>@include</code>s, rather than class names.</p>
+
+<p>It also enforces a clear separation from base styles and custom styles. Base styles are hard-coded in the mixins. Custom styles are implemented as <em>overrides</em> within the module or as <em>parameters</em> to the mixin (using <code>$</code>-variables).</p>
+
+<h3>Applying Styles</h3>
+
+<p>To apply the modulized styles to a component, provide the component with a CSS module prop:</p>
+
+<p>```js
+var resourcesModule = CSSModules(&ldquo;resources&rdquo;)</p>
+
+<div className="resources">
+  <DetailPane cssModule={resourcesModule}/>
+</div>
+
+
+<p>// later &hellip;</p>
+
+<p>var roomsModule = CSSModules(&ldquo;rooms&rdquo;)</p>
+
+<div className="rooms">
+  <DetailPane cssModule={roomsModule}/>
+</div>
+
+
+<pre><code>
+Then, update `DetailPane` so that it gets class names from `this.props.cssModule`:
+</code></pre>
+
+<p>var DetailPane = React.createClass({
+  propTypes: {
+    cssModule: React.PropTypes.func.isRequired,
+  },</p>
+
+<p>  render: function() {
+    var cssModule = this.props.cssModule
+    return (
+      <div className={cssModule("detail-pane")}>
+        <p className={cssModule("description")} />
+      </div>
+    )
+  },
+})
+```</p>
+
+<p>Now, the two instances of <code>DetailPane</code> will <em>not</em> share class names, but they will share common code from <code>@mixin detail-pane</code>.</p>
+
+<p>The rendered output will contain &ldquo;modulized&rdquo; class names. The module is translated into an opaque prefix on the class name:</p>
+
+<p>```html</p>
+
+<div class="resources_abc123_detail-pane">
+  <p class="resources_abc123_description"></p>
+</div>
+
+
+<div class="rooms_xyz987_detail-pane">
+  <p class="rooms_xyz987_description"></p>
+</div>
+
+
+<pre><code>
+### Customizing Styles
+
+You can customize the styles with _overrides_ or _parameters_.
+
+Apply overrides by "reopening" class names inside the module:
+</code></pre>
+
+<p>:module(resources) {
+  @include detail-pane;
+  .detail-pane {
+    // needs extra space here:
+    margin: 10px;
+  }
+}
+```</p>
+
+<p>This will <em>only</em> affect <code>.detail-pane</code> within the <code>resources</code> module.</p>
+
+<p>Alternatively, you can parameterize the mixin. Add a <code>$</code>-parameter to the mixin:</p>
+
+<pre><code class="scss">// in shared/detail_pane.scss
+@mixin detail-pane($margin) {
+  .detail-pane {
+    margin: $margin;
+  }
+}
+</code></pre>
+
+<p>Then provide a value when including that mixin:</p>
+
+<pre><code class="scss">// in views/resources.scss
+:module(resources) {
+  @include detail-pane(10px);
+  // .detail-pane will have 10px margin
+}
+
+// in views/rooms.scss
+:module(rooms) {
+  @include detail-pane(5px);
+  // .detail-pane will have 5px margin
+}
+</code></pre>
+
+<p>Sass also includes <a href="http://advancedsass.com/articles/default-mixin-arguments-for-easier-theming.html">default values and optional arguments</a>.</p>
+
+<h2>Bare class names?</h2>
+
+<p>Perhaps you need to support bare class names (no module). For example, if you extra <code>@mixin detail-pane</code> but your app still contains bare  <code>.detail-pane</code> class names, you might apply the mixin to the global scope:</p>
+
+<pre><code class="scss">@mixin detail-pane {
+  // ...
+}
+
+// Also style global .detail-pane
+@include detail-pane;
+</code></pre>
+
+<p>To use bare class names in your <code>&lt;DetailPane /&gt;</code> component, use a <em>null module</em>:</p>
+
+<pre><code class="js">// This module has no name, it renders bare selectors:
+var nullModule = CSSModules(null)
+nullModule("detail-pane")
+// "detail-pane"
+</code></pre>
+
+<p>You can pass that in for the <code>cssModule</code> prop:</p>
+
+<pre><code class="html">&lt;DetailPane cssModule={CSSModules(null)} /&gt;
+</code></pre>
+
+<p>Then, the rendered output will contain bare class names:</p>
+
+<p>```html</p>
+
+<div class="detail-pane">
+  <p class="description"></p>
+</div>
+
+
+<pre><code>
+## Use with Rails Partials
+
+You can also parameterize the class names in Rails partials.
+
+Get a module with the view helper, then pass it to a partial:
+</code></pre>
+
+<p>&lt;% resources_module = css_module(&ldquo;resources&rdquo;) %>
+&lt;%= render partial: &ldquo;detail_pane&rdquo;, locals: { style_module: resources_module } %></p>
+
+<!-- later -->
+
+
+<p>&lt;% rooms_module = css_module(&ldquo;rooms&rdquo;) %>
+&lt;%= render partial: &ldquo;detail_pane&rdquo;, locals: { style_module: rooms_module } %>
+<code>``
+s that w
+Then, use the</code>style_module` in the partial:</p>
+
+<p>```erb</p>
+
+<div class="<%= style_module.selector("detail-pane") %>">
+  <p class="<%= style_module.selector("description") %>"></p>
+</div>
+
+
+<pre><code>
+Rails can also generate a null module by providing `nil` as the module name:
+</code></pre>
+
+<p>null_style_module = css_module(nil)
+null_style_module.selector(&ldquo;detail-pane&rdquo;)</p>
+
+<h1>=> &ldquo;detail-pane&rdquo;</h1>
+
+<p>```</p>
+
+<p>This allows you to parameterize the class names in your partials.</p>
+]]></content>
+  </entry>
+  
+</feed>

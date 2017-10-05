@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>"Hello World" with mruby - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="mruby is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/11/15/hello-world-with-mruby">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">"Hello World" With Mruby</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-11-15T19:38:00-05:00" pubdate data-updated="true">Nov 15<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://www.mruby.com">mruby</a> is an implementation of Ruby that&rsquo;s designed to be lightweight &amp; integrated with C. To get started, you can run a bit of Ruby code from <em>inside</em> C code.</p>
+
+<!-- more -->
+
+
+<p>&ldquo;Hello World&rdquo; with mruby looks like this:</p>
+
+<ul>
+<li>Set up a new project and include mruby as a submodule</li>
+<li>Write some C code that loads mruby and executes some Ruby code</li>
+<li>Compile the C code &amp; run the resulting binary</li>
+</ul>
+
+
+<p>You can find an example similar to this one <a href="https://github.com/rmosolgo/mruby-examples/tree/master/01_hello_world">on GitHub</a>.</p>
+
+<h2>Start a project</h2>
+
+<p>Make a directory for your new project and enter it:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mkdir ~/hello-mruby
+</span><span class='line'>$ cd ~/hello-mruby</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Clone mruby source and compile mruby:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ git clone git@github.com:mruby/mruby.git
+</span><span class='line'>$ cd mruby
+</span><span class='line'>$ make
+</span><span class='line'>$ cd ..</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(You need bison and Ruby to compile mruby, see the <a href="https://github.com/mruby/mruby/blob/master/INSTALL">install guide</a> for more information.)</p>
+
+<p>You can check if compilation was successful by running <code>mirb</code> (interactive mruby):</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ mruby/bin/mirb
+</span><span class='line'>mirb - Embeddable Interactive Ruby Shell
+</span><span class='line'>
+</span><span class='line'>&gt; 1 + 1
+</span><span class='line'> =&gt; 2</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Write the program</h2>
+
+<p>Here&rsquo;s the whole of <code>hello_world.c</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/* include mruby VM &amp; compiler */</span>
+</span><span class='line'><span class="cp">#include &quot;mruby.h&quot;</span>
+</span><span class='line'><span class="cp">#include &quot;mruby/compile.h&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="cm">/* make a mruby instance */</span>
+</span><span class='line'>  <span class="n">mrb_state</span> <span class="o">*</span><span class="n">mrb</span> <span class="o">=</span> <span class="n">mrb_open</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* write some code */</span>
+</span><span class='line'>  <span class="kt">char</span> <span class="n">code</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;p &#39;Hello world!&#39;&quot;</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* use mruby to execute code from string */</span>
+</span><span class='line'>  <span class="n">mrb_load_string</span><span class="p">(</span><span class="n">mrb</span><span class="p">,</span> <span class="n">code</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Let&rsquo;s break that down:</p>
+
+<ul>
+<li><p><strong>Include mruby &amp; compiler</strong>. The mruby VM takes bytecode instructions. The compiler is used to turn a string of Ruby code into mruby bytecode. <code>mrb_load_string</code> handles both steps: Parse &amp; compile Ruby code, then execute with the mruby VM.</p></li>
+<li><p><strong>Make a mruby instance</strong>. Create an instance of the mruby VM. This object contains the state of the Ruby evnironment. Besides using it to execute code, you can inject values into the Ruby environment or call Ruby code from C.</p></li>
+<li><p><strong>Use mruby to execute code from string</strong>. As described above, in this case, the string will be turned into VM instructions first, then executed by mruby.</p></li>
+</ul>
+
+
+<h2>Compile &amp; run</h2>
+
+<p>Compile your C application, referencing the necessary mruby files:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="err">$</span> <span class="n">gcc</span> <span class="n">hello_world</span><span class="p">.</span><span class="n">c</span> <span class="o">-</span><span class="n">o</span> <span class="n">hello_world</span> <span class="o">-</span><span class="n">Imruby</span><span class="o">/</span><span class="n">include</span>  <span class="o">-</span><span class="n">lmruby</span>  <span class="o">-</span><span class="n">Lmruby</span><span class="o">/</span><span class="n">build</span><span class="o">/</span><span class="n">host</span><span class="o">/</span><span class="n">lib</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, execute the resulting binary:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="err">$</span> <span class="p">.</span><span class="o">/</span><span class="n">hello_world</span>
+</span><span class='line'><span class="s">&quot;Hello world!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You did it!</p>
+
+<h2>What next?</h2>
+
+<ul>
+<li>Use <code>mrbc</code> to precompile <code>.rb</code> into mruby bytecode.</li>
+<li>Modify <code>mrb_state</code> from C with things like <code>mrb_define_class</code>, <code>mrb_define_method</code> and <code>mrb_define_const</code>.</li>
+<li>Call Ruby methods from C with <code>mrb_funcall</code>.</li>
+</ul>
+
+
+<p>However, I don&rsquo;t know of any English documentation for these things yet!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-11-15T19:38:00-05:00" pubdate data-updated="true">Nov 15<span>th</span>, 2014</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ruby/'>Ruby</a>, <a class='category' href='/blog/categories/mruby/'>mruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js/" title="Previous Post: Why (I Think) We're Leaving Batman.js">&laquo; Why (I Think) We're Leaving Batman.js</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2014/11/18/response-to-why-kids-sext/" title="Next Post: Response to "Why Kids Sext"">Response to "Why Kids Sext" &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

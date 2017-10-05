@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Has Many Through in Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.js doesn&rsquo;t support hasManyThrough out of the box, but it can be implemented fairly easily with Set::mappedTo. This feature was just &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/05/30/has-many-through-in-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+  <div class='batmanjs-warning'>
+      To my knowledge, <a href="http://github.com/batmanjs/batman">batman.js</a> is not maintained. For that reason, I don't suggest that you use it for a new project!
+  </div>
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Has Many Through in Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-30T15:27:00-04:00" pubdate data-updated="true">May 30<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org">Batman.js</a> doesn&rsquo;t support <code>hasManyThrough</code> out of the box, but it can be implemented fairly easily with <code>Set::mappedTo</code>.</p>
+
+<!-- more -->
+
+
+<p><em>This feature was just merged into the master branch &ndash; download the latest batman.js <a href="http://batmanjs.org/download.html">here</a>.</em></p>
+
+<h1>What&rsquo;s a &ldquo;Has-Many-Through&rdquo; Association?</h1>
+
+<p>It&rsquo;s best shown by example. To join <code>Household</code> to <code>Person</code>, you might have a &ldquo;join model&rdquo;, <code>HouseholdMembership</code>. The associations look like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Household</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;householdMemberships&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nx">HouseholdMembership</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;household&#39;</span>
+</span><span class='line'>  <span class="nx">@belongsTo</span> <span class="s">&#39;person&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nx">Person</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@hasMany</span> <span class="s">&#39;householdMemberships&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Household <code>hasMany</code> memberships, each membership <code>belongsTo</code> a person.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'>           <span class="nx">__</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span><span class='line'>         <span class="err">╱</span>
+</span><span class='line'><span class="nx">Household</span> <span class="err">───</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span><span class='line'>         <span class="err">╲</span>
+</span><span class='line'>           <span class="err">╲</span><span class="nx">_</span> <span class="nx">HouseholdMembership</span> <span class="err">───</span> <span class="nx">Person</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Household has many people <em>through</em> household memberships.</p>
+
+<h1>Has-Many-Through in Batman.js</h1>
+
+<p>Although <code>hasManyThrough</code> isn&rsquo;t part of batman.js, you can implement a <strong>read-only</strong> has-many-through using <a href="http://batmanjs.org/docs/api/batman.set.html#prototype_function_mappedto"><code>Set::mappedTo</code></a>. Given classes as defined above, you could add an accessor for <code>Household::people</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># class Household</span>
+</span><span class='line'>  <span class="nx">@accessor</span> <span class="s">&#39;people&#39;</span><span class="p">,</span> <span class="nf">-&gt;</span> <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;householdMemberships&#39;</span><span class="p">).</span><span class="nx">mappedTo</span><span class="p">(</span><span class="s">&#39;person&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This returns a <code>Batman.Set</code> (actually a <code>Batman.SetMapping</code>) containing unique <code>Person</code>s belonging to those <code>householdMemberships</code>. As batman.js does, items added and removed are <a href="rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatically tracked</a>, so this is safe to use everywhere.</p>
+
+<p>As for <strong>adding items</strong>, you could do it this way:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="c1"># class Household</span>
+</span><span class='line'>  <span class="nv">addPerson: </span><span class="nf">(person) -&gt;</span>
+</span><span class='line'>    <span class="nx">@get</span><span class="p">(</span><span class="s">&#39;householdMemberships&#39;</span><span class="p">).</span><span class="nx">build</span><span class="p">({</span><span class="nx">person</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Again, the <code>Batman.SetMapping</code> will take care of keeping everything in sync!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-05-30T15:27:00-04:00" pubdate data-updated="true">May 30<span>th</span>, 2014</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2014/05/16/jasmine-friendly-batman-dot-js-accessor-stubs/" title="Previous Post: Jasmine-Friendly Batman.js Accessor Stubs">&laquo; Jasmine-Friendly Batman.js Accessor Stubs</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2014/06/05/client-side-image-preview-with-batman-dot-js/" title="Next Post: Client-Side Image Preview with Batman.js">Client-Side Image Preview with Batman.js &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

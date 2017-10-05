@@ -1,0 +1,337 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Crystal First Impressions - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="The Crystal programming language combines Ruby-like syntax with a really powerful compiler. As a result, it&rsquo;s fun to write, fast to run, and &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2015/09/27/crystal-first-impressions">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Crystal First Impressions</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-27T21:47:00-04:00" pubdate data-updated="true">Sep 27<span>th</span>, 2015</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The <a href="http://crystal-lang.org/">Crystal programming language</a> combines Ruby-like syntax with a really powerful compiler. As a result, it&rsquo;s fun to write, fast to run, and hard to screw up!</p>
+
+<!-- more -->
+
+
+<p>My Crystal experience so far:</p>
+
+<ul>
+<li><a href="https://github.com/danott">danott</a> mentioned it in our Slack a few weeks ago</li>
+<li>I read the great <a href="http://crystal-lang.org/docs/">Crystal docs</a></li>
+<li>I cobbled together <a href="https://github.com/rmosolgo/crythtal">a lisp (barely)</a></li>
+</ul>
+
+
+<p>I&rsquo;d say it&rsquo;s a combination of:</p>
+
+<ul>
+<li>a more-stable-Ruby (like Elixir, but without Erlang)</li>
+<li>a developer-friendly, life-embetter-ing type system (like Elm, but &hellip; not JavaScript)</li>
+<li>a real compiler! (like C, but fun to read and write)</li>
+</ul>
+
+
+<p>Um, what else could you want?! (See last paragraph 😛)</p>
+
+<h2>Crystal Syntax</h2>
+
+<p>Crystal brings the best of Ruby:</p>
+
+<ul>
+<li><strong>Concise literals</strong>, just like Ruby (take it for granted until you use regexps in Python 🙀)</li>
+<li><strong>Great OO support</strong>, classes &amp; modules just like Ruby</li>
+<li><strong>Attractive syntax</strong> thanks to blocks, operator overloading and optional parens</li>
+<li><strong>consistent</strong>, predictable standard library (like Ruby)</li>
+</ul>
+
+
+<p>Plus, some improvements over Ruby:</p>
+
+<ul>
+<li><strong>Method overloading</strong></li>
+<li>Python-like <strong>keyword args</strong>: must have default value, may be passed as kwargs or positional args (I could go either way on this since Ruby 2.1, but it beats <code>options={}</code>)</li>
+<li>More robust <strong>Proc literals</strong>, reminded me of Elixir</li>
+<li>Convention: <strong><code>?</code> methods return maybe-nil types</strong>, while their counterparts raise on nil</li>
+<li>First-class <strong>enums</strong> &amp; <strong>tuples</strong></li>
+<li><strong>Immutable strings</strong>, like Ruby 3 will have (?)</li>
+</ul>
+
+
+<p>For completeness, you lose some things from Ruby:</p>
+
+<ul>
+<li>Runtime <strong>code creation</strong>, like <code>define_method</code> &amp; friends</li>
+<li>Runtime <strong>code evaluation</strong>, like <code>eval</code> &amp; friends</li>
+</ul>
+
+
+<p>Crystal offers a powerful <strong>macro system</strong> that makes up for the loss of runtime metaprogramming. Unlike C preprossing, Crystal macros are awesome. You basically define functions which are called at compile-time, then generate code with liquid-like syntax.</p>
+
+<h2>Crystal Typing</h2>
+
+<h3>Inferring Types</h3>
+
+<p>Crystal infers types from your code, so these are OK:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">my_string</span> <span class="o">=</span> <span class="s2">&quot;Hello World&quot;</span>
+</span><span class='line'><span class="c1"># String</span>
+</span><span class='line'><span class="n">my_hash</span> <span class="o">=</span> <span class="p">{</span><span class="ss">key</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="ss">key2</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span><span class="p">}</span>
+</span><span class='line'><span class="c1"># Hash(Symbol, String)</span>
+</span><span class='line'><span class="n">my_array</span> <span class="o">=</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># Array(Int32)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>When types mix, Crystal automatically unions them. It will ensure any usages of the variable in question are valid for both types. For example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">my_variable</span> <span class="o">=</span> <span class="s2">&quot;string&quot;</span>
+</span><span class='line'><span class="n">my_variable</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'><span class="c1"># String | Int32</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Ok, because String &amp; Int32 both implement #to_f</span>
+</span><span class='line'><span class="n">my_variable</span><span class="o">.</span><span class="n">to_f</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># You can add runtime checks to call type-specific methods</span>
+</span><span class='line'><span class="k">if</span> <span class="n">my_variable</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">my_variable</span><span class="o">.</span><span class="n">upcase</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>There are some times you need to define types to help the compiler. For example, there aren&rsquo;t any values here to tell the compiler what to expect:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_array</span> <span class="o">=</span>  <span class="o">[]</span> <span class="n">of</span> <span class="no">Int32</span>
+</span><span class='line'><span class="c1"># You can use custom types, too</span>
+</span><span class='line'><span class="n">some_hash</span> <span class="o">=</span>   <span class="p">{}</span> <span class="n">of</span> <span class="no">Symbol</span> <span class="o">=&gt;</span> <span class="no">SomeCustomClass</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Goodbye, NoMethodErrors</h3>
+
+<p>If you&rsquo;re like me, you hate this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">undefined</span> <span class="nb">method</span> <span class="sb">`whatever&#39; for nil:NilClass</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Something somehow became nil. 😢</p>
+
+<p>Instead, Crystal reads your code, and if there&rsquo;s somewhere a value could be nil, it throws a compile error:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">in</span> <span class="o">.</span><span class="n">/src</span><span class="o">/</span><span class="n">lisp</span><span class="o">/</span><span class="nb">binding</span><span class="o">.</span><span class="n">cr</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span> <span class="n">undefined</span> <span class="nb">method</span> <span class="s1">&#39;find_owner&#39;</span> <span class="k">for</span> <span class="no">Nil</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="vi">@parent</span><span class="o">.</span><span class="n">find_owner</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span class='line'>              <span class="o">^~~~~~~~~~</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You have two options:</p>
+
+<ul>
+<li>Add an explicit not-nil check (<code>if object.is_a?(String) ...</code>) so the compiler knows it will be safe</li>
+<li>Refactor so the value won&rsquo;t be nil</li>
+</ul>
+
+
+<p>Of course, the first one seems better at the start, but I hope to get better at the second one 😁.</p>
+
+<h2>What&rsquo;s Missing?</h2>
+
+<p>Crystal really shows its youth. Its shortcomings all fall in that vein:</p>
+
+<ul>
+<li><strong>Poorly documented</strong>, which isn&rsquo;t so bad if you&rsquo;re coming from Ruby</li>
+<li><strong>Few projects</strong> out there (I think the <a href="http://crystalshards.herokuapp.com/">package repository is a free Heroku app</a>)</li>
+<li>Standard library has <strong>some kinks</strong>, they say it is still changing</li>
+</ul>
+
+
+<p>One example of a standard library kink is the handling of <code>break</code>, <code>next</code> and <code>return</code> in blocks. If you want to exit a block early, you have to choose one of those three. The problem is that, to choose the right one, you have to know whether the method captures the block into a proc or simply yields values to it. It&rsquo;s a drag to have to know a method&rsquo;s implementation to call it! (IRL, I didn&rsquo;t run into this and I suspect it would be easy enough to work around it.)</p>
+
+<h2>Now What?</h2>
+
+<p>I really liked Crystal and I hope I can work with it more!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-09-27T21:47:00-04:00" pubdate data-updated="true">Sep 27<span>th</span>, 2015</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/crystal/'>Crystal</a>, <a class='category' href='/blog/categories/programming/'>Programming</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2015/08/08/communion-as-bread-from-heaven/" title="Previous Post: Communion as "Bread from Heaven"">&laquo; Communion as "Bread from Heaven"</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2015/10/08/how-many-assertions-per-test-case/" title="Next Post: How many assertions per test case?">How many assertions per test case? &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

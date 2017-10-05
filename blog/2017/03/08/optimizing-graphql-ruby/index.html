@@ -1,0 +1,508 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Optimizing GraphQL-Ruby - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Soon, graphql-ruby 1.5.0 will be released. Query execution will be ~70% faster than 1.3.0! Let&rsquo;s look at how we reduced the execution time &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2017/03/08/optimizing-graphql-ruby">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Optimizing GraphQL-Ruby</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-03-08T08:02:00-05:00" pubdate data-updated="true">Mar 8<span>th</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Soon, <code>graphql-ruby</code> 1.5.0 will be released. Query execution will be ~70% faster than 1.3.0!</p>
+
+<!-- more -->
+
+
+<p>Let&rsquo;s look at how we reduced the execution time between those two versions. Thanks to <a href="https://github.com/theorygeek">@theorygeek</a> who optimized the middleware chain helped me pinpoint several other bottlenecks!</p>
+
+<h2>The Benchmark</h2>
+
+<p>To track GraphQL execution overhead, I <a href="https://github.com/rmosolgo/graphql-ruby/blob/master/benchmark/run.rb">execute the introspection query</a> on a <a href="https://github.com/rmosolgo/graphql-ruby/blob/master/spec/support/dummy/schema.rb">fixture schema</a> in graphql-ruby&rsquo;s test suite.</p>
+
+<p>On GraphQL 1.3.0, the benchmark ran around 22.5 iterations per second:</p>
+
+<p><img src="/images/optimizing_graphql_ruby/1-3-0-bench.png" width="500"></p>
+
+<p>On <a href="https://github.com/rmosolgo/graphql-ruby/commit/943e68f40a11f3f809ecd8485282eccdd6a6991b">master</a>, it runs around 38 iterations per second:</p>
+
+<p><img src="/images/optimizing_graphql_ruby/1-5-0-bench.png" width="500"></p>
+
+<p>That&rsquo;s almost 1.7x faster!</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="mi">38</span><span class="o">.</span><span class="mi">0</span> <span class="o">/</span> <span class="mi">22</span><span class="o">.</span><span class="mi">5</span>
+</span><span class='line'><span class="c1"># =&gt; 1.6888888888888889</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>So, how&rsquo;d we do it?</p>
+
+<h2>Looking Under the Hood with RubyProf</h2>
+
+<p>To find where time was spent, I turned to <a href="https://github.com/ruby-prof/ruby-prof">ruby-prof</a>. I <a href="https://github.com/rmosolgo/graphql-ruby/pull/579">wrapped GraphQL execution</a> with profiling and inspected the result:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>Thread ID: 70149906635240
+</span><span class='line'>Fiber ID: 70149911114440
+</span><span class='line'>Total: 0.474618
+</span><span class='line'>Sort by: self_time
+</span><span class='line'>
+</span><span class='line'> %self      total      self      wait     child     calls  name
+</span><span class='line'>  4.60      0.074     0.022     0.000     0.052     6893  *Class#new
+</span><span class='line'>  3.99      0.019     0.019     0.000     0.000     8715  *GraphQL::Define::InstanceDefinable#ensure_defined
+</span><span class='line'>  3.13      0.015     0.015     0.000     0.000    25403   Module#===
+</span><span class='line'>  2.64      0.013     0.013     0.000     0.000     8813   Kernel#hash
+</span><span class='line'>  2.49      0.074     0.012     0.000     0.063     3496  *GraphQL::Schema::MiddlewareChain#call
+</span><span class='line'>  1.85      0.009     0.009     0.000     0.000     4184   GraphQL::Query::Context::FieldResolutionContext#query
+</span><span class='line'>  1.78      0.017     0.008     0.000     0.008     2141   #&lt;Module:0x007f9a18de37a8&gt;#type
+</span><span class='line'>  1.63      0.008     0.008     0.000     0.000     1960   GraphQL::Query::Context::FieldResolutionContext#initialize
+</span><span class='line'>  1.54      0.012     0.007     0.000     0.005     1748   GraphQL::Query#get_field
+</span><span class='line'>  1.53      0.014     0.007     0.000     0.006     1748   GraphQL::Query#arguments_for
+</span><span class='line'>  1.52      0.007     0.007     0.000     0.000     8356   Kernel#is_a?
+</span><span class='line'>  1.51      0.010     0.007     0.000     0.003     7523   Kernel#===
+</span><span class='line'>  1.44      0.022     0.007     0.000     0.015     1959   GraphQL::Query::Context::FieldResolutionContext#spawn
+</span><span class='line'>  1.32      0.012     0.006     0.000     0.006     1748   GraphQL::Execution::Lazy::LazyMethodMap#get
+</span><span class='line'>  1.31      0.010     0.006     0.000     0.003     1748   GraphQL::Execution::FieldResult#value=
+</span><span class='line'>  1.29      0.032     0.006     0.000     0.026     1748   GraphQL::Field#resolve
+</span><span class='line'>  1.25      0.042     0.006     0.000     0.037     1748   #&lt;Module:0x007f9a18de37a8&gt;#resolve
+</span><span class='line'>  1.16      0.015     0.006     0.000     0.010     1748   GraphQL::Execution::FieldResult#initialize
+</span><span class='line'>  1.06      0.010     0.005     0.000     0.005     2815   GraphQL::Schema::Warden#visible?
+</span><span class='line'>  1.05      0.014     0.005     0.000     0.009     1748   GraphQL::Schema::MiddlewareChain#initialize
+</span><span class='line'>  1.03      0.005     0.005     0.000     0.000     2815   &lt;Module::GraphQL::Query::NullExcept&gt;#call
+</span><span class='line'>  0.97      0.014     0.005     0.000     0.009      756   Hash#each_value
+</span><span class='line'># ... truncated ...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A few things stood out:</p>
+
+<ul>
+<li>~5% of time was spent during ~7k calls to <code>Class#new</code>: this is time spent initializing new objects. I think initialization can also trigger garbage collection (if there&rsquo;s not a spot on the free list), so this may include GC time.</li>
+<li>~4% of time was spent during ~9k calls to <code>InstanceDefinable#ensure_defined</code>, which is part of graphql-ruby&rsquo;s definition API. It&rsquo;s <em>all</em> overhead to support the definition API, 😿.</li>
+<li>Several methods are called <code>1748</code> times. Turns out, this is <em>once per field in the response</em>.</li>
+<li>With that in mind, <code>25,403</code> seems like a lot of calls to <code>Module#===</code>!</li>
+</ul>
+
+
+<h2>Reduce GC Pressure</h2>
+
+<p>Since <code>Class#new</code> was the call with the most <code>self</code> time, I thought I&rsquo;d start there. What kind of objects are being allocated? We can filter the profile output:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>~/code/graphql $ cat 130_prof.txt | grep initialize
+</span><span class='line'>  1.63      0.008     0.008     0.000     0.000     1960   GraphQL::Query::Context::FieldResolutionContext#initialize
+</span><span class='line'>  1.16      0.015     0.006     0.000     0.010     1748   GraphQL::Execution::FieldResult#initialize
+</span><span class='line'>  1.05      0.014     0.005     0.000     0.009     1748   GraphQL::Schema::MiddlewareChain#initialize
+</span><span class='line'>  0.69      0.006     0.003     0.000     0.002     1833   Kernel#initialize_dup
+</span><span class='line'>  0.46      0.002     0.002     0.000     0.000     1768   Array#initialize_copy
+</span><span class='line'>  0.30      0.001     0.001     0.000     0.000      419   GraphQL::Execution::SelectionResult#initialize
+</span><span class='line'>  0.28      0.001     0.001     0.000     0.000      466   Hash#initialize
+</span><span class='line'>  0.17      0.010     0.001     0.000     0.009       92   GraphQL::InternalRepresentation::Selection#initialize
+</span><span class='line'>  0.15      0.002     0.001     0.000     0.001      162   Set#initialize
+</span><span class='line'>  0.15      0.001     0.001     0.000     0.000       70   GraphQL::InternalRepresentation::Node#initialize
+</span><span class='line'>  0.07      0.001     0.000     0.000     0.001       58   GraphQL::StaticValidation::FieldsWillMerge::FieldDefinitionComparison#initialize
+</span><span class='line'>  0.04      0.001     0.000     0.000     0.000       64   GraphQL::Query::Arguments#initialize
+</span><span class='line'>  0.01      0.000     0.000     0.000     0.000       11   GraphQL::StaticValidation::FragmentsAreUsed::FragmentInstance#initialize
+</span><span class='line'>  0.01      0.000     0.000     0.000     0.000        1   GraphQL::Query#initialize
+</span><span class='line'># ... truncated ...
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Lots of GraphQL internals! That&rsquo;s good news though: those are within scope for optimization.</p>
+
+<p><code>MiddlewareChain</code> was ripe for a refactor. In the old implementation, <em>each</em> field resolution created a middleware chain, then used it and discarded it. However, this was a waste of objects. Middlewares don&rsquo;t change during query execution, so we should be able to reuse the same list of middlewares for each field.</p>
+
+<p>This required a bit of refactoring, since the old implementation modified the array (with <code>shift</code>) as it worked through middlewares. In the end, this improvement was added in <a href="https://github.com/rmosolgo/graphql-ruby/pull/462/commits/5549e0cff288a9aecd676603cbb62628a34b4ec8"><code>5549e0cf</code></a>. As a bonus, the number of created <code>Array</code>s (shown by <code>Array#initialize_copy</code>) also declined tremendously since they were used for <code>MiddlewareChain</code>&rsquo;s internal state. Also, calls to <code>Array#shift</code> were removed, since the array was no longer modified:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>~/code/graphql $ cat 130_prof.txt | grep shift
+</span><span class='line'>  0.61      0.003     0.003     0.000     0.000     3496   Array#shift
+</span><span class='line'>~/code/graphql $ cat 150_prof.txt | grep shift
+</span><span class='line'>~/code/graphql $
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>🎉 !</p>
+
+<p>The number <code>FieldResult</code> objects was also reduced. <code>FieldResult</code> is used for execution bookkeeping in some edge cases, but is often unneeded. So, we could optimize by removing the <code>FieldResult</code> object when we had a plain value (and therefore no bookkeeping was needed): <a href="https://github.com/rmosolgo/graphql-ruby/commit/07cbfa89031819d3886f220de8256e83ff59f298"><code>07cbfa89</code></a></p>
+
+<p>A very modest optimization was also applied to <code>GraphQL::Arguments</code>, reusing the same object for empty argument lists (<a href="https://github.com/rmosolgo/graphql-ruby/pull/500/commits/4b07c9b46345144c7d88e429e7b55e09b0615517"><code>4b07c9b4</code></a>) and reusing the argument default values on a field-level basis (<a href="https://github.com/rmosolgo/graphql-ruby/pull/500/commits/4956149df0a4ab8a449679bcd9af20b3dad72585"><code>4956149d</code></a>).</p>
+
+<h2>Avoid Duplicate Calculations</h2>
+
+<p>Some elements of a GraphQL schema don&rsquo;t change during execution. As long as this holds true, we can cache the results of some calculations and avoid recalculating them.</p>
+
+<p>A simple caching approach is to use a hash whose keys are the inputs and whose values are the cached outputs:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Read-through cache for summing two numbers</span>
+</span><span class='line'><span class="c1">#</span>
+</span><span class='line'><span class="c1"># The first layer of the cache is the left-hand number:</span>
+</span><span class='line'><span class="n">read_through_sum</span> <span class="o">=</span> <span class="no">Hash</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">hash1</span><span class="p">,</span> <span class="n">left_num</span><span class="o">|</span>
+</span><span class='line'>  <span class="c1"># The second layer of the cache is the right-hand number:</span>
+</span><span class='line'>  <span class="n">hash1</span><span class="o">[</span><span class="n">num1</span><span class="o">]</span> <span class="o">=</span> <span class="no">Hash</span><span class="o">.</span><span class="n">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">hash2</span><span class="p">,</span> <span class="n">right_num</span><span class="o">|</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># And finally, the result is stored as a value in the second hash:</span>
+</span><span class='line'>    <span class="nb">puts</span> <span class="s2">&quot;Adding </span><span class="si">#{</span><span class="n">left_num</span><span class="si">}</span><span class="s2"> + </span><span class="si">#{</span><span class="n">right_num</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'>    <span class="n">hash2</span><span class="o">[</span><span class="n">right_num</span><span class="o">]</span> <span class="o">=</span> <span class="n">left_num</span> <span class="o">+</span> <span class="n">right_num</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">read_through_sum</span><span class="o">[</span><span class="mi">1</span><span class="o">][</span><span class="mi">2</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># &quot;Adding 1 + 2&quot;</span>
+</span><span class='line'><span class="c1"># =&gt; 3</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">read_through_sum</span><span class="o">[</span><span class="mi">1</span><span class="o">][</span><span class="mi">2</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># =&gt; 3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The first lookup printed a message and returned a value but the second lookup did <em>not</em> print a value. This is because the block wasn&rsquo;t called. Instead, the cached value was returned immediately.</p>
+
+<p>This approach was applied aggressively to <code>GraphQL::Schema::Warden</code>, an object which manages schema visibility on a query-by-query basis. Since the visibility of a schema member would remain constant during the query, we could cache the results of visibility checks: first <a href="https://github.com/rmosolgo/graphql-ruby/pull/462/commits/1a28b10494bf508519f8f9b4a1a589c458837cf7"><code>1a28b104</code></a>, then <a href="https://github.com/rmosolgo/graphql-ruby/pull/462/commits/27b36e89ca24b1dc8ec3e2d27612a6fb99039e54"><code>27b36e89</code></a>.</p>
+
+<p>This was also applied to field lookup in <a href="https://github.com/rmosolgo/graphql-ruby/pull/402/commits/133ed1b1e0577df1db222a892d8afd95082c6d33"><code>133ed1b1e</code></a> and to <code>lazy_resolve</code> handler lookup in <a href="https://github.com/rmosolgo/graphql-ruby/pull/402/commits/283fc19d72eb9890ea6254f7fc79600f3f0bfbeb"><code>283fc19d</code></a>.</p>
+
+<h2>Use <code>yield</code> Instead of <code>&amp;block</code></h2>
+
+<p>Due to the implementation of Ruby&rsquo;s VM, calling a block with <a href="https://github.com/JuanitoFatas/fast-ruby#proccall-and-block-arguments-vs-yieldcode"><code>yield</code> is much faster than <code>block.call</code></a>. <code>@theorygeek</code> migrated <code>MiddlewareChain</code> to use that approach instead in <a href="https://github.com/rmosolgo/graphql-ruby/pull/462/commits/517cec3477097ddb05db0e02b6752be552d2e3dd"><code>517cec34</code></a>.</p>
+
+<h2>Remove Overhead from Lazy Definition API (warning: terrible hack)</h2>
+
+<p>In order to handle circular definitions, graphql-ruby&rsquo;s <code>.define { ... }</code> blocks aren&rsquo;t executed immediately. Instead, they&rsquo;re stored and evaluated only when a definition-dependent value is required. To achieve this, all definition-dependent methods were preceeded by a call to <code>ensure_defined</code>.</p>
+
+<p>Maybe you remember that method from the <em>very top</em> of the profiler output above:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'> %self      total      self      wait     child     calls  name
+</span><span class='line'>  4.60      0.074     0.022     0.000     0.052     6893  *Class#new
+</span><span class='line'>  3.99      0.019     0.019     0.000     0.000     8715  *GraphQL::Define::InstanceDefinable#ensure_defined
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A fact about <code>GraphQL::Schema</code> is that, by the time it is defined, <em>all</em> lazy definitions have been executed. This means that during query execution, calling <code>ensure_defined</code> is <em>always</em> a waste!</p>
+
+<p>I found a way to remove the overhead, but it was a huge hack. It works like this:</p>
+
+<p>When a definition is added (with <code>.define</code>):</p>
+
+<ul>
+<li>store the definition block for later</li>
+<li><p>find each definition-dependent method definition on the defined object and gather them into an array:</p>
+
+<pre><code class="ruby">@pending_methods = method_names.map { |n| self.class.instance_method(n) }
+</code></pre></li>
+<li><em>replace</em> those methods with dummy methods which:
+
+<ul>
+<li>call <code>ensure_defined</code></li>
+<li>re-apply all <code>@pending_methods</code>, overriding the dummy methods</li>
+<li>call the <em>real</em> method (which was just re-applied)</li>
+</ul>
+</li>
+</ul>
+
+
+<p>This way, subsequent calls to definition-dependent methods <em>don&rsquo;t</em> call <code>ensure_defined</code>. <code>ensure_defined</code> removed itself from the class definition after its work was done!</p>
+
+<p>You can see the whole hack in <a href="https://github.com/rmosolgo/graphql-ruby/pull/483/commits/18d73a58314cab96c28a9861506b6ad18c8df3aa"><code>18d73a58</code></a>. For all my teasing, this is something that makes Ruby so powerful: if you can imagine it, you can code it!</p>
+
+<h2>The Final Product</h2>
+
+<p>Two minor releases later, the profile output is looking better! Here&rsquo;s the output on master:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'>Thread ID: 70178713115080
+</span><span class='line'>Fiber ID: 70178720382840
+</span><span class='line'>Total: 0.310395
+</span><span class='line'>Sort by: self_time
+</span><span class='line'>
+</span><span class='line'> %self      total      self      wait     child     calls  name
+</span><span class='line'>  4.06      0.013     0.013     0.000     0.000     7644   Kernel#hash
+</span><span class='line'>  2.93      0.021     0.009     0.000     0.012     2917  *Class#new
+</span><span class='line'>  2.89      0.009     0.009     0.000     0.000     4184   GraphQL::Query::Context::FieldResolutionContext#query
+</span><span class='line'>  2.74      0.009     0.009     0.000     0.000    13542   Module#===
+</span><span class='line'>  2.60      0.008     0.008     0.000     0.000     1960   GraphQL::Query::Context::FieldResolutionContext#initialize
+</span><span class='line'>  2.27      0.013     0.007     0.000     0.006     1748   GraphQL::Query#arguments_for
+</span><span class='line'>  2.25      0.010     0.007     0.000     0.003     7523   Kernel#===
+</span><span class='line'>  2.14      0.022     0.007     0.000     0.015     1959   GraphQL::Query::Context::FieldResolutionContext#spawn
+</span><span class='line'>  2.09      0.007     0.007     0.000     0.000     8260   Kernel#is_a?
+</span><span class='line'>  1.87      0.039     0.006     0.000     0.033     1748   GraphQL::Schema::RescueMiddleware#call
+</span><span class='line'>  1.75      0.013     0.005     0.000     0.008     1748   GraphQL::Execution::Lazy::LazyMethodMap#get
+</span><span class='line'>  1.69      0.005     0.005     0.000     0.000     2259   Kernel#class
+</span><span class='line'>  1.68      0.044     0.005     0.000     0.039     3496  *GraphQL::Schema::MiddlewareChain#invoke_core
+</span><span class='line'>  1.33      0.004     0.004     0.000     0.000     1747   GraphQL::Query::Context::FieldResolutionContext#schema
+</span><span class='line'>  1.31      0.029     0.004     0.000     0.025     1748   &lt;Module::GraphQL::Execution::Execute::FieldResolveStep&gt;#call
+</span><span class='line'>  1.20      0.004     0.004     0.000     0.000     1748   GraphQL::Execution::SelectionResult#set
+</span><span class='line'>  1.15      0.048     0.004     0.000     0.044     1748   GraphQL::Schema::MiddlewareChain#invoke
+</span><span class='line'>  1.14      0.017     0.004     0.000     0.013     1748   GraphQL::Schema#lazy_method_name
+</span><span class='line'>  1.07      0.004     0.003     0.000     0.001     1044   Kernel#public_send
+</span><span class='line'>  1.05      0.020     0.003     0.000     0.017     1748   GraphQL::Schema#lazy?
+</span><span class='line'>  1.02      0.004     0.003     0.000     0.000     1806   GraphQL::InternalRepresentation::Node#definition
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here are the wins:</p>
+
+<ul>
+<li>Object allocations reduced by 58%</li>
+<li>Method calls to gem code and Ruby built-ins reduced by &hellip; a lot!</li>
+<li>Calls to <code>ensure_defined</code> reduced by 100% 😆</li>
+</ul>
+
+
+<p>And, as shown in the benchmark above, 1.7x faster query execution!</p>
+
+<p>There&rsquo;s one caveat: these optimization apply to the GraphQL runtime <em>only</em>. <em>Real</em> GraphQL performance depends on more than that. It includes application-specific details like database access, remote API calls and application code performance.</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-03-08T08:02:00-05:00" pubdate data-updated="true">Mar 8<span>th</span>, 2017</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/graphql/'>GraphQL</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2017/03/07/persisted-graphql-queries-with-ruby/" title="Previous Post: Persisted GraphQL Queries with Ruby">&laquo; Persisted GraphQL Queries with Ruby</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2017/03/16/tracking-schema-changes-with-graphql-ruby/" title="Next Post: Tracking Schema Changes with GraphQL-Ruby">Tracking Schema Changes with GraphQL-Ruby &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>

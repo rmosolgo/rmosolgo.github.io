@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Testing | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/testing/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[How many assertions per test case?]]></title>
+    <link href="http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case/"/>
+    <updated>2015-10-08T21:12:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case</id>
+    <content type="html"><![CDATA[<p>This question is too hard. Instead, ask, &ldquo;how many behaviors per test case?&rdquo; and answer, &ldquo;one.&rdquo;</p>
+
+<!-- more -->
+
+
+<p>I presented at Full Stack about unit testing but what I really like is behavior-driven development.</p>
+
+<h2>A Behavior</h2>
+
+<p>You can think of a code base as a collection of behaviors: given some inputs (data, events), it makes some outputs (more data, more events). In this perspective, the code itself is an implementation detail. As long as it takes the inputs and creates the outputs, it makes little difference what classes, methods, functions etc, implement that behavior.</p>
+
+<p>This kind of thinking is recursive: each behavior is composed of smaller behaviors. For example, in a web application:</p>
+
+<pre><code>Behavior:
+  - A request with a valid username &amp; password is allowed to take Action X
+
+    Is composed of:
+      - The user info is stored in the session
+      - The user's `last_logged_in_at` is updated
+      - Value Y is written to the database
+</code></pre>
+
+<p>Each subsequent level of behavior may have an implementation of its own.</p>
+
+<h2>Testing a behavior</h2>
+
+<p>In a web application, unauthorized requests:</p>
+
+<ul>
+<li>Return meaningful HTTP responses, including a status and a body; and</li>
+<li>do not execute the requested action</li>
+</ul>
+
+
+<p>I would specify that as two <em>behaviors</em>:</p>
+
+<pre><code class="ruby">describe "an unauthorized request" do
+  it "responds as not authorized" do
+    http_response = make_create_request # makes a unauthorized_request
+    assert_equal(403, http_response.status)
+    assert_equal("Not Authorized", http_response.body)
+  end
+
+  it "doesn't write to the database" do
+    http_response = make_create_request # makes a unauthorized_request
+    assert_equal(0, Posts.count)
+  end  
+end
+</code></pre>
+
+<p>(using <a href="https://github.com/seattlerb/minitest#specs">minitest/spec</a>)</p>
+
+<p>Notice that the first test made <em>two</em> assertions. You could split that into three test cases but I don&rsquo;t think it&rsquo;s worth the trouble. What&rsquo;s the case where <code>403</code> and <code>"Not Authorized"</code> are not part of the same behavior?</p>
+
+<h2>Multiple Assertions is a Code Smell</h2>
+
+<p>If your test case has many assertions, your code may be telling you that you&rsquo;re specifying multiple behaviors at once. Ask yourself:</p>
+
+<ul>
+<li>Is there a smaller unit of work to extract?</li>
+<li>Can I make this a two-step process, where step one&rsquo;s result is passed to step two?</li>
+<li>Can I break each test case (and its corresponding code) into a distinct <a href="http://c2.com/cgi/wiki?StrategyPattern">strategy</a>?</li>
+<li>Am I testing business logic <em>and</em> interaction with an external service (eg, your database or an HTTP service)? Can I separate the two actions?</li>
+<li>Am I transforming data, then acting based on the result? Can I separate those two?</li>
+<li>Are there assertions that are shared between multiple test cases? Is there an underlying behavior there?</li>
+</ul>
+
+
+<h2>Other People on The Internet</h2>
+
+<p>Here&rsquo;s some more dignified reading on the topic:</p>
+
+<ul>
+<li><strong><a href="http://dannorth.net/introducing-bdd/">&ldquo;Introducing BDD,&rdquo; Dan North</a></strong>. I especially agree with his point that behavior-driving thinking helps you focus your design and implementation.</li>
+<li><strong><a href="http://blog.jayfields.com/2007/06/testing-one-assertion-per-test.html">&ldquo;Testing One Assertion Per Test,&rdquo; Jay Fields</a></strong>. I basically agree with him: &ldquo;Tests that focus on one behavior of the system are almost always easier to write and to comprehend at a later date.&rdquo; But I disagree with his assumption that one behavior equals one assertion.</li>
+<li><strong><a href="http://programmers.stackexchange.com/a/7829">&ldquo;Is it OK to have multiple asserts in a single unit test?&rdquo;, random Stack Overflow people</a></strong>. &ldquo;Yeah, but try not to.&rdquo;</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

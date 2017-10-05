@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Conferences | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/conferences/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Trip Report: RubyConf Colombia 2016]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/09/04/trip-report-rubyconf-colombia-2016/"/>
+    <updated>2016-09-04T22:13:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/09/04/trip-report-rubyconf-colombia-2016</id>
+    <content type="html"><![CDATA[<p>I just got back from <a href="http://rubyconf.co">RubyConf Colombia</a>. The content was great, the community was great, and the venue was great!</p>
+
+<!-- more -->
+
+
+<h2>The Content</h2>
+
+<p>This was a single-track conference, but there were no dud talks! I prefer code-driven talks, and for that reason, these were a few of my favorites:</p>
+
+<ul>
+<li><a href="https://twitter.com/davidpelaez">David Pelaez</a> demoed some functional concepts in Ruby, including <code>Right</code> and <code>Left</code> (?? name) and <code>None</code> objects.</li>
+<li><a href="https://twitter.com/orendon">Oscar Rendon</a> described an approach to combining business rules which allows you to simplify conditional branching and reuse code more effectively.</li>
+<li><a href="https://twitter.com/apotonick">Nick Sutterer</a> shared some insights into busting up &ldquo;god objects&rdquo; into more specialized, context-specific units of code.</li>
+<li><a href="https://twitter.com/sarcilav">Sebastian Arcila-Valensuela</a> and <a href="https://twitter.com/febuiles">Frederico Builes</a> gave my favorite non-code talk. They told a funny story of making tradeoffs while working on a tough problem: building a human-friendly path from a disjoint set of points.</li>
+</ul>
+
+
+<p>I presented <a href="/talks">&ldquo;Data Fetching with GraphQL and ActionCable&rdquo;</a> while I was there, and I was happy with how it went.</p>
+
+<h2>The Community</h2>
+
+<p>My favorite part of this event was getting to know the local Ruby community. In fact, I should say &ldquo;software development community&rdquo;, as many attendees were not full-time Ruby developers.</p>
+
+<p>Many things were familiar to me: these folks are building interesting projects (like <a href="https://www.wesura.com/">Wesura</a>, peer-to-peer insurance, and <a href="https://vlip.co/">Vlip</a>, a mobile payment platform). They&rsquo;re excited about doing great work and learning new things. Also, there&rsquo;s a big focus on training and education: many attendees were students at local universities or participants in web dev bootcamps.</p>
+
+<p>Other things were different. I saw many more female attendees at this conference than others. I know that this was a goal for the organizers, bravo to them for succeeding! Also, the community is relatively new. RubyConf Colombia is the only Ruby conference in Spanish-speaking Latin America (the other is in Brazil), and it requires <strong>a lot</strong> of work to plan and execute, because there isn&rsquo;t so much momentum in place. For example, there&rsquo;s not a culture of companies sending their employees to conferences, so many attendees paid out of pocket.</p>
+
+<p>I also realized something I take for granted: as a native English speaker, basically <em>all</em> technical information is available in my mother tongue, no matter where in the world it came from. What a blessing! It makes me think how valuable the translation service must have been for some native Spanish speakers. Of course, it was hugely valuable to me too &ndash; I would have been lost without it during the Spanish-language talks!</p>
+
+<h2>The Venue</h2>
+
+<p><a href="http://www.elteatrico.co/">El Teatrico</a> was a great spot for this event. We were close to max capacity, and that gave the conference a very intimate feeling. During breaks, you couldn&rsquo;t help but start a conversation with your neighbor.</p>
+
+<p>Besides that, the translation was <em>amazing</em>! There were two guys taking turns, and they did a great job keeping up with the talks and translating technical vocabulary. I felt like I understood almost 100% of the Spanish-language talks.</p>
+
+<p>I really enjoyed Medellin, too. It checked all the boxes for me: great environment, great people and great food!</p>
+
+<h2>Photos</h2>
+
+<p><img src="/images/rubyconf_co_2016/organizers.jpg" width="300"></p>
+
+<p>(via <a href="https://twitter.com/gigo6000/status/772228777367724032">@gigo6000 on Twitter</a>)</p>
+
+<p><img src="/images/rubyconf_co_2016/talk_1.jpg" width="300">
+<img src="/images/rubyconf_co_2016/el_teatrico_2.jpg" width="300">
+<img src="/images/rubyconf_co_2016/el_teatrico_1.jpg" width="200">
+<img src="/images/rubyconf_co_2016/medellin_1.jpg" width="200">
+<img src="/images/rubyconf_co_2016/medellin_2.jpg" width="200">
+<img src="/images/rubyconf_co_2016/landscape_1.jpg" width="200">
+<img src="/images/rubyconf_co_2016/medellin_3.jpg" width="200">
+<img src="/images/rubyconf_co_2016/aguardiente.jpg" width="200"></p>
+
+<h2>In Summary</h2>
+
+<p>This was a wonderful trip! I loved making some new friends and visiting this fantastic city. I really appreciate the work of the organizers, and that their primary goal is really to benefit their community. I&rsquo;m excited to see what next year holds for them!</p>
+]]></content>
+  </entry>
+  
+</feed>

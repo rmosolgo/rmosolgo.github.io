@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ember.js | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/ember-dot-js/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Computed Properties: Batman.js and Ember.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js/"/>
+    <updated>2014-08-02T09:38:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/08/02/computed-properties-batman-dot-js-and-ember-dot-js</id>
+    <content type="html"><![CDATA[<p><a href="http://batmanjs.org">Batman.js</a> is a front-end MVC framework with an unrivaled implementation of key-value observing. I will explore computed properties in batman.js by contrasting them with Ember.js&rsquo;s computed properties.</p>
+
+<!-- more -->
+
+
+<p>First, disclaimers!</p>
+
+<ul>
+<li>I didn&rsquo;t write any of the <code>Batman.Property</code> code that makes this feature possible. I&rsquo;m only a fanboy!</li>
+<li>I don&rsquo;t know Ember.js. I&rsquo;ve just gathered examples from the <a href="http://emberjs.com/guides">Ember Guides</a>.</li>
+</ul>
+
+
+<p>To explore computed properties, let&rsquo;s take the <strong>canonical <code>fullName</code> example</strong>. It:</p>
+
+<ul>
+<li>depends on two other properties, <code>firstName</code> and <code>lastName</code></li>
+<li>returns a string that joins <code>firstName</code> and <code>lastName</code> with a space</li>
+<li>can be set</li>
+<li>sets <code>firstName</code> and <code>lastName</code> by splitting on whitespace</li>
+</ul>
+
+
+<p>We&rsquo;ll also explore an <strong>aggregrated <code>roster</code> property</strong> which:</p>
+
+<ul>
+<li>depends on <code>fullName</code> for each person</li>
+<li>joins <code>fullName</code> with <code>,</code></li>
+</ul>
+
+
+<h2>fullName in Ember.js</h2>
+
+<p>(This is yanked wholesale from the <a href="http://emberjs.com/guides/object-model/computed-properties/">Computed Properties Guide</a>.)</p>
+
+<p>A couple of things to notice:</p>
+
+<ul>
+<li><code>fullName</code> is defined as <em>one function</em> which handles <code>get</code> and <code>set</code> operations.</li>
+<li><code>fullName</code> must be told what properties it depends on.</li>
+</ul>
+
+
+<pre><code class="javascript">App.Person = Ember.Object.extend({
+  firstName: null, // These aren't necessary, they're
+  lastName: null,  // just for clarity.
+
+  fullName: function(key, value, previousValue) {
+    // setter
+    if (arguments.length &gt; 1) {
+      var nameParts = value.split(/\s+/);
+      this.set('firstName', nameParts[0]);
+      this.set('lastName',  nameParts[1]);
+    }
+
+    // getter, also the return value is cached
+    return this.get('firstName') + ' ' + this.get('lastName');
+  }.property('firstName', 'lastName')
+});
+</code></pre>
+
+<p>Usage is pretty standard: use <code>get</code> and <code>set</code> to access properties.</p>
+
+<pre><code class="javascript">var captainAmerica = App.Person.create();
+captainAmerica.set('fullName', "William Burnside");
+captainAmerica.get('firstName'); // William
+captainAmerica.get('lastName');  // Burnside
+</code></pre>
+
+<h2>fullName in Batman.js</h2>
+
+<p>Two things to notice:</p>
+
+<ul>
+<li><code>get</code> and <code>set</code> operations are defined <em>separately</em>.</li>
+<li><code>fullName</code> doesn&rsquo;t have to be told what its dependencies are.</li>
+</ul>
+
+
+<pre><code class="coffeescript">class App.Person extends Batman.Object
+  @accessor 'firstName' # not necessary,
+  @accessor 'lastName'  # just here for clarity
+
+  @accessor 'fullName',
+    get: (key) -&gt; "#{@get('firstName')} #{@get('lastName')}"
+    set: (key, value) -&gt;
+      nameParts = value.split(/\s+/)
+      @set('firstName', nameParts[0])
+      @set('lastName', nameParts[1])
+      return value # should return newly-set value, although the `get` function will be used for caching.
+</code></pre>
+
+<p>The usage is almost identical:</p>
+
+<pre><code class="coffeescript">captainAmerica = new App.Person
+captainAmerica.set('fullName', 'William Burnside')
+captainAmerica.get('firstName') # William
+captainAmerica.get('lastName')  # Burnside
+</code></pre>
+
+<h2>roster in Ember.js</h2>
+
+<p>(This was adapted from the <a href="http://emberjs.com/guides/object-model/computed-properties-and-aggregate-data/">Computed Properties and Aggregate Data Guide</a>.)</p>
+
+<p>Some things stood out to me:</p>
+
+<ul>
+<li><code>roster</code>&rsquo;s properties are declared with a DSL. Array dependencies are limited to one layer deep (ie, you can&rsquo;t use <code>@each</code> twice).</li>
+<li><code>mapBy</code> is provided by <code>Ember.Enumerable</code> to handle arrays of objects. Nice!</li>
+</ul>
+
+
+<pre><code class="javascript">App.PeopleController = Ember.Controller.extend({
+  people: [
+    App.Person.create({firstName: "Tom", lastName: "Dale"}),
+    App.Person.create({firstName: "Yehuda", lastName: "Katz"})
+  ],
+
+  roster: function() {
+    var people = this.get('people');
+    return people.mapBy('fullName').join(', ');
+  }.property('people.@each.fullName')
+});
+</code></pre>
+
+<h2>roster in Batman.js</h2>
+
+<p>Here&rsquo;s the analogous construction in batman.js:</p>
+
+<pre><code class="coffeescript">class App.PeopleController extends Batman.Controller
+  @accessor 'people', -&gt;
+    new Batman.Set([ # this is future-code: constructor will take an array in v0.17.0
+      new App.Person(firstName: "Tom", lastName: "Dale")
+      new App.Person(firstName: "Yehuda", lastName: "Katz")
+    ])
+
+  @accessor 'roster', -&gt;
+    @get('people').mapToProperty('fullName').join(', ')
+</code></pre>
+
+<p>One thing is the same:</p>
+
+<ul>
+<li><code>mapToProperty</code> works like <code>mapBy</code></li>
+</ul>
+
+
+<p>You might notice two big differences:</p>
+
+<ul>
+<li><code>people</code> is a <code>Batman.Set</code> instead of a native Array.</li>
+<li><code>roster</code> didn&rsquo;t have to be told what its dependencies are</li>
+</ul>
+
+
+<p>By using batman.js data structures inside <code>@accessor</code> functions, we benefit from batman.js&rsquo;s <a href="http://rmosolgo.github.io/blog/2014/04/20/automatic-source-tracking-in-batman-dot-js/">automatic source tracking</a>. It looks like automatic source tracking was considered by the Ember core team, but deemed <a href="https://github.com/emberjs/ember.js/issues/269#issuecomment-3178319">impossible</a> or <a href="https://github.com/emberjs/ember.js/issues/386#issuecomment-3523589">prohibitively expensive</a>.</p>
+
+<p>I recently saw a quote in a <a href="https://www.youtube.com/watch?v=-DX3vJiqxm4">React.js talk</a>:</p>
+
+<blockquote><p>Intellectuals solve probelms. Geniuses prevent them. - Albert Einstein</p></blockquote>
+
+<p>I think that&rsquo;s just what the Shopify team did when they implemented <code>Batman.Observable</code>! The API is very simple and it Just Works<sup>TM</sup>.</p>
+
+<h2>My Opinion</h2>
+
+<p><strong>Pros of batman.js:</strong></p>
+
+<ul>
+<li>Elegant <code>@accessor</code> API for getters and setters: define <code>get</code> and <code>set</code> separately instead of testing for arguments.</li>
+<li>Automatic dependency tracking: batman.js knows what objects &amp; properties were accessed during computation and observes accordingly.</li>
+<li>There&rsquo;s no limit to the depth of enumerable dependencies. Any property of a <code>Batman.Object</code> that&rsquo;s accessed will be tracked, no matter where it exists in the app.</li>
+</ul>
+
+
+<p>In fact, <code>@accessor</code> is the heart and soul of a batman.js app. You&rsquo;re basically declaring a system of computed properties, then updating that system from user input. Batman.js propagates information to wherever it needs to be.</p>
+
+<p><strong>Cons of batman.js:</strong></p>
+
+<ul>
+<li>&ldquo;It&rsquo;s just not Ember.&rdquo; You miss out on huge user base, corporate support, and everything that goes with that.</li>
+<li>Beyond that, batman.js resources are sparse. The <a href="http://batmanjs.org/docs/index.html">new guides</a>, <a href="https://www.softcover.io/read/b5c051f3/batmanjs_mvc_cookbook">cookbook</a> and <a href="http://batmanjs.org/docs/index.html">API docs</a> are improving every week, but for advanced usage you still have to sourcedive sometimes.</li>
+<li>There <strong>is</strong> a performance hit for global observability. The only place I&rsquo;ve noticed it is with complex iteration views (<a href="https://github.com/batmanjs/batman/issues/1086">batmanjs/batman#1086</a>). I&rsquo;m hoping to tackle this soon since it&rsquo;s becoming an issue in <a href="http://get.planningcenteronline.com/check-ins">PCO Check-ins</a>.</li>
+</ul>
+
+
+<p>I&rsquo;m not aware of any features missing from batman.js, but I do miss the &ldquo;googleability&rdquo; of a well-traveled path. Batman.js also lacks some of the dev tools like a decent Chrome extension and a command-line client.</p>
+
+<p>I always want to know <em>how</em> things works, so getting in the source is actually a benefit for me.</p>
+
+<p><strong>Six of one, half-dozen of the other:</strong></p>
+
+<ul>
+<li>Dependency DSL vs <code>Batman.{DataStructure}</code></li>
+<li>Calling super: <code>this._super</code> vs. <code>@wrapAccessor</code></li>
+<li>External API with <code>get</code> and <code>set</code></li>
+<li>Cached values in computed properties</li>
+<li>In batman.js, you can opt out of tracking with <code>Batman.Property.withoutTracking</code>. It&rsquo;s obscure, but I think it&rsquo;s ok because batman.js always covers the more common case.</li>
+</ul>
+
+
+<p>One thing that I found in neither framework was rate-limited properties, a la Knockout. I&rsquo;d love to have a built-in option for this in batman.js.</p>
+]]></content>
+  </entry>
+  
+</feed>

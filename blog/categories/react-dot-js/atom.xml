@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: React.js | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/react-dot-js/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-05T12:36:03-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[What's new in React-Rails 2.0?]]></title>
+    <link href="http://rmosolgo.github.io/blog/2017/04/13/whats-new-in-react-rails-2-dot-0/"/>
+    <updated>2017-04-13T11:59:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2017/04/13/whats-new-in-react-rails-2-dot-0</id>
+    <content type="html"><![CDATA[<p>For <a href="http://planning.center">Planning Center</a> free week, I cooked up <a href="https://github.com/reactjs/react-rails"><code>react-rails</code></a> 2.0 🎊.</p>
+
+<!-- more -->
+
+
+<p>Here are a few highlights. For the full list, see the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a>!</p>
+
+<h2>Webpacker support</h2>
+
+<p><a href="https://github.com/rails/webpacker">Webpacker</a> was great to work with. <code>react-rails</code> now supports webpacker for:</p>
+
+<ul>
+<li>Mounting components with <code>&lt;%= react_component(...) %&gt;</code> via <code>require</code></li>
+<li>Server rendering from a webpacker pack (<code>server_rendering.js</code>)</li>
+<li>Loading the unobtrusive JavaScript (UJS)</li>
+<li>Installation and component generators</li>
+</ul>
+
+
+<p>A nice advantage of using webpacker is that you can load React.js from NPM instead of the <code>react-rails</code> gem. This way, you aren&rsquo;t bound to the React.js version which is included with the Ruby gem. You can pick any version you want!</p>
+
+<h2>UJS on npm</h2>
+
+<p>To support frontends built with Node.js, <code>react-rails</code>&rsquo;s  UJS driver is available on NPM as <a href="https://www.npmjs.com/package/react_ujs"><code>react_ujs</code></a>. It performs setup during <code>require</code>, so these two are equal:</p>
+
+<pre><code class="js">// Sprockets:
+//= require react_ujs
+
+// Node, etc:
+require("react_ujs")
+</code></pre>
+
+<h2>Request-based prerender context</h2>
+
+<p>If you&rsquo;re prerendering your React components on the server, you can perform setup and teardown in your Rails controller. For example, you might use these hooks to populate a flux store.</p>
+
+<p>First, add the <code>per_request_react_rails_prerenderer</code> helper to your controller:</p>
+
+<pre><code class="ruby">class PagesController &lt; ApplicationController
+  per_request_react_rails_prerenderer
+  # ...
+end
+</code></pre>
+
+<p>Then, you can access <code>react_rails_prerenderer</code> in the controller action:</p>
+
+<pre><code class="ruby">def show
+  js_context = react_rails_prerenderer.context
+  js_context.exec(js_setup_code)
+  render :show
+  js_context.exec(js_teardown_code)
+end
+</code></pre>
+
+<p>That way, you can properly prepare &amp; clean up a JS VM for server rendering.</p>
+
+<h2>Re-detect events</h2>
+
+<p>Previously, <code>ReactRailsUJS</code> &ldquo;automatically&rdquo; detected which libraries you were using and hooked up to their events for rendering components.</p>
+
+<p>It still checks for libraries during its initial load, but you can <em>also</em> re-check as needed:</p>
+
+<pre><code class="js">// Check the global context for libraries like Turbolinks and hook up to them:
+ReactRailsUJS.detectEvents()
+</code></pre>
+
+<p>This function removes previous event handlers, so it&rsquo;s safe to call anytime. (This was added in <code>2.0.2</code>.)</p>
+
+<h2>Other Takeaways</h2>
+
+<p>See the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a> for bug fixes and a new default server rendering configuration.</p>
+
+<p>Webpacker is great! Setup was smooth and the APIs were clear and convenient. I&rsquo;m looking forward to using it more.</p>
+
+<p>🍻 Here&rsquo;s to another major version of <code>react-rails</code>!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Parameterized styles with React, Rails and Sprockets]]></title>
+    <link href="http://rmosolgo.github.io/blog/2016/10/18/parameterized-styles-with-react-rails-and-sprockets/"/>
+    <updated>2016-10-18T15:05:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2016/10/18/parameterized-styles-with-react-rails-and-sprockets</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/rmosolgo/css_modules"><code>css_modules</code></a> provides an approach to styling UI components in a local-first way.</p>
+
+<!-- more -->
+
+
+<p>Let&rsquo;s say you have the same component to render in two contexts:</p>
+
+<p>```html</p>
+
+<div className="resources">
+  <DetailPane />
+</div>
+
+
+<p>// later &hellip;</p>
+
+<div className="rooms">
+  <DetailPane />
+</div>
+
+
+<pre><code>
+To style `DetailPane`, you probably want:
+
+- A set of shared styles to apply by default
+- A way to customize styles for each context
+
+How can we accomplish that? The [`css_modules`](https://github.com/rmosolgo/css_modules) gem provides a solution.
+
+(This example uses React components, but see below for a brief analogy to Rails partials.)
+
+## CSS Modules
+
+Let's treat each context as a module in CSS:
+</code></pre>
+
+<p>// in views/resources.scss
+:module(resources) {
+  // &hellip;
+}</p>
+
+<p>// in views/rooms.scss
+:module(rooms) {
+  // &hellip;
+}
+```</p>
+
+<p>Since each context has a <code>DetailPane</code>, let&rsquo;s define a mixin and share it between the two:</p>
+
+<pre><code class="scss">// in shared/detail_pane.scss
+@mixin detail-pane {
+  .detail-pane {
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid #777;
+
+    .description {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+// in views/resources.css
+:module(resources) {
+  @include detail-pane;
+}
+
+// in views/rooms.css
+:module(rooms) {
+  @include detail-pane;
+}
+</code></pre>
+
+<h3>Why a mixin?</h3>
+
+<p>Using a mixin makes it easier to track usage within the application: you only need to search for <code>@include</code>s, rather than class names.</p>
+
+<p>It also enforces a clear separation from base styles and custom styles. Base styles are hard-coded in the mixins. Custom styles are implemented as <em>overrides</em> within the module or as <em>parameters</em> to the mixin (using <code>$</code>-variables).</p>
+
+<h3>Applying Styles</h3>
+
+<p>To apply the modulized styles to a component, provide the component with a CSS module prop:</p>
+
+<p>```js
+var resourcesModule = CSSModules(&ldquo;resources&rdquo;)</p>
+
+<div className="resources">
+  <DetailPane cssModule={resourcesModule}/>
+</div>
+
+
+<p>// later &hellip;</p>
+
+<p>var roomsModule = CSSModules(&ldquo;rooms&rdquo;)</p>
+
+<div className="rooms">
+  <DetailPane cssModule={roomsModule}/>
+</div>
+
+
+<pre><code>
+Then, update `DetailPane` so that it gets class names from `this.props.cssModule`:
+</code></pre>
+
+<p>var DetailPane = React.createClass({
+  propTypes: {
+    cssModule: React.PropTypes.func.isRequired,
+  },</p>
+
+<p>  render: function() {
+    var cssModule = this.props.cssModule
+    return (
+      <div className={cssModule("detail-pane")}>
+        <p className={cssModule("description")} />
+      </div>
+    )
+  },
+})
+```</p>
+
+<p>Now, the two instances of <code>DetailPane</code> will <em>not</em> share class names, but they will share common code from <code>@mixin detail-pane</code>.</p>
+
+<p>The rendered output will contain &ldquo;modulized&rdquo; class names. The module is translated into an opaque prefix on the class name:</p>
+
+<p>```html</p>
+
+<div class="resources_abc123_detail-pane">
+  <p class="resources_abc123_description"></p>
+</div>
+
+
+<div class="rooms_xyz987_detail-pane">
+  <p class="rooms_xyz987_description"></p>
+</div>
+
+
+<pre><code>
+### Customizing Styles
+
+You can customize the styles with _overrides_ or _parameters_.
+
+Apply overrides by "reopening" class names inside the module:
+</code></pre>
+
+<p>:module(resources) {
+  @include detail-pane;
+  .detail-pane {
+    // needs extra space here:
+    margin: 10px;
+  }
+}
+```</p>
+
+<p>This will <em>only</em> affect <code>.detail-pane</code> within the <code>resources</code> module.</p>
+
+<p>Alternatively, you can parameterize the mixin. Add a <code>$</code>-parameter to the mixin:</p>
+
+<pre><code class="scss">// in shared/detail_pane.scss
+@mixin detail-pane($margin) {
+  .detail-pane {
+    margin: $margin;
+  }
+}
+</code></pre>
+
+<p>Then provide a value when including that mixin:</p>
+
+<pre><code class="scss">// in views/resources.scss
+:module(resources) {
+  @include detail-pane(10px);
+  // .detail-pane will have 10px margin
+}
+
+// in views/rooms.scss
+:module(rooms) {
+  @include detail-pane(5px);
+  // .detail-pane will have 5px margin
+}
+</code></pre>
+
+<p>Sass also includes <a href="http://advancedsass.com/articles/default-mixin-arguments-for-easier-theming.html">default values and optional arguments</a>.</p>
+
+<h2>Bare class names?</h2>
+
+<p>Perhaps you need to support bare class names (no module). For example, if you extra <code>@mixin detail-pane</code> but your app still contains bare  <code>.detail-pane</code> class names, you might apply the mixin to the global scope:</p>
+
+<pre><code class="scss">@mixin detail-pane {
+  // ...
+}
+
+// Also style global .detail-pane
+@include detail-pane;
+</code></pre>
+
+<p>To use bare class names in your <code>&lt;DetailPane /&gt;</code> component, use a <em>null module</em>:</p>
+
+<pre><code class="js">// This module has no name, it renders bare selectors:
+var nullModule = CSSModules(null)
+nullModule("detail-pane")
+// "detail-pane"
+</code></pre>
+
+<p>You can pass that in for the <code>cssModule</code> prop:</p>
+
+<pre><code class="html">&lt;DetailPane cssModule={CSSModules(null)} /&gt;
+</code></pre>
+
+<p>Then, the rendered output will contain bare class names:</p>
+
+<p>```html</p>
+
+<div class="detail-pane">
+  <p class="description"></p>
+</div>
+
+
+<pre><code>
+## Use with Rails Partials
+
+You can also parameterize the class names in Rails partials.
+
+Get a module with the view helper, then pass it to a partial:
+</code></pre>
+
+<p>&lt;% resources_module = css_module(&ldquo;resources&rdquo;) %>
+&lt;%= render partial: &ldquo;detail_pane&rdquo;, locals: { style_module: resources_module } %></p>
+
+<!-- later -->
+
+
+<p>&lt;% rooms_module = css_module(&ldquo;rooms&rdquo;) %>
+&lt;%= render partial: &ldquo;detail_pane&rdquo;, locals: { style_module: rooms_module } %>
+<code>``
+s that w
+Then, use the</code>style_module` in the partial:</p>
+
+<p>```erb</p>
+
+<div class="<%= style_module.selector("detail-pane") %>">
+  <p class="<%= style_module.selector("description") %>"></p>
+</div>
+
+
+<pre><code>
+Rails can also generate a null module by providing `nil` as the module name:
+</code></pre>
+
+<p>null_style_module = css_module(nil)
+null_style_module.selector(&ldquo;detail-pane&rdquo;)</p>
+
+<h1>=> &ldquo;detail-pane&rdquo;</h1>
+
+<p>```</p>
+
+<p>This allows you to parameterize the class names in your partials.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Why (I Think) We're Leaving Batman.js]]></title>
+    <link href="http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js/"/>
+    <updated>2014-09-07T20:19:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2014/09/07/why-i-think-were-leaving-batman-dot-js</id>
+    <content type="html"><![CDATA[<p>Sadly, <a href="http://get.planningcenteronline.com">PCO</a> is getting out of the batman.js game.</p>
+
+<!-- more -->
+
+
+<p>From where I sit, I think it boils down to:</p>
+
+<ul>
+<li>The framework never hit critical mass (and lost what it had)</li>
+<li>The framework&rsquo;s magic made some problems impossible to debug</li>
+<li>Client-side apps aren&rsquo;t good for business</li>
+<li>Rails, Turbolinks &amp; React will do just fine</li>
+</ul>
+
+
+<p>Batman.js is a great framework with some amazing, well-tested features and I&rsquo;m sorry to see it go this way for us!</p>
+
+<h2>No Critical Mass</h2>
+
+<p>Batman.js was an early entrant to the &ldquo;Framework Wars&rdquo;. It was production-ready by early 2013, which made it appealing at that point. However,</p>
+
+<ul>
+<li>there was very little &ldquo;evangelism&rdquo; by its creators (almost no talks, very little documentation, no &ldquo;media presence&rdquo;)</li>
+<li>early adopters were not &ldquo;invited in&rdquo; (unanswered github issues, for example)</li>
+</ul>
+
+
+<p>When Shopify pulled out (around <a href="https://github.com/batmanjs/batman/graphs/contributors">fall 2013</a>?), a ton of knowledge and resources were removed with no viable replacement.</p>
+
+<h2>Magic Problems</h2>
+
+<p>Batman.js is loaded with awesome APIs that were fun to use and satisfying when they worked. However, when it <em>didn&rsquo;t work</em>, you were up a creek without a paddle. There was:</p>
+
+<ul>
+<li>no helpful error messages</li>
+<li>no support on github, stack overflow or IRC</li>
+<li>no documentation or information of any kind about the inner workings</li>
+<li>no debugging tools</li>
+</ul>
+
+
+<p>I&rsquo;ve seen a lot of batman.js users pull their hair out yelling, &ldquo;Why doesn&rsquo;t this <em>work</em>?!&rdquo; Indeed, that&rsquo;s what drove me to learn it from the source.</p>
+
+<h2>Client-Side Issues</h2>
+
+<p>Making a whole app in JavaScript has a lot of sex appeal, but several things make it bad for real-life business:</p>
+
+<ul>
+<li>Bug-tracking tools (namely Bugsnag for JS) are not as good (especially when you throw CoffeeScript &amp; minification in the mix)</li>
+<li>Browser environments are outside your control (I got a lot of bugsnags for peoples' browser extensions)</li>
+<li>State can get weird &ndash; after having the app open for an hour, data can just get messed up! (Maybe this doesn&rsquo;t happen for better programmers.)</li>
+</ul>
+
+
+<p><em>Not my problem:</em></p>
+
+<p><img src="/images/extension_errors.png" width="500"></p>
+
+<p><em>No es mi problema:</em></p>
+
+<p><img src="/images/extension_errors2.png" width="900"></p>
+
+<p>You just don&rsquo;t realize the luxury of reliable bugsnags until they&rsquo;re gone! So many Check-Ins bugsnags leave no trace of what actually went wrong.</p>
+
+<h2>Other Options are OK, too</h2>
+
+<p>We have a solid data model, HTML templates and CSS to boot. It stinks to throw away all that code, but I forgot how amazingly fast it is to code Ruby on Rails.</p>
+
+<p>JS MVC types will look down their noses at Turbolinks, but it <em>works</em> and it has a lot of eyes on it. Combined with <code>react-rails</code>, it&rsquo;s a really strong option!</p>
+
+<h2>What Now?</h2>
+
+<p>In short, Rails-rendered HTML, Turbolinks &amp; <code>form_for ... remote: true</code>, and ReactJS for live-updates. There are a few things I am looking forward to:</p>
+
+<ul>
+<li><strong>RUBY BUGSNAGS</strong> with stack traces, request environments and everything!</li>
+<li><strong>Less state.</strong> Fewer things that can randomly affect other things in ways I didn&rsquo;t think about.</li>
+<li><strong>ReactJS.</strong> <code>Batman.View</code> is an amazing thing, but it makes me appreciate the dead-simple API of a React component. It can only get data from one place, no other objects can mess with it, its lifecycle is <em>very</em> simple (and works as documented), etc etc. I write a lot more code to do a lot less with React, but I think it&rsquo;s going to be a lot more stable, and that&rsquo;s worth it.</li>
+</ul>
+
+
+<p>We held on to Batman.js for a long time because it lended itself to <em>live-updating everything</em>. I think React is going to cover the a few key things there, and just <em>changing pages</em> will do the rest. So far I&rsquo;ve hooked up Pusher to Flux-style stores, then wrapped anything live-updating in a React component that observes that store. It&rsquo;s a lot more hands-on than Batman.js updates, but it has other advantages.</p>
+]]></content>
+  </entry>
+  
+</feed>

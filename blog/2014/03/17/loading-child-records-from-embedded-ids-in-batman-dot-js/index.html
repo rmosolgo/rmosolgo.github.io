@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Loading Child Records from Embedded IDs in Batman.js - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Batman.js provides a powerful model associations inspired by Ruby on Rails. But, if you&rsquo;re loading child items from ids, it&rsquo;s not going &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2014/03/17/loading-child-records-from-embedded-ids-in-batman-dot-js">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+  <div class='batmanjs-warning'>
+      To my knowledge, <a href="http://github.com/batmanjs/batman">batman.js</a> is not maintained. For that reason, I don't suggest that you use it for a new project!
+  </div>
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">Loading Child Records From Embedded IDs in Batman.js</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-17T11:03:00-04:00" pubdate data-updated="true">Mar 17<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><a href="http://batmanjs.org/">Batman.js</a> provides a powerful <a href="http://batmanjs.org/docs/api/batman.model_associations.html">model associations</a> inspired by Ruby on Rails. But, if you&rsquo;re loading child items from ids, it&rsquo;s not going to work out of the box.</p>
+
+<!-- more -->
+
+
+<h2>The problem</h2>
+
+<p>Batman.js <code>@hasMany</code> (in v0.15.0, anyways) doesn&rsquo;t support loading items from JSON like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'>  <span class="p">{</span>
+</span><span class='line'>    <span class="s2">&quot;parent&quot;</span> <span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+</span><span class='line'>      <span class="s2">&quot;children&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="cm">/* &lt;- here&#39;s tough part */</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>The solution</h2>
+
+<p>Instead of <code>Model.hasMany</code>, use a custom encoder to load the records:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='coffeescript'><span class='line'><span class="k">class</span> <span class="nx">Parent</span> <span class="k">extends</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Model</span>
+</span><span class='line'>  <span class="nx">@encode</span> <span class="s">&#39;children&#39;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nv">encode: </span><span class="nf">(value, key, builtJSON, record) -&gt;</span>
+</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span><span class="p">.</span><span class="nx">mapToProperty</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">builtJSON.key = </span><span class="nx">ids</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nv">decode: </span><span class="nf">(value, key, incomingJSON, outgoingObject, record) -&gt;</span>
+</span><span class='line'>      <span class="nv">ids = </span><span class="nx">value</span>
+</span><span class='line'>      <span class="nv">childRecords = </span><span class="k">new</span> <span class="nx">Batman</span><span class="p">.</span><span class="nx">Set</span>
+</span><span class='line'>      <span class="nx">ids</span><span class="p">.</span><span class="nx">forEach</span> <span class="nf">(id) -&gt;</span>
+</span><span class='line'>        <span class="nv">child = </span><span class="k">new</span> <span class="nx">Child</span> <span class="c1"># &lt;-- your Child class here</span>
+</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span>
+</span><span class='line'>        <span class="nx">child</span><span class="p">.</span><span class="nx">load</span><span class="p">()</span>
+</span><span class='line'>        <span class="nx">childRecords</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">child</span><span class="p">)</span> <span class="c1"># one caveat -- the childRecords&#39; attributes will be empty until their requests come back.</span>
+</span><span class='line'>      <span class="nx">childRecords</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s">&#39;loaded&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">outgoingObject.key = </span><span class="nx">childRecords</span>
+</span><span class='line'>      <span class="nx">record</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">childRecords</span><span class="p">)</span> <span class="c1"># this will fire updates in case bindings are waiting for this data</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Make sure to add your own <code>Child</code> class! Also, note that their attributes will be empty until their AJAX requests resolve!</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-17T11:03:00-04:00" pubdate data-updated="true">Mar 17<span>th</span>, 2014</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/batman-dot-js/'>Batman.js</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2014/03/05/tips-for-batman-dot-reststorage-and-batman-dot-railsstorage/" title="Previous Post: Tips for Batman.RestStorage and Batman.RailsStorage">&laquo; Tips for Batman.RestStorage and Batman.RailsStorage</a>
+        </div>
+      
+      
+        <div class="next-post">
+          <a href="/blog/2014/03/19/batman-dot-model-lifecycle-callbacks/" title="Next Post: Batman.Model Lifecycle Callbacks">Batman.Model Lifecycle Callbacks &raquo;</a>
+        </div>
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Robert Mosolgo -
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>
