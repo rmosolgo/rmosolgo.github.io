@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Type Checking | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/type-checking/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2017-10-06T09:28:00-04:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby Type Checking Roundup]]></title>
+    <link href="http://rmosolgo.github.io/blog/2017/10/06/ruby-type-checking-roundup/"/>
+    <updated>2017-10-06T09:00:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2017/10/06/ruby-type-checking-roundup</id>
+    <content type="html"><![CDATA[<p>This fall, several people presented their work on Ruby type checkers. So let&rsquo;s take a look: what&rsquo;s the big deal, and what have they been up to?</p>
+
+<!-- more -->
+
+
+<h2>Why Type Check?</h2>
+
+<p>Part of Ruby&rsquo;s appeal is to be <em>free</em> of the cruft of its predecessors. So why is there so much interest in <em>adding</em> types to Ruby?</p>
+
+<ul>
+<li>Large, sprawling projects are becoming more common. At Ruby&rsquo;s inception, there were no 10-year-old Rails apps which people struggled to maintain, only greenfield Ruby scripts for toy projects.</li>
+<li>Programmers have experienced excellent type systems in other languages, and want those benefits in Ruby.</li>
+<li><em>Optional</em>, gradual type systems have been introduced to Python and JavaScript and they&rsquo;re big successes.</li>
+</ul>
+
+
+<p>What are the benefits?</p>
+
+<ul>
+<li><strong>Correctness</strong>: Type checking, like testing, is a way to be confident that your codebase is functioning properly. Employing a type checker can help you find bugs during development and prevent those bugs from going to production.</li>
+<li><strong>Confidence</strong>: Since an incorrect program won&rsquo;t pass type checking, developers can refactor with more confidence. Common errors such as typos and argument errors can be caught by the type checker.</li>
+<li><strong>Design</strong>: The type system gives you a way to think about the program. Specifically, types document and define the <em>boundaries</em> between parts of code, like methods, classes and modules.</li>
+</ul>
+
+
+<p>To experience a great type system in a Ruby-like language, I recommend <a href="https://crystal-lang.org/">Crystal</a>.</p>
+
+<h2>Jeff Foster, StrangeLoop 2017</h2>
+
+<p><a href="http://www.cs.umd.edu/~jfoster/">Jeff Foster</a> is a professor at the <a href="http://www.umd.edu/">University of Maryland, College Park</a> and works in the <a href="http://www.cs.umd.edu/projects/PL/">programming languages group</a>. Along with his students, he&rsquo;s been exploring Ruby type checkers for <strong>nine years</strong>! This year, he gave a presentation at StrangeLoop, <a href="https://www.youtube.com/watch?v=buY54I7mEjA">Type Checking Ruby</a>.</p>
+
+<p>He described his various avenues of research over the years, and how they influenced one another, leading to a final question:</p>
+
+<pre><code class="ruby">class Talk &lt; ActiveRecord::Base
+  belongs_to :owner, class_name: "User"
+
+  def owner?(other_user)
+    # QUESTION
+    # How to know the type of `#owner` method at this point?
+    owner == other_user
+  end
+end
+</code></pre>
+
+<p>His early work revolved around <em>static</em> type checking: annotations in the source code were given to a type checker, which used those annotations to assert that the Ruby code was correct.</p>
+
+<p>This approach had a fundamental limitation: how can dynamically-created methods (like <code>Talk#owner</code> above) be statically annotated?</p>
+
+<p>This drove him and his team to develop <a href="https://github.com/plum-umd/rdl">RDL</a>, a <em>dynamic</em> type checker. In RDL, types are declared using <em>methods</em> instead of annotations, for example:</p>
+
+<pre><code class="ruby">type '(Integer, Integer) -&gt; Integer'
+def multiply(x, y)
+  x * y
+end
+</code></pre>
+
+<p>By using methods, it handles metaprogramming in a straightforward way. It hooks into Rails' <code>.belongs_to</code> and adds annotations for the generated methods, for example:</p>
+
+<pre><code class="ruby"># Rails' belongs_to method
+def belongs_to(name, options = {})
+  # ...
+  # define a reader method, like `Talk#owner` above
+  type "() -&gt; #{class_name}"
+  define_method(name) do
+    # ...
+  end
+end
+</code></pre>
+
+<p>(In reality, RDL uses <a href="https://github.com/plum-umd/rdl#preconditions-and-postconditions">conditions</a>, not monkey-patching, to achieve this.)</p>
+
+<p>In this approach, type information is <em>gathered while the program runs</em>, but the typecheck is deferred until the method is called. At that point, RDL checks the source code (static information) using the runtime data (dynamic information). For this reason, RDL is called &ldquo;Just-in-Time Static Type Checking.&rdquo;</p>
+
+<p>You can learn more about RDL in several places:</p>
+
+<ul>
+<li>RDL on GitHub: <a href="https://github.com/plum-umd/rdl">https://github.com/plum-umd/rdl</a></li>
+<li>StrangeLoop 2017 talk: <a href="https://www.youtube.com/watch?v=buY54I7mEjA">https://www.youtube.com/watch?v=buY54I7mEjA</a></li>
+<li>Academic papers from the folks behind RDL: <a href="https://github.com/plum-umd/rdl#bibliography">https://github.com/plum-umd/rdl#bibliography</a></li>
+</ul>
+
+
+<p>Personally, I can&rsquo;t wait to take RDL for a try. At the conference, Jeff mentioned that <em>type inference</em> was on his radar. That would take RDL to the next level!</p>
+
+<p>Not to read into it too far, but it looks like <a href="https://github.com/plum-umd/rdl/issues/40#issuecomment-329135921">Stripe is exploring RDL</a> 😎.</p>
+
+<h2>Soutaro Matsumoto, RubyKaigi 2017</h2>
+
+<p>Soutaro Matsumoto also has significant academic experience with type checking Ruby, and this year, he presented some of his work at RubyKaigi in <a href="https://youtu.be/JExXdUux024">Type Checking Ruby Programs with Annotations</a>.</p>
+
+<p>He begins with an overview of type checking Ruby, and surveys the previous work in type inference. He also points out how requirements should be relaxed for Ruby:</p>
+
+<ul>
+<li><strong><del>Correctness</del> -> Forget correctness</strong> (Allow a mix of typed and untyped code, so that developers can work quickly when they don&rsquo;t want or need types.)</li>
+<li><strong><del>Static</del> -> Defer type checking to runtime</strong> (He mentions RDL in this context)</li>
+<li><strong><del>No annotations</del> -> Let programmers write types</strong> (<em>Completely</em> inferring types is not possible, so accept some hints from the developers.)</li>
+</ul>
+
+
+<p>Then, he introduces his recent project, <a href="https://github.com/soutaro/steep">Steep</a>.</p>
+
+<p>Steep&rsquo;s approach is familiar, but new to Ruby. It has three steps:</p>
+
+<ul>
+<li>Write a <code>.rbi</code> file which describes the types in your program, using a special type language, for example:</li>
+</ul>
+
+
+<pre><code class="ruby">class Talk {
+  def owner: (User) -&gt; _Boolean
+}
+</code></pre>
+
+<ul>
+<li>Add annotations to your Ruby code to connect it to your types:</li>
+</ul>
+
+
+<pre><code class="ruby">class Talk &lt; ActiveRecord::Base
+  belongs_to :owner, class_name: "User"
+  # @dynamic owner
+end
+</code></pre>
+
+<p>  Some connections between Ruby source and the <code>.rbi</code> files can be made automatically; others require explicit annotations.</p>
+
+<ul>
+<li><p>Run the type checker:</p>
+
+<pre><code>$ steep check app/models/talk.rb
+</code></pre></li>
+</ul>
+
+
+<p>It reminds me a bit of the <code>.h</code>/<code>.c</code> files in a C project.</p>
+
+<p>Soutaro is also presenting his work at <a href="http://rubyconf.org/program#session-233">this winter&rsquo;s RubyConf</a>.</p>
+
+<h2>Valentin Fondaratov, RubyKaigi 2017</h2>
+
+<p>Valentin works at JetBrains (creators of <a href="https://www.jetbrains.com/ruby/">RubyMine</a>) and presented his work on type-checking based on <em>runtime</em> data. His presentation, <a href="https://www.youtube.com/watch?v=JS6m2gke0Ic">Automated Type Contracts Generation for Ruby</a>, was really fascinating and offered a promising glimpse of what a Ruby type ecosystem could be.</p>
+
+<p>Valentin started by covering RubyMine&rsquo;s current type checking system:</p>
+
+<ul>
+<li>RubyMine tries to resolve identifiers (eg, method names, constant names) to their implementations</li>
+<li>But this is hard: given <code>obj.execute</code>, what method does it call?</li>
+<li>Developers can provide hints with YARD documentation</li>
+<li>RubyMine uses this to support autocomplete, error prediction, and rename refactorings</li>
+</ul>
+
+
+<p>He also pointed out that even code coverage is not enough: 100% code coverage does <em>not</em> guarantee that all <em>possible</em> codepaths were run. For example, any composition of <code>if</code> branches require a cross-product of codepaths, not only that each line is executed once. Besides that, code coverage does <em>not</em> analyze the coverage of your dependencies' code (ie, RubyGems).</p>
+
+<p>So, Valentin suggests getting <em>more</em> from our unit tests: what if we <em>observed</em> the running program, and kept notes about what values were passed around and how they were used? In this arrangement, that <em>runtime</em> data could be accumulated, then used for type checking.</p>
+
+<p>Impressively, he introduced the implementation of this, first using a <a href="ruby-doc.org/core-2.4.0/TracePoint.html">TracePoint</a>, then digging into the Ruby VM to get even more granular data.</p>
+
+<p>However, the gathered data can be very complicated. For example, how can we understand the input type of <code>String#split</code>?</p>
+
+<pre><code class="ruby"># A lot of type checking data generated at runtime:
+# call                                # Input type
+"1,2,,3,4,,".split(",")               # (String, nil)
+# =&gt; ["1", "2", "", "3", "4"]
+"1,2,,3,4,,".split(",", 4)            # (String, Integer)
+# =&gt; ["1", "2", "", "3,4,,"]
+"1,2,,3,4,,".split(",", -4)           # (String, Integer)
+# =&gt; ["1", "2", "", "3", "4", "", ""]
+"1,2,,3,4,,".split(/\d/)              # (Regexp, nil)
+# =&gt; ["", ",", ",,", ",", ",,"]
+# ...
+</code></pre>
+
+<p>Valentin showed how a classic technique, finite automata, can be used to reduce this information to a useful data structure.</p>
+
+<p>Then, this runtime data can be used to <em>generate</em> type annotations (as YARD docs).</p>
+
+<p>Finally, he imagines a type ecosystem for Ruby:</p>
+
+<ul>
+<li>Users contribute their (anonymized) runtime information for their RubyGem depenedencies</li>
+<li>This data is pooled into a shared database, merged by RubyGem &amp; version</li>
+<li>Users can draw type data <em>from</em> the shared database</li>
+</ul>
+
+
+<p>Personally, I think this is a great future to pursue:</p>
+
+<ul>
+<li>Developers can <em>gain</em> type checking without any annotations</li>
+<li>Annotations can become very robust because resources are shared</li>
+<li><em>Real</em> 100% coverage is possible via community collaboration</li>
+</ul>
+
+
+<p>You can see the project on GitHub: <a href="https://github.com/JetBrains/ruby-type-inference">https://github.com/JetBrains/ruby-type-inference</a></p>
+
+<h2>Summary</h2>
+
+<p>There&rsquo;s a lot of technically-savvy and academically-informed work on type checking Ruby! Many of the techniques preserve Ruby&rsquo;s productivity and dynamism while improving the developer experience and confidence. What makes them unique is their use of <em>runtime</em> data, to observe the program in action, then make assertions about the source code.</p>
+]]></content>
+  </entry>
+  
+</feed>

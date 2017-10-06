@@ -373,16 +373,20 @@
         <lastmod>2017-10-05T12:25:02-04:00</lastmod>
     </url>
     <url>
+        <loc>http://rmosolgo.github.io/blog/2017/10/06/ruby-type-checking-roundup/</loc>
+        <lastmod>2017-10-06T09:26:42-04:00</lastmod>
+    </url>
+    <url>
         <loc>http://rmosolgo.github.io/about/</loc>
         <lastmod>2017-10-05T12:25:02-04:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/archives/</loc>
-        <lastmod>2017-10-05T12:25:03-04:00</lastmod>
+        <lastmod>2017-10-06T09:26:42-04:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/</loc>
-        <lastmod>2017-10-05T12:25:03-04:00</lastmod>
+        <lastmod>2017-10-06T09:26:42-04:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/robots.txt</loc>
@@ -390,6 +394,6 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/talks/</loc>
-        <lastmod>2017-10-05T12:25:03-04:00</lastmod>
+        <lastmod>2017-10-06T09:26:42-04:00</lastmod>
     </url>
 </urlset>
