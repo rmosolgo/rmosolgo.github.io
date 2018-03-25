@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-03-25T15:21:04-04:00</updated>
+  <updated>2018-03-25T16:06:30-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -91,7 +91,31 @@ end
 
 <p>In the new class-based API, there are no proc literals (although they&rsquo;re supported for compatibility&rsquo;s sake). There are some <code>instance_eval</code>&rsquo;d blocks (<code>field(...) { }</code>, for example), but field resolution is <em>just an instance method</em> and the type definition is a normal class, so module scoping works normally. (Contrast that with the constant assignment in <code>Types::Post = GraphQL::ObjectType.define { ... }</code>, where no module scope is used). Several hooks that were previously specified as procs are now class methods, such as <code>resolve_type</code> and <code>coerce_input</code> (for scalars).</p>
 
-<p>By switching to Ruby&rsquo;s happy path of classes and methods, we can help Ruby developers feel more at home in GraphQL definitions. Additionally, we avoid some unfamiliar gotchas of procs.</p>
+<p>Overriding <code>!</code> is another particular no-no I&rsquo;m correcting. At the time, I thought, &ldquo;what a cool way to bring a GraphQL concept into Ruby!&rdquo; This is because GraphQL non-null types are expressed with <code>!</code>:</p>
+
+<pre><code class="ruby"># This field always returns a User, never `null`
+author: User!
+</code></pre>
+
+<p>So, why not express the concept with Ruby&rsquo;s <code>!</code> method (which is usually used for negation)?</p>
+
+<pre><code class="ruby">field :author, !User
+</code></pre>
+
+<p>As it turns out, there are several good reasons for <em>why not</em>!</p>
+
+<ul>
+<li>Overriding <code>!</code> breaks the negation operator. ActiveSupport&rsquo;s <code>.present?</code> didn&rsquo;t work with type objects, because <code>!</code> didn&rsquo;t return <code>false</code>, it returned a non-null type.</li>
+<li>Overriding the <code>!</code> operator throws people off. When a newcomer sees GraphQL-Ruby sample code, they have a WTF moment, followed by the dreadful memory (or discovery) that Ruby allows you to override <code>!</code>.</li>
+<li>There&rsquo;s very little value in importing GraphQL concepts into Ruby. GraphQL-Ruby developers are generally seasoned Ruby developers who are just learning GraphQL, so they don&rsquo;t gain anything by the similarity to GraphQL.</li>
+</ul>
+
+
+<p>So, overriding <code>!</code> didn&rsquo;t deliver any value, but it did present a roadblock to developers and break some really essential code.</p>
+
+<p>In the new API, nullability is expressed with the options <code>null:</code> and <code>required:</code> instead of with <code>!</code>. (But, you can re-activate that override for compatibility while you transition to the new API.)</p>
+
+<p>By switching to Ruby&rsquo;s happy path of classes and methods, we can help Ruby developers feel more at home in GraphQL definitions. Additionally, we avoid some unfamiliar gotchas of procs and clear a path for removing the <code>!</code> override.</p>
 
 <h2>Rails Compatibility</h2>
 
