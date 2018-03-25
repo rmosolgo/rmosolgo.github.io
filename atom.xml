@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2017-10-06T09:28:00-04:00</updated>
+  <updated>2018-03-25T15:21:04-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,243 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Why a New Schema Definition API?]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/03/25/why-a-new-schema-definition-api/"/>
+    <updated>2018-03-25T13:59:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/03/25/why-a-new-schema-definition-api</id>
+    <content type="html"><![CDATA[<p>GraphQL-Ruby <code>1.8.0</code> will have an new class-based API for defining your schema. Let&rsquo;s investigate the design choices in the new API.</p>
+
+<!-- more -->
+
+
+<p>The new API is backwards-compatible and can coexist with type definitions in the old format. See <a href="https://github.com/rmosolgo/graphql-ruby/blob/1.8-dev/guides/schema/class_based_api.md#compatibility--migration-overview">the docs</a> for details. <code>1.8.0.pre</code> versions are available on RubyGems now and are very stable &ndash; that&rsquo;s what we&rsquo;re running at GitHub!</p>
+
+<h2>Problems Worth Fixing</h2>
+
+<p>Since starting at GitHub last May, I&rsquo;ve entered into the experience of a huge-scale GraphQL system. Huge scale in lots of ways: huge schema, huge volume, and huge developer base. One of the problems that stood out to me (and to lots of us) was that GraphQL-Ruby simply <em>didn&rsquo;t help</em> us be productive. Elements of schema definition hindered us rather than helped us.</p>
+
+<p>So, our team set out on remaking the GraphQL-Ruby schema definition API. We wanted to address a few specific issues:</p>
+
+<ul>
+<li><strong>Familiarity</strong>. GraphQL-Ruby&rsquo;s schema definition API reflected GraphQL and JavaScript more than it reflected Ruby. (The JavaScript influence comes from <code>graphql-js</code>, the reference implementation.) Ruby developers couldn&rsquo;t bring their usual practices into schema development; instead, they had to learn a bunch of new APIs and figure out how to work them together.</li>
+<li><strong>Rails Compatibility</strong>, especially constant loading. A good API would work seamlessly with Rails development configurations, but the current API has some gotchas regarding circular dependencies and reloading.</li>
+<li><strong>Hackability</strong>. Library code is fine <em>until it isn&rsquo;t</em>, and one of the best (and worst) things about Ruby is that all code is open to extension (or monkey-patching 🙈). At best, this means that library users can customize the library code in straightforward ways to better suit their use cases. However, GraphQL-Ruby didn&rsquo;t support this well: to support special use cases, customizations had to be hacked in in odd ways that were hard to maintain and prone to breaking during gem updates.</li>
+</ul>
+
+
+<p>Besides all that, we needed a <em>safe</em> transition, so it had to support a gradual adoption.</p>
+
+<p>After trying a few different possibilities, the team decided to take a class-based approach to defining GraphQL schemas. I&rsquo;m really thankful for their support in the design process, and I&rsquo;m indebted to the folks at Shopify, who used a class-based schema definition system from the start (as a layer on top of GraphQL-Ruby) and <a href="https://www.youtube.com/watch?v=Wlu_PWCjc6Y">presented their work</a> early on.</p>
+
+<h2>The new API, from 10,000 feet</h2>
+
+<p>In short, GraphQL types used to be singleton instances, built with a <a href="https://twitter.com/krainboltgreene/status/971797438070599680">block-based API</a>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">Types</span><span class="p">:</span><span class="ss">:Post</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:ObjectType</span><span class="o">.</span><span class="n">define</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, GraphQL types are classes, with a DSL implemented as class methods:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Types</span><span class="o">::</span><span class="no">Post</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Field resolution was previously defined using Proc literals:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">field</span> <span class="ss">:comments</span><span class="p">,</span> <span class="n">types</span><span class="o">[</span><span class="ss">Types</span><span class="p">:</span><span class="ss">:Comments</span><span class="o">]</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:orderBy</span><span class="p">,</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:CommentOrder</span>
+</span><span class='line'>  <span class="n">resolve</span> <span class="o">-&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">obj</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">args</span><span class="o">[</span><span class="ss">:orderBy</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, field resolution is defined with an instance method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">field</span> <span class="ss">:comments</span><span class="p">,</span> <span class="o">[</span><span class="ss">Types</span><span class="p">:</span><span class="ss">:Comments</span><span class="o">]</span><span class="p">,</span> <span class="ss">null</span><span class="p">:</span> <span class="kp">true</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:order_by</span><span class="p">,</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:CommentOrder</span><span class="p">,</span> <span class="ss">required</span><span class="p">:</span> <span class="kp">false</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">comments</span><span class="p">(</span><span class="n">order_by</span><span class="p">:</span> <span class="kp">nil</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">object</span><span class="o">.</span><span class="n">comments</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="n">order_by</span><span class="p">)</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>How does this address the issues listed above?</p>
+
+<h2>More Familiarity</h2>
+
+<p>First, using classes reduces the &ldquo;WTF&rdquo; factor of GraphQL definition code. A seasoned Ruby developer might (rightly) smell foul play and reject GraphQL-Ruby on principle. (I was not seasoned enough to detect this when I designed the API!)</p>
+
+<p>Proc literals are rare in Ruby, but common in GraphQL-Ruby&rsquo;s <code>.define { ... }</code> API. Their lexical scoping rules are different than method scoping rules, making it hard to remember what <em>was</em> and <em>wasn&rsquo;t</em> in scope during field resolution (for example, what was <code>self</code>?). To make matters worse, <em>some</em> of the blocks in the <code>.define</code> API were <code>instance_eval</code>&rsquo;d, so their <code>self</code> would be overridden. Practically, this meant that typos in development resulted in strange <code>NoMethodError</code>s.</p>
+
+<p>Proc literals also have performance downsides: they&rsquo;re not optimized by CRuby, so they&rsquo;re <a href="https://gist.github.com/rmosolgo/6c6a7d787e0f1666f4c6d858c8402a01#gistcomment-1843329">slower than method calls</a>. Since they capture a lexical scope, they may also have <a href="https://github.com/github/graphql-client/pull/139">unexpected impacts on memory footprint</a> (any local variable may be retained, since it might be accessed by the proc). The solutions here are simple: just use methods, the way Ruby wants you to! 😬</p>
+
+<p>In the new class-based API, there are no proc literals (although they&rsquo;re supported for compatibility&rsquo;s sake). There are some <code>instance_eval</code>&rsquo;d blocks (<code>field(...) { }</code>, for example), but field resolution is <em>just an instance method</em> and the type definition is a normal class, so module scoping works normally. (Contrast that with the constant assignment in <code>Types::Post = GraphQL::ObjectType.define { ... }</code>, where no module scope is used). Several hooks that were previously specified as procs are now class methods, such as <code>resolve_type</code> and <code>coerce_input</code> (for scalars).</p>
+
+<p>By switching to Ruby&rsquo;s happy path of classes and methods, we can help Ruby developers feel more at home in GraphQL definitions. Additionally, we avoid some unfamiliar gotchas of procs.</p>
+
+<h2>Rails Compatibility</h2>
+
+<p>Rails&#8217; automatic constant loading is wonderful &hellip; until it&rsquo;s <em>not</em>! GraphQL-Ruby didn&rsquo;t play well with Rails&#8217; constant loading especially when it came to cyclical dependencies, and here&rsquo;s why.</p>
+
+<p>Imagine a typical <code>.define</code>-style type definition, like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">Types</span><span class="p">:</span><span class="ss">:T</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:ObjectType</span><span class="o">.</span><span class="n">define</span> <span class="p">{</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We&rsquo;re assigning the constant <code>Types::T</code> to the return value of <code>.define { ... }</code>. Consequently, the constant is not defined <em>until</em> <code>.define</code> returns.</p>
+
+<p>Let&rsquo;s expand the example to two type definitions:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="ss">Types</span><span class="p">:</span><span class="ss">:T1</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:ObjectType</span><span class="o">.</span><span class="n">define</span> <span class="p">{</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="p">}</span>
+</span><span class='line'><span class="ss">Types</span><span class="p">:</span><span class="ss">:T2</span> <span class="o">=</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:ObjectType</span><span class="o">.</span><span class="n">define</span> <span class="p">{</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>If <code>T1</code> depends on <code>T2</code>, <em>and</em> <code>T2</code> depends on <code>T1</code>, how can this work? (For example, imagine a <code>Post</code> type whose <code>author</code> field returns a <code>User</code>, and a <code>User</code> type whose <code>posts</code> field returns a list of <code>Post</code>s. This kind of cyclical dependency is common!) GraphQL-Ruby&rsquo;s solution was to adopt a JavaScriptism, a <em>thunk</em>. (Technically, I guess it&rsquo;s a functional programming-ism, but I got it from <code>graphql-js</code>.) A <em>thunk</em> is an anonymous function used to defer the resolution of a value. For example, if we have code like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">field</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:User</span>
+</span><span class='line'><span class="c1"># NameError: uninitialized constant Types::User</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>GraphQL-Ruby would accept this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">field</span> <span class="ss">:author</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:User</span> <span class="p">}</span>
+</span><span class='line'><span class="c1"># Thanks for the function, I will call it later to get the value!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Later, GraphQL-Ruby would <code>.call</code> the proc and get the value. At that type, <code>Types::User</code> would properly resolve to the correct type. This <em>worked</em> but it had two big downsides:</p>
+
+<ul>
+<li>It added an unfamiliar construct (<code>Proc</code>) in an unfamiliar context (a method argument), so it was frustrating and disorienting.</li>
+<li>It added visual noise to the source code.</li>
+</ul>
+
+
+<p>How does switching to classes resolve this issue? To ask the same question, how come we don&rsquo;t experience this problem with normal Rails models?</p>
+
+<p>Part of the answer has to do with <em>how classes are evaluated</em>. Consider two classes in two different files:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># app/graphql/types/post.rb</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Types</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Post</span> <span class="o">&lt;</span> <span class="no">BaseObject</span>
+</span><span class='line'>    <span class="n">field</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:User</span><span class="p">,</span> <span class="ss">null</span><span class="p">:</span> <span class="kp">false</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="c1"># app/graphql/types/user.rb</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Types</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">BaseObject</span>
+</span><span class='line'>    <span class="n">field</span> <span class="ss">:posts</span><span class="p">,</span> <span class="o">[</span><span class="ss">Types</span><span class="p">:</span><span class="ss">:Post</span><span class="o">]</span><span class="p">,</span> <span class="ss">null</span><span class="p">:</span> <span class="kp">false</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Notice that <code>Post</code> depends on <code>User</code>, and <code>User</code> depends on <code>Post</code>. The difference is how these lines are evaluated, and when the constants become defined. Here&rsquo;s the same code, with numbering to indicate the order that lines are evaluated:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Let&#39;s assume that `Post` is loaded first.</span>
+</span><span class='line'><span class="c1"># app/graphql/types/post.rb</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Types</span>                                  <span class="c1"># 1, evaluation starts here</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">Post</span> <span class="o">&lt;</span> <span class="no">BaseObject</span>                     <span class="c1"># 2, and naturally flows here, constant `Types::Post` is initialized as a class extending BaseObject</span>
+</span><span class='line'>    <span class="n">field</span> <span class="ss">:author</span><span class="p">,</span> <span class="ss">Types</span><span class="p">:</span><span class="ss">:User</span><span class="p">,</span> <span class="ss">null</span><span class="p">:</span> <span class="kp">false</span>   <span class="c1"># 3, but when evaluating `Types::User`, jumps down below</span>
+</span><span class='line'>  <span class="k">end</span>                                         <span class="c1"># 9, execution resumes here after loading `Types::User`</span>
+</span><span class='line'><span class="k">end</span>                                           <span class="c1"># 10</span>
+</span><span class='line'><span class="c1"># app/graphql/types/user.rb</span>
+</span><span class='line'><span class="k">module</span> <span class="nn">Types</span>                                  <span class="c1"># 4, Rails opens this file looking for `Types::User`</span>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">User</span> <span class="o">&lt;</span> <span class="no">BaseObject</span>                     <span class="c1"># 5, constant `Types::User` is initialized</span>
+</span><span class='line'>    <span class="n">field</span> <span class="ss">:posts</span><span class="p">,</span> <span class="o">[</span><span class="ss">Types</span><span class="p">:</span><span class="ss">:Post</span><span class="o">]</span><span class="p">,</span> <span class="ss">null</span><span class="p">:</span> <span class="kp">false</span>  <span class="c1"># 6, this line finishes without jumping, because `Types::Post` is _already_ initialized (see `# 2` above)</span>
+</span><span class='line'>  <span class="k">end</span>                                         <span class="c1"># 7</span>
+</span><span class='line'><span class="k">end</span>                                           <span class="c1"># 8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since <code>Types::Post</code> is <em>initialized</em> first, then built-up by the following lines of code, it&rsquo;s available to <code>Types::User</code> in the case of a circular dependency. As a result, the thunk is not necessary.</p>
+
+<p>This approach isn&rsquo;t a silver bullet &ndash; <code>Types::Post</code> is not fully initialized by the time <code>Types::User</code> needs it &ndash; but it reduces visual friction and generally plays nice with Rails out of the box.</p>
+
+<h2>Hackability</h2>
+
+<p>I&rsquo;ve used a naughty word here, but in fact, I&rsquo;m talking about something very good. Have you ever been stuck with some dependency that didn&rsquo;t quite fit your application? (Or, maybe you were stuck on an old version, or your app needed a new feature that wasn&rsquo;t quite supported by the library.) Like it or not, sometimes the only way forward in a case like that is to hack it: reopen classes, redefine methods, mess with the inheritance chain, etc. Yes, those choices come with maintenance downsides, but sometimes they&rsquo;re really the best way forward.</p>
+
+<p>On the other hand, really flexible libraries are <em>ready</em> for you to come and extend them. For example, they might provide base classes for you to extend, with the assumption that you&rsquo;ll override and implement certain methods. In that case, the same hacking techniques listed above have found their time to shine.</p>
+
+<p><code>ActiveRecord::Base</code> is a great example of both cases: plenty of libraries hack methods right into the built-in class (for example, <code>acts_as_{whatever}</code>), and also, lots of Rails apps use an <code>ApplicationRecord</code> class for their application-specific customizations.</p>
+
+<p>Since GraphQL-Ruby didn&rsquo;t use the familiar arrangement of classes and methods, it was closed to this kind of extension. (Ok, you <em>could</em> do it, but it was a lot of work! And who wants to do that!?) In place of this, GraphQL-Ruby had yet-another-API for extending its DSL. Yet another thing to learn, with more Proc literals 😪.</p>
+
+<p>Using classes simplifies this process because you can use familiar Ruby techniques to build your GraphQL schema. For example, if you want to share code between field resolvers, you can <code>include</code> a module and call its methods. If you want to make shorthands for common cases in your app, you can use your <code>Base</code> type classes. If you want to add special configuration to your types, you can use class methods. And, whenever that day should come, when you need to monkey-patch GraphQL-Ruby internals, I hope you&rsquo;ll be able to find the right spot to do it!</p>
+
+<h2>Stay Classy</h2>
+
+<p>GraphQL-Ruby is three years old now, and I&rsquo;ve learned a LOT during that time! I&rsquo;m really thankful for the opportunity to focus on <em>developer productivity</em> in the last few months, learning how I&rsquo;ve prevented it and working on ways to improve it. I hope to keep working on topics like this &ndash; how to make GraphQL more productive for Ruby developers &ndash; in the next year, especially, so if you have feedback on this new API, please <a href="https://github.com/rmosolgo/graphql-ruby/issues/new">open an issue</a> to share it!</p>
+
+<p>I&rsquo;m excited to see how this new API changes the way people think about GraphQL in Ruby, and I hope it will foster more creativity and stability.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Ruby Type Checking Roundup]]></title>
@@ -4103,112 +4340,6 @@ Then, use the <code>style_module</code> in the partial:</p>
 <p><del>I heard that Facebook&rsquo;s GraphQL server had this behavior, but I don&rsquo;t know that any of the open implementations have it yet. I&rsquo;m <a href="https://github.com/rmosolgo/graphql-ruby/pull/76">considering it for <code>graphql-ruby</code></a>.</del></p>
 
 <p>Update: this behavior is called &ldquo;persisted queries&rdquo; and is supported by <a href="http://graphql.pro"><code>GraphQL::Pro</code></a>, read more in <a href="#">this introductory blog post</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[How many assertions per test case?]]></title>
-    <link href="http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case/"/>
-    <updated>2015-10-08T21:12:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2015/10/08/how-many-assertions-per-test-case</id>
-    <content type="html"><![CDATA[<p>This question is too hard. Instead, ask, &ldquo;how many behaviors per test case?&rdquo; and answer, &ldquo;one.&rdquo;</p>
-
-<!-- more -->
-
-
-<p>I presented at Full Stack about unit testing but what I really like is behavior-driven development.</p>
-
-<h2>A Behavior</h2>
-
-<p>You can think of a code base as a collection of behaviors: given some inputs (data, events), it makes some outputs (more data, more events). In this perspective, the code itself is an implementation detail. As long as it takes the inputs and creates the outputs, it makes little difference what classes, methods, functions etc, implement that behavior.</p>
-
-<p>This kind of thinking is recursive: each behavior is composed of smaller behaviors. For example, in a web application:</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>Behavior:
-</span><span class='line'>  - A request with a valid username & password is allowed to take Action X
-</span><span class='line'>
-</span><span class='line'>    Is composed of:
-</span><span class='line'>      - The user info is stored in the session
-</span><span class='line'>      - The user's `last_logged_in_at` is updated
-</span><span class='line'>      - Value Y is written to the database</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Each subsequent level of behavior may have an implementation of its own.</p>
-
-<h2>Testing a behavior</h2>
-
-<p>In a web application, unauthorized requests:</p>
-
-<ul>
-<li>Return meaningful HTTP responses, including a status and a body; and</li>
-<li>do not execute the requested action</li>
-</ul>
-
-
-<p>I would specify that as two <em>behaviors</em>:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">describe</span> <span class="s2">&quot;an unauthorized request&quot;</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;responds as not authorized&quot;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">http_response</span> <span class="o">=</span> <span class="n">make_create_request</span> <span class="c1"># makes a unauthorized_request</span>
-</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="mi">403</span><span class="p">,</span> <span class="n">http_response</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="s2">&quot;Not Authorized&quot;</span><span class="p">,</span> <span class="n">http_response</span><span class="o">.</span><span class="n">body</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">it</span> <span class="s2">&quot;doesn&#39;t write to the database&quot;</span> <span class="k">do</span>
-</span><span class='line'>    <span class="n">http_response</span> <span class="o">=</span> <span class="n">make_create_request</span> <span class="c1"># makes a unauthorized_request</span>
-</span><span class='line'>    <span class="n">assert_equal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="no">Posts</span><span class="o">.</span><span class="n">count</span><span class="p">)</span>
-</span><span class='line'>  <span class="k">end</span>
-</span><span class='line'><span class="k">end</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>(using <a href="https://github.com/seattlerb/minitest#specs">minitest/spec</a>)</p>
-
-<p>Notice that the first test made <em>two</em> assertions. You could split that into three test cases but I don&rsquo;t think it&rsquo;s worth the trouble. What&rsquo;s the case where <code>403</code> and <code>"Not Authorized"</code> are not part of the same behavior?</p>
-
-<h2>Multiple Assertions is a Code Smell</h2>
-
-<p>If your test case has many assertions, your code may be telling you that you&rsquo;re specifying multiple behaviors at once. Ask yourself:</p>
-
-<ul>
-<li>Is there a smaller unit of work to extract?</li>
-<li>Can I make this a two-step process, where step one&rsquo;s result is passed to step two?</li>
-<li>Can I break each test case (and its corresponding code) into a distinct <a href="http://c2.com/cgi/wiki?StrategyPattern">strategy</a>?</li>
-<li>Am I testing business logic <em>and</em> interaction with an external service (eg, your database or an HTTP service)? Can I separate the two actions?</li>
-<li>Am I transforming data, then acting based on the result? Can I separate those two?</li>
-<li>Are there assertions that are shared between multiple test cases? Is there an underlying behavior there?</li>
-</ul>
-
-
-<h2>Other People on The Internet</h2>
-
-<p>Here&rsquo;s some more dignified reading on the topic:</p>
-
-<ul>
-<li><strong><a href="http://dannorth.net/introducing-bdd/">&ldquo;Introducing BDD,&rdquo; Dan North</a></strong>. I especially agree with his point that behavior-driving thinking helps you focus your design and implementation.</li>
-<li><strong><a href="http://blog.jayfields.com/2007/06/testing-one-assertion-per-test.html">&ldquo;Testing One Assertion Per Test,&rdquo; Jay Fields</a></strong>. I basically agree with him: &ldquo;Tests that focus on one behavior of the system are almost always easier to write and to comprehend at a later date.&rdquo; But I disagree with his assumption that one behavior equals one assertion.</li>
-<li><strong><a href="http://programmers.stackexchange.com/a/7829">&ldquo;Is it OK to have multiple asserts in a single unit test?&rdquo;, random Stack Overflow people</a></strong>. &ldquo;Yeah, but try not to.&rdquo;</li>
-</ul>
-
 ]]></content>
   </entry>
   
