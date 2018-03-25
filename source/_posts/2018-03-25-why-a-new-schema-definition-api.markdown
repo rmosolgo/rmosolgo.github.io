@@ -81,7 +81,30 @@ Proc literals also have performance downsides: they're not optimized by CRuby, s
 
 In the new class-based API, there are no proc literals (although they're supported for compatibility's sake). There are some `instance_eval`'d blocks (`field(...) { }`, for example), but field resolution is _just an instance method_ and the type definition is a normal class, so module scoping works normally. (Contrast that with the constant assignment in `Types::Post = GraphQL::ObjectType.define { ... }`, where no module scope is used). Several hooks that were previously specified as procs are now class methods, such as `resolve_type` and `coerce_input` (for scalars).
 
-By switching to Ruby's happy path of classes and methods, we can help Ruby developers feel more at home in GraphQL definitions. Additionally, we avoid some unfamiliar gotchas of procs.
+Overriding `!` is another particular no-no I'm correcting. At the time, I thought, "what a cool way to bring a GraphQL concept into Ruby!" This is because GraphQL non-null types are expressed with `!`:
+
+```ruby
+# This field always returns a User, never `null`
+author: User!
+```
+
+So, why not express the concept with Ruby's `!` method (which is usually used for negation)?
+
+```ruby
+field :author, !User
+```
+
+As it turns out, there are several good reasons for _why not_!
+
+- Overriding `!` breaks the negation operator. ActiveSupport's `.present?` didn't work with type objects, because `!` didn't return `false`, it returned a non-null type.
+- Overriding the `!` operator throws people off. When a newcomer sees GraphQL-Ruby sample code, they have a WTF moment, followed by the dreadful memory (or discovery) that Ruby allows you to override `!`.
+- There's very little value in importing GraphQL concepts into Ruby. GraphQL-Ruby developers are generally seasoned Ruby developers who are just learning GraphQL, so they don't gain anything by the similarity to GraphQL.
+
+So, overriding `!` didn't deliver any value, but it did present a roadblock to developers and break some really essential code.
+
+In the new API, nullability is expressed with the options `null:` and `required:` instead of with `!`. (But, you can re-activate that override for compatibility while you transition to the new API.)
+
+By switching to Ruby's happy path of classes and methods, we can help Ruby developers feel more at home in GraphQL definitions. Additionally, we avoid some unfamiliar gotchas of procs and clear a path for removing the `!` override.
 
 ## Rails Compatibility
 
