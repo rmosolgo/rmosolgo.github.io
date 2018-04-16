@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-04-16T10:32:05-04:00</updated>
+  <updated>2018-04-16T11:11:53-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -746,7 +746,7 @@ legacy_defn.metadata[:type_class] # `Project` class from above
     <link href="http://rmosolgo.github.io/blog/2018/03/25/why-a-new-schema-definition-api/"/>
     <updated>2018-03-25T13:59:00-04:00</updated>
     <id>http://rmosolgo.github.io/blog/2018/03/25/why-a-new-schema-definition-api</id>
-    <content type="html"><![CDATA[<p>GraphQL-Ruby <code>1.8.0</code> will have an new class-based API for defining your schema. Let&rsquo;s investigate the design choices in the new API.</p>
+    <content type="html"><![CDATA[<p>GraphQL-Ruby <code>1.8.0</code> will have a new class-based API for defining your schema. Let&rsquo;s investigate the design choices in the new API.</p>
 
 <!-- more -->
 
