@@ -8,7 +8,7 @@ categories:
 - Ruby
 ---
 
-GraphQL-Ruby `1.8.0` will have an new class-based API for defining your schema. Let's investigate the design choices in the new API.
+GraphQL-Ruby `1.8.0` will have a new class-based API for defining your schema. Let's investigate the design choices in the new API.
 
 <!-- more -->
 
