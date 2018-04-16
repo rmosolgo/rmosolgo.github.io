@@ -4,7 +4,7 @@
   <title><![CDATA[Category: GraphQL | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/graphql/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-03-25T16:06:30-04:00</updated>
+  <updated>2018-04-16T10:32:05-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,734 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Updating GitHub to GraphQL 1.8.0]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/04/09/updating-github-to-graphql-1-dot-8-0/"/>
+    <updated>2018-04-09T09:52:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/04/09/updating-github-to-graphql-1-dot-8-0</id>
+    <content type="html"><![CDATA[<p>GraphQL 1.8.0 was designed and built largely as a part of my work at GitHub. Besides designing the <a href="http://graphql-ruby.org/schema/class_based_api">new Schema definition API</a>, I migrated our codebase to use it. Here are some field notes from my migration.</p>
+
+<!-- more -->
+
+
+<p>If you want to know more about the motivations behind this work, check out this <a href="/blog/2018/03/25/why-a-new-schema-definition-api/">previous post</a>.</p>
+
+<p>Below, I&rsquo;ll cover:</p>
+
+<ul>
+<li>The Process: in general, how I went about migrating our code</li>
+<li>The Upgrader: how to run it and roughly how it&rsquo;s organized</li>
+<li>Custom Transforms: extensions I made for the upgrader to work on GitHub-specific code</li>
+<li>Fixes By Hand: bits of code that needed more work (some of these could be automated, but aren&rsquo;t yet!)</li>
+<li>Porting Relay Types: using the class-based API for connections and edges</li>
+<li>Migrating DSL extensions: how to support custom GraphQL extension in the new API</li>
+</ul>
+
+
+<h2>The Process</h2>
+
+<p>GitHub&rsquo;s type definitions are separated into folders by type, for example: <code>objects/</code>, <code>unions/</code>, <code>enums/</code> (and <code>mutations/</code>). I worked through them one folder at a time. The <code>objects/</code> folder was big, so I did it twenty or thirty files at a time.</p>
+
+<p>I had to do <code>interfaces/</code> last because of the nature of the new class-based schema. Interfaces modules' methods can&rsquo;t be added to legacy-style GraphQL object types. So, by doing interfaces last, I didn&rsquo;t have to worry about this compatibility issue.</p>
+
+<p>Now that I remember it, I did the schema <em>first</em>, and by hand. It was a pretty easy upgrade.</p>
+
+<p>When I started each section, I created a base class by hand. (There is some automated support for this, but I didn&rsquo;t use it.) Then, I ran the upgrader on some files and tried to run the test suite. There were usually two kinds of errors:</p>
+
+<ul>
+<li>Parse- or load-time errors which prevented the app from booting</li>
+<li>Runtime errors which resulted in unexpected behavior or raised errors</li>
+</ul>
+
+
+<p>More on these errors below.</p>
+
+<p>After upgrading a section of the schema, I opened a PR for review from the team. This was crucial: since I was working at such a large scale, it was easy for me to miss the trees for the forest. My teammates caught a lot of things during the process!</p>
+
+<p>After a review, the PR would be merged into master. Since GraphQL 1.8.0 supports incremental migration, I could work through the code in chunks without a long running branch or feature flags.</p>
+
+<h2>About the Upgrader</h2>
+
+<p>Here&rsquo;s an overview of how the upgrader works. After reading the overview, if you want some specific examples, check out the <a href="https://github.com/rmosolgo/graphql-ruby/blob/master/lib/graphql/upgrader/member.rb">source code</a>.</p>
+
+<h3>Running The Upgrader</h3>
+
+<p>The gem includes an auto-upgrader, spearheaded by the folks at <a href="https://hackerone.com">HackerOne</a> and refined during my use of it. It&rsquo;s encapsulated in a class, <code>GraphQL::Upgrader::Member</code>.</p>
+
+<p>To use the upgrader, I added a Ruby script to the code base called <code>graphql-update.rb</code>:</p>
+
+<pre><code class="ruby"># Usage:
+#   ruby graphql-update.rb path/to/type_definition.rb
+#
+# Example:
+#   # Upgrade `BlameRange`
+#   ruby graphql-update.rb lib/platform/objects/blame_range.rb
+#
+#   # Upgrade based on a pattern (use quotes)
+#   ruby graphql-update.rb "lib/platform/objects/blob_\*.rb"
+#
+#   # Upgrade one more file in this pattern (use quotes)
+#   ruby graphql-update.rb 1 "lib/platform/objects/**.rb"
+
+# Load the upgrader from local code, for easier trial-and-error development
+# require "~/code/graphql-ruby/lib/graphql/upgrader/member"
+# Load the upgrader from the Gem:
+require "graphql/upgrader/member"
+
+# Accept two arguments: next_files (optional), file_pattern (required)
+file_pattern = ARGV[0]
+if file_pattern =~ /\d+/
+  next_files = file_pattern.to_i
+  next_files_pattern = ARGV[1]
+  "Upgrading #{next_files} more files in #{next_files_pattern}"
+  filenames = Dir.glob(next_files_pattern)
+else
+  filenames = Dir.glob(file_pattern)
+  next_files = nil
+  puts "Upgrading #{filenames.join(", ")}"
+end
+
+# ...
+# Lots of custom rules here, see below
+# ...
+
+CUSTOM_TRANSFORMS = {
+  type_transforms: type_transforms,
+  field_transforms: field_transforms,
+  clean_up_transforms: clean_up_transforms,
+  skip: CustomSkip,
+}
+
+upgraded = []
+filenames.each do |filename|
+  puts "Begin (#{filename})"
+  # Read the file into a string
+  original_text = File.read(filename)
+  # Create an Upgrader with the set of custom transforms
+  GraphQL::Upgrader::Member.new(original_text, **CUSTOM_TRANSFORMS)
+  # Generate updated text
+  transformed_text = upgrader.upgrade
+  if transformed_text == original_text
+    # No upgrade was performed
+  else
+    # If the upgrade was successful, update the source file
+    File.write(filename, transformed_text)
+    upgraded &lt;&lt; filename
+  end
+  puts "Done (#{filename})"
+  if next_files &amp;&amp; upgraded.size &gt;= next_files
+    # We've upgraded as many as we said we would
+    break
+  end
+end
+puts "Upgraded #{upgraded.size} files: \n#{upgraded.join("\n")}"
+</code></pre>
+
+<p>This script has two basic parts:</p>
+
+<ul>
+<li>Using <code>GraphQL::Upgrader::Member</code> with a set of custom transformations</li>
+<li>Supporting code: accepting input, counting files, logging, etc</li>
+</ul>
+
+
+<p>In your own script, you can write whatever supporting code you want. The key part from GraphQL-Ruby is:</p>
+
+<pre><code class="ruby"># Create an Upgrader with the set of custom transforms
+GraphQL::Upgrader::Member.new(original_text, **CUSTOM_TRANSFORMS)
+# Generate updated text
+transformed_text = upgrader.upgrade
+</code></pre>
+
+<h3>The Pipeline</h3>
+
+<p>The upgrader is structured as a pipeline: each step accepts a big string of input and returns a big string of output. Sometimes, a step does nothing and so its returned string is the same as the input string. In general, the transforms consist of two steps:</p>
+
+<ul>
+<li>Check whether the transform applies to the given input</li>
+<li>If it does, copy the string and apply a find-and-replace to it (sometimes using RegExp, other times using the excellent <code>parser</code> gem.)</li>
+</ul>
+
+
+<p>You have a few options for customizing the transformation pipeline:</p>
+
+<ul>
+<li>Write new transforms and add them to the pipeline</li>
+<li>Remove transforms from the pipeline</li>
+<li>Re-use the built-in transforms, but give them different parameters, then replace the built-in one with your custom instance</li>
+</ul>
+
+
+<p>(The &ldquo;pipeline&rdquo; is just an array of instances or subclasses of <code>GraphQL::Upgrader::Transform</code>.)</p>
+
+<p>We&rsquo;ll see cases of each below.</p>
+
+<h3>Kinds of Transforms</h3>
+
+<p>The upgrader accepts several types of transform pipelines:</p>
+
+<pre><code class="ruby">CUSTOM_TRANSFORMS = {
+  type_transforms: type_transforms,
+  field_transforms: field_transforms,
+  clean_up_transforms: clean_up_transforms,
+  skip: CustomSkip,
+}
+</code></pre>
+
+<ul>
+<li><code>type_transforms</code> are run first, on the <em>entire</em> file.</li>
+<li><code>field_transforms</code> are run second, but they receive <em>parts</em> of the type definition. They receive calls to <code>field</code>, <code>connection</code>, <code>return_field</code>, <code>input_field</code>, and <code>argument</code>. Fine-grained changes to field definition or argument definition go here.</li>
+<li><code>clean_up_transforms</code> are run last, on the <em>entire</em> file. For example, there&rsquo;s a built-in <code>RemoveExcessWhitespaceTransform</code> which cleans up trailing spaces after other transforms have run.</li>
+<li><code>skip:</code> has a special function: its <code>#skip?(input)</code> method is called and if it returns true, the text is not transformed at all. This allows the transformer to be idempotent: by default, if you run it on the same file over and over, it will update the file only <em>once</em>.</li>
+</ul>
+
+
+<h2>Custom Transforms</h2>
+
+<p>Here are some custom transforms applied to our codebase.</p>
+
+<h3>Handle a custom type-definition DSL</h3>
+
+<p>We had a wrapper around <code>ObjectType.define</code> which attached metadata, linking the object type to a specific Rails model. The helper was called <code>define_active_record_type</code>. I wanted to take this:</p>
+
+<pre><code class="ruby">module Platform
+  module Objects
+    Issue = define_active_record_type(-&gt; { ::Issue }) do
+      # ...
+    end
+  end
+end
+</code></pre>
+
+<p>And make it this:</p>
+
+<pre><code class="ruby">module Platform
+  module Objects
+    class Issue &lt; Platform::Objects::Base
+      model_name "Issue"
+      # ...
+    end
+  end
+end
+</code></pre>
+
+<p>Fortunately, this can be done with a pretty straightforward regular expression substitution. Here&rsquo;s the transform:</p>
+
+<pre><code class="ruby"># Create a custom transform for our `define_active_record_type` factory:
+class ActiveRecordTypeToClassTransform &lt; GraphQL::Upgrader::Transform
+  # Capture: leading whitespace, type name, model name
+  FIND_PATTERN = /^( +)([a-zA-Z_0-9:]*) = define_active_record_type\(-&gt; ?\{ ?:{0,2}([a-zA-Z_0-9:]*) ?\} ?\) do/
+  # Restructure as a class, using the leading whitespace and adding the `model_name` DSL
+  REPLACE_PATTERN = "\\1class \\2 &lt; Platform::Objects::Base\n\\1  model_name \"\\3\""
+
+  def apply(input_text)
+    # It's safe to apply this transform to _all_ input,
+    # since it's a no-op if `FIND_PATTERN` is missing.
+    input_text.sub(FIND_PATTERN, REPLACE_PATTERN)
+  end
+end
+</code></pre>
+
+<p>Then, in <code>graphql-update.rb</code>, this transform was put <em>first</em> in the list:</p>
+
+<pre><code class="ruby"># graphql-update.rb
+type_transforms = GraphQL::Upgrader::Member::DEFAULT_TYPE_TRANSFORMS.dup
+type_transforms.unshift(ActiveRecordTypeToClassTransform)
+</code></pre>
+
+<p>Also, for this to work, I added the <code>def self.model_name(name)</code> helper to the base class.</p>
+
+<h3>Renaming a Custom Field Method</h3>
+
+<p>We have a helper for adding URL fields called <code>define_url_field</code>. I decided to rename this to <code>url_fields</code>, since these days it creates <em>two</em> fields.</p>
+
+<p>The arguments are the same, so it was a simple substitution:</p>
+
+<pre><code class="ruby">class UrlFieldTransform &lt; GraphQL::Upgrader::Transform
+  def apply(input_text)
+    # Capture the leading whitespace and the rest of the line,
+    # then insert the new name where the old name used to be
+    input_text.gsub(/^( +)define_url_field( |\()/, "\\1url_fields\\2")
+  end
+end
+</code></pre>
+
+<p>This transform didn&rsquo;t interact with any other transforms, so I added it to <code>clean_up_transforms</code>, so it would run last:</p>
+
+<pre><code class="ruby"># Make a copy of the built-in arry
+clean_up_transforms = GraphQL::Upgrader::Member::DEFAULT_CLEAN_UP_TRANSFORMS.dup
+# Add my custom transform to the end of the array
+clean_up_transforms.push(UrlFieldTransform)
+</code></pre>
+
+<h3>Moving DSL methods to keywords</h3>
+
+<p>We have a few DSL methods that, at the time, were easier to implement as keyword arguments. (Since then, the API has changed a bit. You can implement DSL methods on your fields by extending <code>GraphQL::Schema::Field</code> and setting that class as <code>field_class</code> on your base Object, Interface and Mutation classes.)</p>
+
+<p>I wanted to transform:</p>
+
+<pre><code class="ruby">field :secretStuff, types.String do
+  visibility :secret
+end
+</code></pre>
+
+<p>To:</p>
+
+<pre><code class="ruby">field :secretStuff, types.String, visibility: :secret
+</code></pre>
+
+<p>(Later, a built-in upgrader would change <code>secretStuff</code> to <code>secret_stuff</code> and <code>types.String</code> to <code>String, null: true</code>.)</p>
+
+<p>To accomplish this, I reused a built-in transform, <code>ConfigurationToKwargTransform</code>, adding it to <code>field_transforms</code>:</p>
+
+<pre><code class="ruby"># Make a copy of the built-in list of defaults
+field_transforms = GraphQL::Upgrader::Member::DEFAULT_FIELD_TRANSFORMS.dup
+# Put my custom transform at the beginning of the list
+field_transforms.unshift(GraphQL::Upgrader::ConfigurationToKwargTransform.new(kwarg: "visibility"))
+</code></pre>
+
+<p>In fact, there were several configuration methods moved this way.</p>
+
+<h3>Custom Skip</h3>
+
+<p>As I was working through the code, some files were tougher than others. So, I decided to skip them. I decided that a magic comment:</p>
+
+<pre><code class="ruby"># @skip-auto-upgrade
+</code></pre>
+
+<p>would cause a file to be skipped. To implement this, I made a custom skip class:</p>
+
+<pre><code class="ruby">class CustomSkip &lt; GraphQL::Upgrader::SkipOnNullKeyword
+  def skip?(input_text)
+    super(input_text) || input_text.include?("@skip-auto-upgrade")
+  end
+end
+</code></pre>
+
+<p>And passed it as <code>skip:</code> to the upgrader. Then, later, I removed the comment and tried again. (Fortunately, my procrastination paid off because the upgrader was improved in the meantime!)</p>
+
+<h2>Fixes by Hand</h2>
+
+<p>As I worked, I improved the upgrader to cover as many cases as I could, but there are still a few cases that I had to upgrade by hand. I&rsquo;ll list them here. If you&rsquo;re really dragged down by them, consider opening an issue on GraphQL-Ruby to talk about fixing them. I&rsquo;m sure they <em>can</em> be fixed, I just didn&rsquo;t get to it!</p>
+
+<p>If you want to fix one of these issues, try to replicate the issue by adding to an example <code>spec/fixtures/upgrader</code> and then getting a failing test. Then, you could update the upgrader code to fix that broken test.</p>
+
+<h3>Accessing Arguments By Method</h3>
+
+<p>Arguments could be accessed by method to avoid typos. However, now, since arguments are a Ruby keyword hash, they don&rsquo;t have methods corresponding to their keys.</p>
+
+<p>Unfortunately, the upgrader doesn&rsquo;t do anything about this, it just leaves them there and you get a <code>NoMethodError</code> on <code>Hash</code>.</p>
+
+<p>This could almost certainly be fixed by improving this find-and-replace in <code>ResolveProcToMethodTransform</code>:</p>
+
+<pre><code class="ruby"># Update Argument access to be underscore and symbols
+# Update `args[...]` and `args.key?`
+method_body = method_body.gsub(/#{args_arg_name}(?&lt;method_begin&gt;\.key\?\(?|\[)["':](?&lt;arg_name&gt;[a-zA-Z0-9_]+)["']?(?&lt;method_end&gt;\]|\))?/) do
+ # ...
+end
+</code></pre>
+
+<p>It only updates a few methods on <code>args</code>, but I bet a similar find-and-replace could replace <em>other</em> method calls, too.</p>
+
+<h3>Argument Usages Outside of Type Definitions</h3>
+
+<p>Sometimes, we take GraphQL arguments and pass them to helper methods:</p>
+
+<pre><code class="ruby">resolve -&gt;(obj, args, ctx) {
+  Some::Helper.call(obj, args)
+}
+</code></pre>
+
+<p>However when this was transformed to:</p>
+
+<pre><code class="ruby">def do_stuff(**arguments)
+  Some::Helper.call(@object, arguments)
+end
+</code></pre>
+
+<p>It would break, because the new <code>arguments</code> value is a Ruby hash with underscored, symbol keys. So, if <code>Some::Helper</code> was using camelized strings to get values, it would stop working.</p>
+
+<p>The upgrader can&rsquo;t really do anything there, since it&rsquo;s not analyzing the codebase. In my case, these were readily apparent because of failing tests, so I went and fixed them.</p>
+
+<h3>context.add_error</h3>
+
+<p>We have some fields that add to the <code>"errors"</code> key <em>and</em> return values, they used <code>ctx.add_error</code> to do so:</p>
+
+<pre><code class="ruby">resolve -&gt;(obj, args, ctx) {
+  begin
+    obj.count_things
+  rescue BackendIsBrokenError
+    ctx.add_error(GraphQL::ExecutionError.new("Not working!"))
+    0
+  end
+}
+</code></pre>
+
+<p>When upgraded, it doesn&rsquo;t work quite right:</p>
+
+<pre><code class="ruby">def count_things
+  begin
+    @object.count_things
+  rescue BackendIsBrokenError
+    @context.add_error(GraphQL::ExecutionError.new("Not working!"))
+    0
+  end
+end
+</code></pre>
+
+<p>(If you don&rsquo;t have to return a value, use <code>raise</code> instead, then you can stop reading this part!)</p>
+
+<p>The problem is that <code>@context</code> is not a <em>field-specific</em> context anymore. Instead, it&rsquo;s the query-level context. (This is downside of the new API: we don&rsquo;t have a great way to pass in the field context anymore.)</p>
+
+<p>To address this kind of issues, <code>field</code> accepts a keyword called <code>extras:</code>, which contains a array of symbols. In the case above, we could use <code>:execution_errors</code>:</p>
+
+<pre><code class="ruby">field :count_things, Integer, null: false, extras: [:execution_errors]
+def count_things(execution_errors:)
+  @object.count_things
+rescue BackendIsBrokenError
+  execution_errors.add("Not working!")
+  0
+end
+</code></pre>
+
+<p>So, <code>execution_errors</code> was injected into the field as a keyword. It <em>is</em> field-level, so adding errors there works as before.</p>
+
+<p>Other extras are <code>:irep_node</code>, <code>:parent</code>, <code>:ast_node</code>, and <code>:arguments</code>. It&rsquo;s a bit of a hack, but we need <em>something</em> for this!</p>
+
+<h3>Accessing Connection Arguments</h3>
+
+<p>By default, connection arguments (like <code>first</code>, <code>after</code>, <code>last</code>, <code>before</code>) are <em>not</em> passed to the Ruby methods for implementing fields. This is because they&rsquo;re generally used by the automagical (😖) connection wrappers, not the resolve functions.</p>
+
+<p>But, sometimes you just <em>need</em> those old arguments!</p>
+
+<p>If you use <code>extras: [:arguments]</code>, the legacy-style arguments will be injected as a keyword:</p>
+
+<pre><code class="ruby"># `arguments` is the legacy-style Query::Arguments instance
+# `field_arguments` is a Ruby hash with symbol, underscored keys.
+def things(arguments:, **field_arguments)
+  arguments[:first] # =&gt; 5
+  # ...
+end
+</code></pre>
+
+<h3>Fancy String Descriptions</h3>
+
+<p>The upgrader does fine when the description is a <code>"..."</code> or <code>'...'</code> string. But in other cases, it was a bit wacky.</p>
+
+<p>Strings built up with <code>+</code> or <code>\</code> always broke. I had to go back by hand and join them into one string.</p>
+
+<p>Heredoc strings often <em>worked</em>, but only by chance. For example:</p>
+
+<pre><code class="ruby">field :stuff, types.Int do
+  description &lt;&lt;~MD
+    Here's the stuff
+  MD
+end
+</code></pre>
+
+<p>Would be transformed to:</p>
+
+<pre><code class="ruby">field :stuff, Integer, description: &lt;&lt;~MD, null: true
+    Here's the stuff
+  MD
+</code></pre>
+
+<p>This is valid Ruby, but a bit tricky. This could definitely be improved: since I started my project, GraphQL 1.8 was extended to support <code>description</code> as a <em>method</em> as well as a keyword. So, the upgrader could be improved to leave descriptions in place if they&rsquo;re fancy strings.</p>
+
+<h3>Removed Comments From the Start of Resolve Proc</h3>
+
+<p>I hacked around with the <code>parser</code> gem to transform <code>resolve</code> procs into instance methods, but there&rsquo;s a bug. A proc like this:</p>
+
+<pre><code class="ruby">resolve -&gt;(obj, args, ctx) {
+  # Do stuff
+  obj.do_stuff { stuff }
+}
+</code></pre>
+
+<p>Will be transformed to:</p>
+
+<pre><code class="ruby">def stuff
+  @object.do_stuff { stuff }
+end
+</code></pre>
+
+<p>Did you see how the comment was removed? I think I&rsquo;ve somehow wrongly detected the start of the proc body, so that the comment was left out.</p>
+
+<p>In my case, I re-added those comments by hand. But it could probably be fixed in <code>GraphQL::Upgrader::ResolveProcToMethodTransform</code>.</p>
+
+<h3>Hash Reformating?</h3>
+
+<p>I&rsquo;m not sure why, but sometimes a hash of arguments like:</p>
+
+<pre><code class="ruby">obj.do_stuff(
+  a: 1,
+  b: 2,
+  c: 3,
+  d: 4,
+)
+</code></pre>
+
+<p>would be reorganized to</p>
+
+<pre><code class="ruby">obj.do_stuff(
+  a: 1,
+  b: 2, c: 3, d: 4,
+)
+</code></pre>
+
+<p>I have no idea why, and I didn&rsquo;t look into it, I just fixed it by hand.</p>
+
+<h3>Issues with Connection DSL</h3>
+
+<p>We have a DSL for making connections, like:</p>
+
+<pre><code class="ruby">Connections.define(Objects::Issue)
+</code></pre>
+
+<p>Sometimes, when this connection was inside a proc, it would be wrongly transformed to:</p>
+
+<pre><code class="ruby">field :issues, Connections.define(Objects::Issue) }, ,null: true
+</code></pre>
+
+<p>This was invalid Ruby, so the app wouldn&rsquo;t boot, and I would fix it by hand.</p>
+
+<h2>Porting Relay Types</h2>
+
+<p>Generating connection and edge types with the <code>.connection_type</code>/<code>.define_connection</code> and <code>.edge_type</code>/<code>.define_edge</code> methods will work fine with the new API, but if you want to migrate them to classes, you can do it.</p>
+
+<p>It&rsquo;s on my radar because I want to remove our DSL extensions, and that requires updating our custom connection edge types.</p>
+
+<p>Long story, short, it Just Work™ed with the class-based API. The approach was:</p>
+
+<ul>
+<li>Add a base class inheriting from our <code>BaseObject</code></li>
+<li>Use the new base class&rsquo;s <code>def self.inherited</code> hook to add connection- and edge-related behaviors</li>
+<li>Run the upgrader on edge and connection types, then go back and do some manual find-and-replaces to make them work right</li>
+</ul>
+
+
+<p>So, I will share my base classes in case that helps. Sometime it will be nice to upstream this to GraphQL-Ruby, but I&rsquo;m not sure how to do it now.</p>
+
+<p>Base connection class:</p>
+
+<pre><code class="ruby">module Platform
+  module Connections
+    class Base &lt; Platform::Objects::Base
+      # For some reason, these are needed, they call through to the underlying connection wrapper.
+      extend Forwardable
+      def_delegators :@object, :cursor_from_node, :parent
+
+      # When this class is extended, add the default connection behaviors.
+      # This adds a new `graphql_name` and description, and searches
+      # for a corresponding edge type.
+      # See `.edge_type` for how the fields are added.
+      def self.inherited(child_class)
+        # We have a convention that connection classes _don't_ end in `Connection`, which
+        # is a bit confusing and results in naming conflicts.
+        # To avoid a GraphQL conflict, override `graphql_name` to end in `Connection`.
+        type_name = child_class.name.split("::").last
+        child_class.graphql_name("#{type_name}Connection")
+
+        # Use `require_dependency` so that the types will be loaded, if they exist.
+        # Otherwise, `const_get` may reach a top-level constant (eg, `::Issue` model instead of `Platform::Objects::Issue`).
+        # That behavior is removed in Ruby 2.5, then we can remove these require_dependency calls too.
+        begin
+          # Look for a custom edge whose name matches this connection's name
+          require_dependency "lib/platform/edges/#{type_name.underscore}"
+          wrapped_edge_class = Platform::Edges.const_get(type_name)
+          wrapped_node_class = wrapped_edge_class.fields["node"].type
+        rescue LoadError =&gt; err
+          # If the custom edge file doesn't exist, look for an object
+          begin
+            require_dependency "lib/platform/objects/#{type_name.underscore}"
+            wrapped_node_class = Platform::Objects.const_get(type_name)
+            wrapped_edge_class = wrapped_node_class.edge_type
+          rescue LoadError =&gt; err
+            # Assume that `edge_type` will be called later
+          end
+        end
+
+        # If a default could be found using constant lookups, generate the fields for it.
+        if wrapped_edge_class
+          if wrapped_edge_class.is_a?(GraphQL::ObjectType) || (wrapped_edge_class.is_a?(Class) &amp;&amp; wrapped_edge_class &lt; Platform::Edges::Base)
+            child_class.edge_type(wrapped_edge_class, node_type: wrapped_node_class)
+          else
+            raise TypeError, "Missed edge type lookup, didn't find a type definition: #{type_name.inspect} =&gt; #{wrapped_edge_class.inspect}"
+          end
+        end
+      end
+
+      # Configure this connection to return `edges` and `nodes` based on `edge_type_class`.
+      #
+      # This method will use the inputs to create:
+      # - `edges` field
+      # - `nodes` field
+      # - description
+      #
+      # It's called when you subclass this base connection, trying to use the
+      # class name to set defaults. You can call it again in the class definition
+      # to override the default (or provide a value, if the default lookup failed).
+      def self.edge_type(edge_type_class, edge_class: GraphQL::Relay::Edge, node_type: nil)
+        # Add the edges field, can be overridden later
+        field :edges, [edge_type_class, null: true],
+          null: true,
+          description: "A list of edges.",
+          method: :edge_nodes,
+          edge_class: edge_class
+
+        # Try to figure out what the node type is, if it wasn't provided:
+        if node_type.nil?
+          if edge_type_class.is_a?(Class)
+            node_type = edge_type_class.fields["node"].type
+          elsif edge_type_class.is_a?(GraphQL::ObjectType)
+            # This was created with `.edge_type`
+            node_type = Platform::Objects.const_get(edge_type_class.name.sub("Edge", ""))
+          else
+            raise ArgumentError, "Can't get node type from edge type: #{edge_type_class}"
+          end
+        end
+
+        # If it's a non-null type, remove the wrapper
+        if node_type.respond_to?(:of_type)
+          node_type = node_type.of_type
+        end
+
+        # Make the `nodes` shortcut field, which can be overridden later
+        field :nodes, [node_type, null: true],
+          null: true,
+          description: "A list of nodes."
+
+        # Make a nice description
+        description("The connection type for #{node_type.graphql_name}.")
+      end
+
+      field :page_info, GraphQL::Relay::PageInfo, null: false, description: "Information to aid in pagination."
+
+      # By default this calls through to the ConnectionWrapper's edge nodes method,
+      # but sometimes you need to override it to support the `nodes` field
+      def nodes
+        @object.edge_nodes
+      end
+    end
+  end
+end
+</code></pre>
+
+<p>Base edge class:</p>
+
+<pre><code class="ruby">module Platform
+  module Edges
+    class Base &lt; Platform::Objects::Base
+      # A description which is inherited and may be overridden
+      description "An edge in a connection."
+
+      def self.inherited(child_class)
+        # We have a convention that edge classes _don't_ end in `Edge`,
+        # which is a little bit confusing, and would result in a naming conflict by default.
+        # Avoid the naming conflict by overriding `graphql_name` to include `Edge`
+        wrapped_type_name = child_class.name.split("::").last
+        child_class.graphql_name("#{wrapped_type_name}Edge")
+        # Add a default `node` field, assuming the object type name matches.
+        # If it doesn't match, you can override this in subclasses
+        child_class.field :node, "Platform::Objects::#{wrapped_type_name}", null: true, description: "The item at the end of the edge."
+      end
+
+      # A cursor field which is inherited
+      field :cursor, String,
+        null: false,
+        description: "A cursor for use in pagination."
+    end
+  end
+end
+</code></pre>
+
+<h2>Migrating DSL Extensions</h2>
+
+<p>We have several extensions to the GraphQL-Ruby <code>.define</code> DSL, for example, <code>visibility</code> controls who can see certain types and fields and <code>scopes</code> maps OAuth scopes to GraphQL types.</p>
+
+<p>The difficulty in porting extensions comes from the implementation details of the new API. For now, definition classes are factories for legacy-style type instances. Each class has a <code>.to_graphql</code> method which is called <em>once</em> to return a legacy-style definition. To maintain compatibility, you have to either:</p>
+
+<ul>
+<li>Modify the derived legacy-style definition to reflect configurations on the class-based definition; OR</li>
+<li>Update your runtime code to <em>stop</em> checking for configurations on the legacy-style definition and <em>start</em> checking for configurations on the class-based definition.</li>
+</ul>
+
+
+<p>Eventually, legacy-style definitions will be phased out of GraphQL-Ruby, but for now, they both exist in this way in order to maintain backwards compatibility and gradual adoptability.</p>
+
+<p>In the mean time, you can go between class-based and legacy-style definitions using <code>.graphql_defintion</code> and <code>.metadata[:type_class]</code>, for example:</p>
+
+<pre><code class="ruby">class Project &lt; BaseObject
+  # ...
+end
+
+legacy_type = Project.graphql_definition
+# #&lt;GraphQL::ObjectType&gt; instance
+legacy_type.metadata[:type_class]
+# `Project` class
+</code></pre>
+
+<h3>The Easy Way: <code>.redefine</code></h3>
+
+<p>The easiest way to retain compatibility is to:</p>
+
+<ul>
+<li>Add a class method to your base classes which accept some configuration and put it in instance variables</li>
+<li>Override <code>.to_graphql</code> to call super, and then pass the configuration to <code>defn.redefine(...)</code>, then return the redefined type.</li>
+</ul>
+
+
+<p>After my work on our code, I extracted this into a <a href="http://graphql-ruby.org/type_definitions/extensions.html#customization-compatibility">backport of <code>accepts_definition</code></a></p>
+
+<p>You can take that approach for a try, for example:</p>
+
+<pre><code class="ruby">class BaseObject &lt; GraphQL::Schema::Object
+  # Add a configuration method
+  def self.visibility(level)
+    @visibility = level
+  end
+
+  # Re-apply the configuration
+  def self.to_graphql
+    type_defn = super
+    # Call through to the old extension:
+    type_defn = type_defn.redefine(visibilty: @visibility)
+    # Return the redefined type:
+    type_defn
+  end
+end
+
+# Then, use it in type definitions:
+class Post &lt; BaseObject
+  visibility(:secret)
+end
+</code></pre>
+
+<h3>The Hard Way: <code>.metadata[:type_class]</code></h3>
+
+<p>An approach I haven&rsquo;t tried yet, but I will soon, is to move the &ldquo;source of truth&rdquo; to the the class-based definition. The challenge here is that class-based definitions are not really used during validation and execution, so how can you reach configuration values on those classes?</p>
+
+<p>The answer is that if a legacy-style type was derived from a class, that class is stored as <code>metadata[:type_class]</code>. For example:</p>
+
+<pre><code class="ruby">class Project &lt; BaseObject
+  # ...
+end
+legacy_defn = Project.graphql_definition # Instance of GraphQL::ObjectType, just like `.define`
+legacy_defn.metadata[:type_class] # `Project` class from above
+</code></pre>
+
+<p>So, you could update runtime code to read configurations from <code>type_defn.metadata[:type_class]</code>.</p>
+
+<p>Importantly, <code>metadata[:type_class]</code> will be <code>nil</code> if the type <em>wasn&rsquo;t</em> derived from a class, so this approach is tough to use if some definitions are still using the <code>.define</code> API.</p>
+
+<p>I haven&rsquo;t implemented this yet, but I will be doing it in the next few weeks so we can simplify our extensions and improve boot time.</p>
+
+<h2>The End</h2>
+
+<p>I&rsquo;m still wrapping up some loose ends in the codebase, but I thought I&rsquo;d share these notes in case they help you in your upgrade. If you run into trouble on anything mentioned here, please <a href="https://github.com/rmosolgo/graphql-ruby/issues/new">open an issue</a> on GraphQL-Ruby! I really want to support a smooth transition to this new API.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Why a New Schema Definition API?]]></title>
@@ -749,212 +1477,6 @@ Sort by: self_time
 <p>And, as shown in the benchmark above, 1.7x faster query execution!</p>
 
 <p>There&rsquo;s one caveat: these optimization apply to the GraphQL runtime <em>only</em>. <em>Real</em> GraphQL performance depends on more than that. It includes application-specific details like database access, remote API calls and application code performance.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Persisted GraphQL Queries with Ruby]]></title>
-    <link href="http://rmosolgo.github.io/blog/2017/03/07/persisted-graphql-queries-with-ruby/"/>
-    <updated>2017-03-07T07:55:00-05:00</updated>
-    <id>http://rmosolgo.github.io/blog/2017/03/07/persisted-graphql-queries-with-ruby</id>
-    <content type="html"><![CDATA[<p><a href="http://graphql.pro" target="_blank">GraphQL Pro</a> 1.3.0 adds <a href="http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries">support for server-defined queries via <code>GraphQL::Pro::Repository</code></a>. In this approach, GraphQL operations are stored on the server and clients invoke them by name.</p>
-
-<!-- more -->
-
-
-<p>This provides several benefits:</p>
-
-<ul>
-<li>You can completely close the door to client-provided query strings. This removes an attack vector for a malicious client who might try to swamp your system with expensive queries.</li>
-<li>Static queries (in <code>.graphql</code> files) are easier to review and more available tooling (eg, code generation or analysis).</li>
-<li>Operation names improve <a href="http://rmosolgo.github.io/graphql-ruby/pro/monitoring">GraphQL server monitoring</a> by serving as the primary unit of analysis.</li>
-</ul>
-
-
-<h2>What&rsquo;s a &ldquo;repository?&rdquo;</h2>
-
-<p>A <code>GraphQL::Pro::Repository</code> works like a single, large GraphQL document with many different operations (ie, queries, mutations, or subscriptions) and fragments inside it. These operations are validated and analyzed as a single unit, as if they came in a single query string.</p>
-
-<p>From a client&rsquo;s perspective, the server has a fixed set of operations it can perform. Each one can be executed by sending its <a href="http://graphql.org/learn/queries/#operation-name">operation name</a>.</p>
-
-<p>The repository approach allows us to use pre-existing GraphQL concepts:</p>
-
-<ul>
-<li><strong><a href="https://facebook.github.io/graphql/#sec-Language.Query-Document">Document</a></strong>: A GraphQL document is a set of operations and fragments. The semantics of a valid document are <a href="https://facebook.github.io/graphql/#sec-Validation">well-specified</a> and broadly implemented. A repository is an extension of this concept.</li>
-<li><a href="http://graphql.org/learn/queries/#operation-name"><strong>Operation name</strong></a>: GraphQL includes a way to specify which operation to run in a document. Repositories build on this by separating the set of operations (which lives on the server) from the identifier (which comes from the client).</li>
-</ul>
-
-
-<p>By employing these concepts, we make full use of the battle-tested <a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a> runtime without deviating from the spec.</p>
-
-<h2>A Quick Example</h2>
-
-<p>First, add a <code>.graphql</code> file with a named operation:</p>
-
-<pre><code># app/graphql/documents/GetItems.graphql
-query GetItems {
-  # Your GraphQL here:
-  items {
-    name
-  }
-}
-</code></pre>
-
-<p>Then, define a repository with that path:</p>
-
-<pre><code class="ruby">MyAppRepository = GraphQL::Pro::Repository.define do
-  schema MyAppSchema
-  path Rails.root.join("app/graphql/documents")
-end
-</code></pre>
-
-<p>Next, update your controller to execute queries with the repository instead of the schema:</p>
-
-<pre><code class="diff"># app/controllers/graphql_controller.rb
-- MyAppSchema.execute(
--   query_string,
-+ MyAppRepository.execute(
-+   operation_name: params[:operationName]
-    context: context,
-    variables: variables,
-  )
-</code></pre>
-
-<p>Finally, execute the operation by sending a request with the <code>operationName</code>:</p>
-
-<pre><code class="js">$.post("/graphql", { operationName: "GetItems" }, function(response) {
-  console.log(response.data)
-})
-
-// {
-//   items: [
-//     { name: "Item 1" },
-//     ...
-//    ]
-// }
-</code></pre>
-
-<p>🎉 We served a GraphQL response by name!</p>
-
-<h2>Naming Files</h2>
-
-<p>A straightforward approach is to name <code>.graphql</code> files after the operations they contain, so this operation:</p>
-
-<pre><code class="text">mutation UpdateComment($id: Int!, $body: String!) {
-  updateComment(id: $id, body: $body) {
-    # ...
-  }
-}
-</code></pre>
-
-<p>would go in:</p>
-
-<pre><code>app/graphql/documents/UpdateComment.graphql
-</code></pre>
-
-<p>This way, a reader can skim the <code>app/graphql/documents</code> directory to take a quick inventory of operations. Also, this one-to-one mapping mimics the Ruby convention of putting constants in identically-named files.</p>
-
-<p>In the end, <code>GraphQL::Pro::Repository</code> will accept files with any name, as long as they match <code>#{path}/**/*.graphql</code>.</p>
-
-<h2>Sharing Fragments</h2>
-
-<p>Since a repository functions as one big GraphQL document, <a href="http://graphql.org/learn/queries/#fragments">fragments</a> are shared by default.</p>
-
-<p>You can put fragments in their own files, then reference them from each operation that needs them. This way, operations with common data responsibilities can share code, ensuring that they stay in sync.</p>
-
-<p>For example, consider a list of comments with a box to create a new comment. We&rsquo;d make three <code>.graphql</code> files:</p>
-
-<pre><code class="text">app/graphql/documents/
-  ListComments.graphql
-  CreateComment.graphql
-  CommentFields.graphql
-</code></pre>
-
-<p>First, specify the operation to load the list of comments:</p>
-
-<pre><code class="text"># app/graphql/documents/ListComments.graphql
-query ListComments($postId: ID!) {
-  post(id: $id) {
-    comments {
-      author {
-        name
-      }
-      body
-      createdAt
-      updatedAt
-    }
-  }
-}
-</code></pre>
-
-<p>Then, specify the operation to create a new comment:</p>
-
-<pre><code class="text"># app/graphql/documents/CreateComment.graphql
-query CreateComment($postId: ID!, $body: String!) {
-  createComment(postId: $postId, body: $body) {
-    # ??
-  }
-}
-</code></pre>
-
-<p>After creating a comment, you want to update the list of comments to include the new member. To express this shared need for data, create a fragment with the required fields:</p>
-
-<pre><code class="text"># app/graphql/documents/CommentFields.graphql
-fragment CommentFields on Comment {
-  author {
-    name
-  }
-  body
-  createdAt
-  updatedAt
-}
-</code></pre>
-
-<p>Then, apply the fragment to <code>ListComments</code> and <code>CreateComment</code>:</p>
-
-<pre><code class="diff"># app/graphql/documents/ListComments.graphql
-  query ListComments($postId: ID!) {
-    post(id: $id) {
-      comments {
-+       ...CommentFields
--       author {
--         name
--       }
--       body
--       createdAt
--       updatedAt
-      }
-    }
-  }
-</code></pre>
-
-<pre><code class="diff">  # app/graphql/documents/CreateComment.graphql
-  query CreateComment($postId: ID!, $body: String!) {
-    createComment(postId: $postId, body: $body) {
--     # ??
-+     ...CommentFields
-    }
-  }
-</code></pre>
-
-<p>This way:</p>
-
-<ul>
-<li>A reader can see that these operations are linked</li>
-<li>If the list view ever requires more data, the create operation will load that data, too</li>
-</ul>
-
-
-<h2>Next Steps</h2>
-
-<ul>
-<li>Repositories can also <a href="http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#arbitrary-input">accept dynamic inputs</a>. This allows you to use GraphiQL during development or continue serving old clients while you transition to server-defined queries.</li>
-<li>On Rails, repositories watch their files and reload as needed. If you&rsquo;re using another framework, you can <a href="http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#watching-files">reload repositories</a> as needed.</li>
-<li>You can use a repository to find <a href="http://rmosolgo.github.io/graphql-ruby/pro/persisted_queries#analysis">unused fields</a> in your schema.</li>
-</ul>
-
-
-<p>For me, I&rsquo;m hoping to improve client support (eg, Apollo Client) and server tooling (eg, query diffing) to make repositories even more useful!</p>
 ]]></content>
   </entry>
   
