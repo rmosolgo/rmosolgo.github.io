@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-04-16T11:11:53-04:00</updated>
+  <updated>2018-05-21T14:41:21-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,115 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[How Ripper parses variables]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/05/21/how-ripper-parses-variables/"/>
+    <updated>2018-05-21T14:11:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/05/21/how-ripper-parses-variables</id>
+    <content type="html"><![CDATA[<p>Ruby has a few different kinds of variables, and Ripper expresses them with a few different nodes.</p>
+
+<!-- more -->
+
+
+<p>Here are the different variables in Ruby:</p>
+
+<pre><code class="ruby">a   # Local variable (or method call on self)
+$a  # Global variable
+A   # Constant
+@a  # Instance variable
+@@a # Class variable
+
+# Bonus, not variables:
+a()       # explicit method call (with parens) on implicit self
+a b       # explicit method call (with args) on implicit self
+self.a    # explicit method call (with dot) on explicit self
+</code></pre>
+
+<p>Here is how Ripper parses the above code:</p>
+
+<pre><code class="ruby"># Ripper.sexp_raw(...) =&gt;
+
+[:program,
+ [:stmts_add,
+  [:stmts_add,
+   [:stmts_add,
+    [:stmts_add,
+     [:stmts_add,
+      [:stmts_add,
+       [:stmts_add,
+        [:stmts_add, [:stmts_new], [:vcall, [:@ident, "a", [1, 0]]]],
+        [:var_ref, [:@gvar, "$a", [2, 0]]]],
+       [:var_ref, [:@const, "A", [3, 0]]]],
+      [:var_ref, [:@ivar, "@a", [4, 0]]]],
+     [:var_ref, [:@cvar, "@@a", [5, 0]]]],
+    [:method_add_arg, [:fcall, [:@ident, "a", [8, 0]]], [:arg_paren, nil]]],
+   [:command,
+    [:@ident, "a", [9, 0]],
+    [:args_add_block,
+     [:args_add, [:args_new], [:vcall, [:@ident, "b", [9, 2]]]],
+     false]]],
+  [:call, [:var_ref, [:@kw, "self", [10, 0]]], :".", [:@ident, "a", [10, 5]]]]]
+</code></pre>
+
+<p>(<a href="https://ripper-preview.herokuapp.com/?code=a+++%23+Local+variable+%28or+method+call+on+self%29%0D%0A%24a++%23+Global+variable%0D%0AA+++%23+Constant%0D%0A%40a++%23+Instance+varaible%0D%0A%40%40a+%23+Class+variable%0D%0A%0D%0A%23+Bonus%2C+not+variables%3A%0D%0Aa%28%29+++++++%23+explicit+method+call+%28with+parens%29+on+implicit+self%0D%0Aself.a++++%23+explicit+method+call+%28with+dot%29+on+explicit+self">Ripper-preview</a>)</p>
+
+<p>Let&rsquo;s check out those nodes.</p>
+
+<h3>:vcall</h3>
+
+<pre><code class="ruby"># a
+[:vcall, [:@ident, "a", [1, 0]]]]
+</code></pre>
+
+<p>A <code>:vcall</code> is a bareword, either a local variable lookup <em>or</em> a method call on self. Used alone, this can only be determined at runtime, depending on the binding. If there&rsquo;s a local variable, it will be used. My guess is that <code>:vcall</code> is short for &ldquo;variable/call&rdquo;</p>
+
+<p>Interestingly, there is a single-expression case which <em>could</em> be disambiguated statically, but Ripper still uses <code>:vcall</code>:</p>
+
+<pre><code class="ruby"># a b
+[:command,
+ [:@ident, "a", [1, 0]],
+ [:args_add_block,
+  [:args_add, [:args_new], [:vcall, [:@ident, "b", [1, 2]]]],
+  false]]]]
+</code></pre>
+
+<h3>:var_ref</h3>
+
+<pre><code class="ruby"># $a
+[:var_ref, [:@gvar, "$a", [1, 0]]]
+# A
+[:var_ref, [:@const, "A", [1, 0]]]
+# @a
+[:var_ref, [:@ivar, "@a", [4, 0]]]
+# @@aa
+[:var_ref, [:@cvar, "@@a", [5, 0]]]
+</code></pre>
+
+<p><code>:var_ref</code> (presumably &ldquo;variable reference&rdquo;) is shared by many of these examples, and can always be resolved to a <em>variable</em> lookup, never a method call.
+Its argument tells what kind of lookup to do (global, constant, instance, class), and what name to look up.</p>
+
+<h3>Method calls</h3>
+
+<p>Some Ruby can be statically known to be a method call, <em>not</em> a variable lookup:</p>
+
+<pre><code class="ruby"># a(), explicit method call (with parens) on implicit self
+[:method_add_arg, [:fcall, [:@ident, "a", [1, 0]]], [:arg_paren, nil]]
+# self.a, explicit method call (with dot) on explicit self
+[:call, [:var_ref, [:@kw, "self", [1, 0]]], :".", [:@ident, "a", [1, 5]]]
+# a b, explicit method call (with arguments) on implicit self
+[:command,
+   [:@ident, "a", [10, 0]],
+   [:args_add_block,
+    [:args_add, [:args_new], [:vcall, [:@ident, "b", [10, 2]]]],
+    false]]]
+</code></pre>
+
+<p>In these cases, <code>:fcall</code>, <code>:call</code> and <code>:command</code> are used to represent definite method sends.</p>
+
+<p>Interestingly, <code>:var_ref</code> is used for <code>self</code>, too.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Updating GitHub to GraphQL 1.8.0]]></title>
@@ -1229,116 +1338,6 @@ ReactRailsUJS.detectEvents()
 <p>Webpacker is great! Setup was smooth and the APIs were clear and convenient. I&rsquo;m looking forward to using it more.</p>
 
 <p>🍻 Here&rsquo;s to another major version of <code>react-rails</code>!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Watching files during Rails development]]></title>
-    <link href="http://rmosolgo.github.io/blog/2017/04/12/watching-files-during-rails-development/"/>
-    <updated>2017-04-12T14:09:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2017/04/12/watching-files-during-rails-development</id>
-    <content type="html"><![CDATA[<p>You can tell Ruby on Rails to respond to changes in certain files during development.</p>
-
-<!-- more -->
-
-
-<p>Rails knows to watch <code>config/routes.rb</code> for changes and reload them when the files change. You can use the same mechanism to watch other files and take action when they change.</p>
-
-<p>I used this feature for <a href="https://github.com/reactjs/react-rails">react-rails</a> server rendering and for <a href="http://graphql.pro">GraphQL::Pro</a> static queries.</p>
-
-<h2>app.reloader</h2>
-
-<p>Every Rails app has <a href="https://github.com/rails/rails/blob/8f59a1dd878f56798f88369fa5b448f17a29679d/railties/lib/rails/application.rb#L135">a <code>@reloader</code></a>, which is a local subclass of <a href="http://api.rubyonrails.org/classes/ActiveSupport/Reloader.html"><code>ActiveSupport::Reloader</code></a>. It&rsquo;s used whenever you call <a href="https://github.com/rails/rails/blob/fe1f4b2ad56f010a4e9b93d547d63a15953d9dc2/railties/lib/rails/console/app.rb#L29-L34"><code>reload!</code> in the Rails console</a>.</p>
-
-<p>It&rsquo;s attached to a <a href="https://github.com/rails/rails/blob/d3c9d808e3e242155a44fd2a89ef272cfade8fe8/railties/lib/rails/application/default_middleware_stack.rb#L51-L53">rack middleware</a> which <a href="https://github.com/rails/rails/blob/d3c9d808e3e242155a44fd2a89ef272cfade8fe8/actionpack/lib/action_dispatch/middleware/executor.rb#L10">calls <code>#run!</code></a> (which, in turn, <a href="https://github.com/rails/rails/blob/291a098c111ff419506094e14c0186389b0020ca/activesupport/lib/active_support/reloader.rb#L57-L63">calls the reload blocks if it detects changes</a>).</p>
-
-<h2>config.to_prepare</h2>
-
-<p>You can add custom preparation hooks with <code>config.to_prepare</code>:</p>
-
-<pre><code class="ruby">initializer :my_custom_preparation do |app|
-  config.to_prepare do
-    puts "Reloading now ..."
-  end
-end
-</code></pre>
-
-<p>When Rails detects a change, this block will be called. It&rsquo;s implemented by <a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/finisher.rb#L53-L55">registering the block with <code>app.reloader</code></a>.</p>
-
-<h2>app.reloaders</h2>
-
-<p>To add <em>new conditions</em> for which Rails should reload, you can add to the <a href="https://github.com/rails/rails/blob/8f59a1dd878f56798f88369fa5b448f17a29679d/railties/lib/rails/application.rb#L126"><code>app.reloaders</code> array</a>:</p>
-
-<pre><code class="ruby"># Object responds to `#updated?`
-class MyWatcher
-  def updated?
-    # ...
-  end
-end
-
-# ...
-
-initializer :my_custom_watch_condition do |app|
-  # Register custom reloader:
-  app.reloaders &lt;&lt; MyWatcher.new
-end
-</code></pre>
-
-<p>The object&rsquo;s <a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/finisher.rb#L156-L158"><code>updated?</code> method will be called</a> by the reloader. If any reloader returns <code>true</code>, the middleware will run all <code>to_prepare</code> blocks (via the call to <code>@reloader.run!</code>).</p>
-
-<h2>FileUpdateChecker</h2>
-
-<p>Rails includes a goodie for watching files. <a href="http://api.rubyonrails.org/classes/ActiveSupport/FileUpdateChecker.html"><code>ActiveSupport::FileUpdateChecker</code></a> is great for:</p>
-
-<ul>
-<li>Watching specific files for changes (<a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/routes_reloader.rb#L41"><code>config/routes.rb</code> is watched this way</a>)</li>
-<li>Watching a directory of files for changes, additions and deletions (<a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/finisher.rb#L164"><code>app/**/*.rb</code> is watched this way</a>)</li>
-</ul>
-
-
-<p>You can create your own <code>FileUpdateChecker</code> and add it to <code>app.reloaders</code> to reload Rails when certain files change:</p>
-
-<pre><code class="ruby"># Watch specific files:
-app.reloaders &lt;&lt; ActiveSupport::FileUpdateChecker.new(["my_important_file.txt", "my_other_important_file.txt"])
-# Watch directory-extension pairs, eg all `.txt` and `.md` files in `app/important_files` and subdirectories:
-app.reloaders &lt;&lt; ActiveSupport::FileUpdateChecker([], { "app/important_files" =&gt; [".txt", ".md"] })
-</code></pre>
-
-<p>Some filesystems support an evented file watcher implementation, <a href="http://api.rubyonrails.org/classes/ActiveSupport/EventedFileUpdateChecker.html"><code>ActiveSupport::EventedFileUpdateChecker</code></a>. <code>app.config.file_watcher</code> will return the proper filewatcher class for the current context.</p>
-
-<pre><code class="ruby">app.reloaders &lt;&lt; app.config.file_watcher(["my_important_file.txt", "my_other_important_file.txt"])
-</code></pre>
-
-<h2>All Together Now</h2>
-
-<p><code>react-rails</code> maintains a pool of V8 instances for server rendering React components. These instances are initialized with a bunch of JavaScript code, and whenever a developer changes a JavaScript file, we need to reload them with the new code. This requires two steps:</p>
-
-<ul>
-<li>Adding a new watcher to <code>app.reloaders</code> to detect changes to JavaScript files</li>
-<li>Adding a <code>to_prepare</code> hook to reload the JS instances</li>
-</ul>
-
-
-<p>It looks basically like this:</p>
-
-<pre><code class="ruby">initializer "react_rails.watch_js_files" do |app|
-  # Watch for changes to javascript files:
-  app.reloaders &lt;&lt; app.config.file_watcher.new([], {
-    # Watch the asset pipeline:
-    Rails.root.join("app/assets/javascripts").to_s =&gt; ["jsx", "js"],
-    # Watch webpacker:
-    Rails.root.join("app/javascript").to_s =&gt; ["jsx", "js"]
-  })
-
-  config.to_prepare do
-    React::ServerRendering.reset_pool
-  end
-end
-</code></pre>
-
-<p>The <a href="https://github.com/reactjs/react-rails/blob/bbb1ff10c787ca6a186e39df57fe5b228b37bd7e/lib/react/rails/railtie.rb#L26-L39">full implementation</a> supports some customization. You can see similar (and more complicated) examples with <a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/finisher.rb#L126-L142">routes reloading</a>, <a href="https://github.com/rails/rails/blob/e9abbb700acd8165a8994d8b2a700e507fb3b7ff/activesupport/lib/active_support/i18n_railtie.rb#L59-L74">i18n reloading</a> and <a href="https://github.com/rails/rails/blob/ce97c79445f9ac4b056e34deaaaaf25cadc08b72/railties/lib/rails/application/finisher.rb#L163-L183"><code>.rb</code> reloading</a>.</p>
-
-<p>Happy reloading!</p>
 ]]></content>
   </entry>
   

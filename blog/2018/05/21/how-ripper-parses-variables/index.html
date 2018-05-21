@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>How Ripper parses variables - Robert Mosolgo</title>
+  <meta name="author" content="Robert Mosolgo">
+
+  
+  <meta name="description" content="Ruby has a few different kinds of variables, and Ripper expresses them with a few different nodes. Here are the different variables in Ruby: 1
+2
+3
+4 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://rmosolgo.github.io/blog/2018/05/21/how-ripper-parses-variables">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://feeds.feedburner.com/RobertMosolgo" rel="alternate" title="Robert Mosolgo" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Gentium+Book+Basic' rel='stylesheet' type='text/css'>
+
+  
+
+</head>
+
+<body   class="no-sidebar"  >
+  <div id="wrapper">
+    <header role="banner"><hgroup>
+  <h1 class="site-title">
+  	<a href="/">Robert Mosolgo</a>
+  </h1>
+  
+</hgroup>
+
+</header>
+    <nav role="navigation"><ul class="main-navigation">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/blog/archives">Blog</a></li>
+  <li><a href="/talks">Talks</a></li>
+  <li><a href="http://feeds.feedburner.com/RobertMosolgo" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+</ul>
+
+</nav>
+    <div id="main">
+      <div id="content">
+        <div>
+<article class="hentry" role="article">
+  
+
+  
+  <header>
+    
+      <h1 class="entry-title">How Ripper Parses Variables</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-05-21T14:11:00-04:00" pubdate data-updated="true">May 21<span>st</span>, 2018</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ruby has a few different kinds of variables, and Ripper expresses them with a few different nodes.</p>
+
+<!-- more -->
+
+
+<p>Here are the different variables in Ruby:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">a</span>   <span class="c1"># Local variable (or method call on self)</span>
+</span><span class='line'><span class="vg">$a</span>  <span class="c1"># Global variable</span>
+</span><span class='line'><span class="n">A</span>   <span class="c1"># Constant</span>
+</span><span class='line'><span class="vi">@a</span>  <span class="c1"># Instance variable</span>
+</span><span class='line'><span class="vc">@@a</span> <span class="c1"># Class variable</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1"># Bonus, not variables:</span>
+</span><span class='line'><span class="n">a</span><span class="p">()</span>       <span class="c1"># explicit method call (with parens) on implicit self</span>
+</span><span class='line'><span class="n">a</span> <span class="n">b</span>       <span class="c1"># explicit method call (with args) on implicit self</span>
+</span><span class='line'><span class="nb">self</span><span class="o">.</span><span class="n">a</span>    <span class="c1"># explicit method call (with dot) on explicit self</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Here is how Ripper parses the above code:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Ripper.sexp_raw(...) =&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[</span><span class="ss">:program</span><span class="p">,</span>
+</span><span class='line'> <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>  <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>   <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>     <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>      <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>       <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span>
+</span><span class='line'>        <span class="o">[</span><span class="ss">:stmts_add</span><span class="p">,</span> <span class="o">[</span><span class="ss">:stmts_new</span><span class="o">]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:vcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>        <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@gvar</span><span class="p">,</span> <span class="s2">&quot;$a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>       <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@const</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>      <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ivar</span><span class="p">,</span> <span class="s2">&quot;@a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>     <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@cvar</span><span class="p">,</span> <span class="s2">&quot;@@a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">[</span><span class="ss">:method_add_arg</span><span class="p">,</span> <span class="o">[</span><span class="ss">:fcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:arg_paren</span><span class="p">,</span> <span class="kp">nil</span><span class="o">]]]</span><span class="p">,</span>
+</span><span class='line'>   <span class="o">[</span><span class="ss">:command</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">[</span><span class="ss">:args_add_block</span><span class="p">,</span>
+</span><span class='line'>     <span class="o">[</span><span class="ss">:args_add</span><span class="p">,</span> <span class="o">[</span><span class="ss">:args_new</span><span class="o">]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:vcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>     <span class="kp">false</span><span class="o">]]]</span><span class="p">,</span>
+</span><span class='line'>  <span class="o">[</span><span class="ss">:call</span><span class="p">,</span> <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@kw</span><span class="p">,</span> <span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span><span class="p">,</span> <span class="ss">:&quot;.&quot;</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="o">]]]]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>(<a href="https://ripper-preview.herokuapp.com/?code=a+++%23+Local+variable+%28or+method+call+on+self%29%0D%0A%24a++%23+Global+variable%0D%0AA+++%23+Constant%0D%0A%40a++%23+Instance+varaible%0D%0A%40%40a+%23+Class+variable%0D%0A%0D%0A%23+Bonus%2C+not+variables%3A%0D%0Aa%28%29+++++++%23+explicit+method+call+%28with+parens%29+on+implicit+self%0D%0Aself.a++++%23+explicit+method+call+%28with+dot%29+on+explicit+self">Ripper-preview</a>)</p>
+
+<p>Let&rsquo;s check out those nodes.</p>
+
+<h3>:vcall</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># a</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:vcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>A <code>:vcall</code> is a bareword, either a local variable lookup <em>or</em> a method call on self. Used alone, this can only be determined at runtime, depending on the binding. If there&rsquo;s a local variable, it will be used. My guess is that <code>:vcall</code> is short for &ldquo;variable/call&rdquo;</p>
+
+<p>Interestingly, there is a single-expression case which <em>could</em> be disambiguated statically, but Ripper still uses <code>:vcall</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># a b</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:command</span><span class="p">,</span>
+</span><span class='line'> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]</span><span class="p">,</span>
+</span><span class='line'> <span class="o">[</span><span class="ss">:args_add_block</span><span class="p">,</span>
+</span><span class='line'>  <span class="o">[</span><span class="ss">:args_add</span><span class="p">,</span> <span class="o">[</span><span class="ss">:args_new</span><span class="o">]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:vcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>  <span class="kp">false</span><span class="o">]]]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>:var_ref</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># $a</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@gvar</span><span class="p">,</span> <span class="s2">&quot;$a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span>
+</span><span class='line'><span class="c1"># A</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@const</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span>
+</span><span class='line'><span class="c1"># @a</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ivar</span><span class="p">,</span> <span class="s2">&quot;@a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span>
+</span><span class='line'><span class="c1"># @@aa</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@cvar</span><span class="p">,</span> <span class="s2">&quot;@@a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>:var_ref</code> (presumably &ldquo;variable reference&rdquo;) is shared by many of these examples, and can always be resolved to a <em>variable</em> lookup, never a method call.
+Its argument tells what kind of lookup to do (global, constant, instance, class), and what name to look up.</p>
+
+<h3>Method calls</h3>
+
+<p>Some Ruby can be statically known to be a method call, <em>not</em> a variable lookup:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># a(), explicit method call (with parens) on implicit self</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:method_add_arg</span><span class="p">,</span> <span class="o">[</span><span class="ss">:fcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:arg_paren</span><span class="p">,</span> <span class="kp">nil</span><span class="o">]]</span>
+</span><span class='line'><span class="c1"># self.a, explicit method call (with dot) on explicit self</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:call</span><span class="p">,</span> <span class="o">[</span><span class="ss">:var_ref</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@kw</span><span class="p">,</span> <span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]]</span><span class="p">,</span> <span class="ss">:&quot;.&quot;</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="o">]]]</span>
+</span><span class='line'><span class="c1"># a b, explicit method call (with arguments) on implicit self</span>
+</span><span class='line'><span class="o">[</span><span class="ss">:command</span><span class="p">,</span>
+</span><span class='line'>   <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="o">]]</span><span class="p">,</span>
+</span><span class='line'>   <span class="o">[</span><span class="ss">:args_add_block</span><span class="p">,</span>
+</span><span class='line'>    <span class="o">[</span><span class="ss">:args_add</span><span class="p">,</span> <span class="o">[</span><span class="ss">:args_new</span><span class="o">]</span><span class="p">,</span> <span class="o">[</span><span class="ss">:vcall</span><span class="p">,</span> <span class="o">[</span><span class="ss">:@ident</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="o">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="o">]]]]</span><span class="p">,</span>
+</span><span class='line'>    <span class="kp">false</span><span class="o">]]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In these cases, <code>:fcall</code>, <code>:call</code> and <code>:command</code> are used to represent definite method sends.</p>
+
+<p>Interestingly, <code>:var_ref</code> is used for <code>self</code>, too.</p>
+</div>
+
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Robert Mosolgo</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2018-05-21T14:11:00-04:00" pubdate data-updated="true">May 21<span>st</span>, 2018</time>
+      
+
+in
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ripper/'>Ripper</a>, <a class='category' href='/blog/categories/ruby/'>Ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <div class="other-posts">
+      
+        <div class="prev-post">
+          <a href="/blog/2018/04/09/updating-github-to-graphql-1-dot-8-0/" title="Previous Post: Updating GitHub to GraphQL 1.8.0">&laquo; Updating GitHub to GraphQL 1.8.0</a>
+        </div>
+      
+      
+    </p>
+  </footer>
+</article>
+</div>
+
+
+      </div>
+    </div>
+    <footer role="contentinfo"><p>
+  Copyright &copy; 2018 Robert Mosolgo
+</p>
+
+</footer>
+    
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+</body>
+</html>
