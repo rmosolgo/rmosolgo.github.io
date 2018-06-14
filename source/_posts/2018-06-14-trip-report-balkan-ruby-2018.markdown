@@ -100,6 +100,8 @@ And, pleasantly, we caught a nice view of Sofia on the way back down:
 
 {% img /images/balkan_ruby_2018/overlook.png 500 %}
 
+(You can even see the Nevski cathedral if you look closely!)
+
 ## Closing Thoughts
 
 Balkan Ruby was a big hit on all fronts: great people, great city, great technical content. Especially as a dairy lover, I'll take the next chance I get to go back! And I loved making some new friends, who I hope to see at future Ruby events.
