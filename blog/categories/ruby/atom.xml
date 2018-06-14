@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-05-21T14:41:21-04:00</updated>
+  <updated>2018-06-14T16:09:29-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,113 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Trip Report: Balkan Ruby 2018]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018/"/>
+    <updated>2018-06-14T15:02:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018</id>
+    <content type="html"><![CDATA[<p>This May, I had the opportunity to attend <a href="https://balkanruby.com/">Balkan Ruby</a> and present on my work with <a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a>.</p>
+
+<!-- more -->
+
+
+<p>Here are a few thoughts about the trip.</p>
+
+<h2>The Conference</h2>
+
+<p>Balkan Ruby was a big hit. Personally, some of my favorites were:</p>
+
+<ul>
+<li>Zach Holman&rsquo;s opening talk about datetimes and timezones (which became a <a href="https://zachholman.com/talk/utc-is-enough-for-everyone-right">blog post</a> and inspired a <a href="https://github.com/rmosolgo/graphql-ruby/pull/1566">GraphQL-Ruby ISO8601 scalar type</a>)</li>
+<li>Sameer Deshmukh&rsquo;s presentation about various <a href="https://github.com/sciruby">SciRuby</a> projects</li>
+<li>Marko Bogdanović&rsquo;s talk about <a href="https://rubybench.org/">RubyBench</a>, which was a really cool project and made me want something like it for GraphQL-Ruby.</li>
+</ul>
+
+
+<p>One of my favorite parts of the conference was the code challenges set up by <a href="">Receipt Bank</a>, one of the sponsors.</p>
+
+<p><img src="/images/balkan_ruby_2018/challenge.png" width="500"></p>
+
+<p>Every few hours, a new, wacky challenge would go live. Although I didn&rsquo;t do well on them, I enjoyed working with a few new friends on different solutions, and seeing the creative things that other attendees submitted!</p>
+
+<h2>The City</h2>
+
+<p>Sofia was <strong>great</strong>. A beautiful city with interesting architecture, tons of trees and tasty food.</p>
+
+<p>The Nevski Cathedral was built in the early 1900s to celebrate Russia&rsquo;s liberation of Bulgaria from the Ottomans:</p>
+
+<p><img src="/images/balkan_ruby_2018/nevski.png" width="500"></p>
+
+<p>Inside, a mural of Abraham and Isaac:</p>
+
+<p><img src="/images/balkan_ruby_2018/abraham.png" width="500"></p>
+
+<p>And St. Cyril and St. Methodius, creators of the Cyrillic alphabet, who are quite popular around here:</p>
+
+<p><img src="/images/balkan_ruby_2018/saints.png" width="500"></p>
+
+<p>I really enjoyed the different cathedrals. There&rsquo;s something cool about the different instructive artwork and &ldquo;sacred&rdquo; feeling of a beautiful building with incense burning. I wonder if modern American churches could do more to engage all of our senses.</p>
+
+<p>Also, a bit of Soviet history found in a nearby park:</p>
+
+<p><img src="/images/balkan_ruby_2018/soviet.png" width="500"></p>
+
+<p>And here, some recently excavated Roman ruins, and the one remaining Turkish mosque downtown:</p>
+
+<p><img src="/images/balkan_ruby_2018/ruins.png" width="500"></p>
+
+<p>The mosque was right beside ruins of an old bathhouse. Apparently that&rsquo;s why Sofia was founded here &ndash; there were hot springs on the road between Rome and Constantinople, so the Romans set up camp (and called it Serdica).</p>
+
+<p>And a fairly typical meal during my time there, a <em>shopska</em> salad (veggies with cheese, oil, and vinegar):</p>
+
+<p><img src="/images/balkan_ruby_2018/food.png" width="500"></p>
+
+<p>I can&rsquo;t say enough good things about the local dairy products. The cheese was soft and fresh and the yogurt was tart and refreshing.</p>
+
+<h2>The Organizers</h2>
+
+<p>My favorite part about programming conferences is meeting the smart, caring folks who make them possible, and Balkan Ruby was no exception.</p>
+
+<p>The two main organizers, <a href="https://twitter.com/gsamokovarov">Genadi</a> and <a href="https://twitter.com/vestimir">Vestimir</a> were fantastic hosts (and experienced, since they got their start with Euruko a few years back). Besides that, I really enjoyed meeting the volunteers and learning a bit about life in Sofia.</p>
+
+<p>One thing that stood out to me was the tradition behind the local liquor, rakia. It turns out that many families make it themselves, despite a law against owning stills. I&rsquo;ve been reading that peach wine was the traditional alcoholic drink for the earliest European arrivals to my area, so I decided to give it a shot this summer!</p>
+
+<p>A big bonus was when Vestimir played trail guide for our hike up the nearby mountain, Mt. Vitosha. It turned out to be a gray day, but we had a blast anyways.</p>
+
+<p>Some pictures of the trail:</p>
+
+<p><img src="/images/balkan_ruby_2018/trail1.png" width="500"></p>
+
+<p><img src="/images/balkan_ruby_2018/trail2.png" width="500"></p>
+
+<p><img src="/images/balkan_ruby_2018/trail3.png" width="500"></p>
+
+<p>Beautiful! But you could say were were <em>a bit</em> underdressed XD</p>
+
+<p>At the summit, we were happy to find a lodge where some food was served.</p>
+
+<p><img src="/images/balkan_ruby_2018/hut.png" width="500"></p>
+
+<p>Some traditional bean soup, bread, <a href="https://en.wikipedia.org/wiki/Ljutenica">lyutenitsa</a>, cheese tea, and rakia never tasted so good.</p>
+
+<p><img src="/images/balkan_ruby_2018/snack.png" width="500"></p>
+
+<p>Enjoying a rest:</p>
+
+<p><img src="/images/balkan_ruby_2018/group.png" width="500"></p>
+
+<p>(Left-to-right: Andreas, Nynne, Sameer, Me and Vestimir)</p>
+
+<p>And, pleasantly, we caught a nice view of Sofia on the way back down:</p>
+
+<p><img src="/images/balkan_ruby_2018/overlook.png" width="500"></p>
+
+<h2>Closing Thoughts</h2>
+
+<p>Balkan Ruby was a big hit on all fronts: great people, great city, great technical content. Especially as a dairy lover, I&rsquo;ll take the next chance I get to go back! And I loved making some new friends, who I hope to see at future Ruby events.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How Ripper parses variables]]></title>
@@ -1255,89 +1362,6 @@ end
 <h2>Summary</h2>
 
 <p>There&rsquo;s a lot of technically-savvy and academically-informed work on type checking Ruby! Many of the techniques preserve Ruby&rsquo;s productivity and dynamism while improving the developer experience and confidence. What makes them unique is their use of <em>runtime</em> data, to observe the program in action, then make assertions about the source code.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[What's new in React-Rails 2.0?]]></title>
-    <link href="http://rmosolgo.github.io/blog/2017/04/13/whats-new-in-react-rails-2-dot-0/"/>
-    <updated>2017-04-13T11:59:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2017/04/13/whats-new-in-react-rails-2-dot-0</id>
-    <content type="html"><![CDATA[<p>For <a href="http://planning.center">Planning Center</a> free week, I cooked up <a href="https://github.com/reactjs/react-rails"><code>react-rails</code></a> 2.0 🎊.</p>
-
-<!-- more -->
-
-
-<p>Here are a few highlights. For the full list, see the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a>!</p>
-
-<h2>Webpacker support</h2>
-
-<p><a href="https://github.com/rails/webpacker">Webpacker</a> was great to work with. <code>react-rails</code> now supports webpacker for:</p>
-
-<ul>
-<li>Mounting components with <code>&lt;%= react_component(...) %&gt;</code> via <code>require</code></li>
-<li>Server rendering from a webpacker pack (<code>server_rendering.js</code>)</li>
-<li>Loading the unobtrusive JavaScript (UJS)</li>
-<li>Installation and component generators</li>
-</ul>
-
-
-<p>A nice advantage of using webpacker is that you can load React.js from NPM instead of the <code>react-rails</code> gem. This way, you aren&rsquo;t bound to the React.js version which is included with the Ruby gem. You can pick any version you want!</p>
-
-<h2>UJS on npm</h2>
-
-<p>To support frontends built with Node.js, <code>react-rails</code>&rsquo;s  UJS driver is available on NPM as <a href="https://www.npmjs.com/package/react_ujs"><code>react_ujs</code></a>. It performs setup during <code>require</code>, so these two are equal:</p>
-
-<pre><code class="js">// Sprockets:
-//= require react_ujs
-
-// Node, etc:
-require("react_ujs")
-</code></pre>
-
-<h2>Request-based prerender context</h2>
-
-<p>If you&rsquo;re prerendering your React components on the server, you can perform setup and teardown in your Rails controller. For example, you might use these hooks to populate a flux store.</p>
-
-<p>First, add the <code>per_request_react_rails_prerenderer</code> helper to your controller:</p>
-
-<pre><code class="ruby">class PagesController &lt; ApplicationController
-  per_request_react_rails_prerenderer
-  # ...
-end
-</code></pre>
-
-<p>Then, you can access <code>react_rails_prerenderer</code> in the controller action:</p>
-
-<pre><code class="ruby">def show
-  js_context = react_rails_prerenderer.context
-  js_context.exec(js_setup_code)
-  render :show
-  js_context.exec(js_teardown_code)
-end
-</code></pre>
-
-<p>That way, you can properly prepare &amp; clean up a JS VM for server rendering.</p>
-
-<h2>Re-detect events</h2>
-
-<p>Previously, <code>ReactRailsUJS</code> &ldquo;automatically&rdquo; detected which libraries you were using and hooked up to their events for rendering components.</p>
-
-<p>It still checks for libraries during its initial load, but you can <em>also</em> re-check as needed:</p>
-
-<pre><code class="js">// Check the global context for libraries like Turbolinks and hook up to them:
-ReactRailsUJS.detectEvents()
-</code></pre>
-
-<p>This function removes previous event handlers, so it&rsquo;s safe to call anytime. (This was added in <code>2.0.2</code>.)</p>
-
-<h2>Other Takeaways</h2>
-
-<p>See the <a href="https://github.com/reactjs/react-rails/blob/master/CHANGELOG.md">changelog</a> for bug fixes and a new default server rendering configuration.</p>
-
-<p>Webpacker is great! Setup was smooth and the APIs were clear and convenient. I&rsquo;m looking forward to using it more.</p>
-
-<p>🍻 Here&rsquo;s to another major version of <code>react-rails</code>!</p>
 ]]></content>
   </entry>
   

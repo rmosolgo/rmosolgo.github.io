@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-05-21T14:41:21-04:00</updated>
+  <updated>2018-06-14T16:09:29-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,113 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Trip Report: Balkan Ruby 2018]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018/"/>
+    <updated>2018-06-14T15:02:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018</id>
+    <content type="html"><![CDATA[<p>This May, I had the opportunity to attend <a href="https://balkanruby.com/">Balkan Ruby</a> and present on my work with <a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a>.</p>
+
+<!-- more -->
+
+
+<p>Here are a few thoughts about the trip.</p>
+
+<h2>The Conference</h2>
+
+<p>Balkan Ruby was a big hit. Personally, some of my favorites were:</p>
+
+<ul>
+<li>Zach Holman&rsquo;s opening talk about datetimes and timezones (which became a <a href="https://zachholman.com/talk/utc-is-enough-for-everyone-right">blog post</a> and inspired a <a href="https://github.com/rmosolgo/graphql-ruby/pull/1566">GraphQL-Ruby ISO8601 scalar type</a>)</li>
+<li>Sameer Deshmukh&rsquo;s presentation about various <a href="https://github.com/sciruby">SciRuby</a> projects</li>
+<li>Marko Bogdanović&rsquo;s talk about <a href="https://rubybench.org/">RubyBench</a>, which was a really cool project and made me want something like it for GraphQL-Ruby.</li>
+</ul>
+
+
+<p>One of my favorite parts of the conference was the code challenges set up by <a href="">Receipt Bank</a>, one of the sponsors.</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/challenge.png" width="500"></p>
+
+<p>Every few hours, a new, wacky challenge would go live. Although I didn&rsquo;t do well on them, I enjoyed working with a few new friends on different solutions, and seeing the creative things that other attendees submitted!</p>
+
+<h2>The City</h2>
+
+<p>Sofia was <strong>great</strong>. A beautiful city with interesting architecture, tons of trees and tasty food.</p>
+
+<p>The Nevski Cathedral was built in the early 1900s to celebrate Russia&rsquo;s liberation of Bulgaria from the Ottomans:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/nevski.png" width="500"></p>
+
+<p>Inside, a mural of Abraham and Isaac:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/abraham.png" width="500"></p>
+
+<p>And St. Cyril and St. Methodius, creators of the Cyrillic alphabet, who are quite popular around here:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/saints.png" width="500"></p>
+
+<p>I really enjoyed the different cathedrals. There&rsquo;s something cool about the different instructive artwork and &ldquo;sacred&rdquo; feeling of a beautiful building with incense burning. I wonder if modern American churches could do more to engage all of our senses.</p>
+
+<p>Also, a bit of Soviet history found in a nearby park:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/soviet.png" width="500"></p>
+
+<p>And here, some recently excavated Roman ruins, and the one remaining Turkish mosque downtown:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/ruins.png" width="500"></p>
+
+<p>The mosque was right beside ruins of an old bathhouse. Apparently that&rsquo;s why Sofia was founded here &ndash; there were hot springs on the road between Rome and Constantinople, so the Romans set up camp (and called it Serdica).</p>
+
+<p>And a fairly typical meal during my time there, a <em>shopska</em> salad (veggies with cheese, oil, and vinegar):</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/food.png" width="500"></p>
+
+<p>I can&rsquo;t say enough good things about the local dairy products. The cheese was soft and fresh and the yogurt was tart and refreshing.</p>
+
+<h2>The Organizers</h2>
+
+<p>My favorite part about programming conferences is meeting the smart, caring folks who make them possible, and Balkan Ruby was no exception.</p>
+
+<p>The two main organizers, <a href="https://twitter.com/gsamokovarov">Genadi</a> and <a href="https://twitter.com/vestimir">Vestimir</a> were fantastic hosts (and experienced, since they got their start with Euruko a few years back). Besides that, I really enjoyed meeting the volunteers and learning a bit about life in Sofia.</p>
+
+<p>One thing that stood out to me was the tradition behind the local liquor, rakia. It turns out that many families make it themselves, despite a law against owning stills. I&rsquo;ve been reading that peach wine was the traditional alcoholic drink for the earliest European arrivals to my area, so I decided to give it a shot this summer!</p>
+
+<p>A big bonus was when Vestimir played trail guide for our hike up the nearby mountain, Mt. Vitosha. It turned out to be a gray day, but we had a blast anyways.</p>
+
+<p>Some pictures of the trail:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/trail1.png" width="500"></p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/trail2.png" width="500"></p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/trail3.png" width="500"></p>
+
+<p>Beautiful! But you could say were were <em>a bit</em> underdressed XD</p>
+
+<p>At the summit, we were happy to find a lodge where some food was served.</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/hut.png" width="500"></p>
+
+<p>Some traditional bean soup, bread, <a href="https://en.wikipedia.org/wiki/Ljutenica">lyutenitsa</a>, cheese tea, and rakia never tasted so good.</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/snack.png" width="500"></p>
+
+<p>Enjoying a rest:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/group.png" width="500"></p>
+
+<p>(Left-to-right: Andreas, Nynne, Sameer, Me and Vestimir)</p>
+
+<p>And, pleasantly, we caught a nice view of Sofia on the way back down:</p>
+
+<p><img src="http://rmosolgo.github.io/images/balkan_ruby_2018/overlook.png" width="500"></p>
+
+<h2>Closing Thoughts</h2>
+
+<p>Balkan Ruby was a big hit on all fronts: great people, great city, great technical content. Especially as a dairy lover, I&rsquo;ll take the next chance I get to go back! And I loved making some new friends, who I hope to see at future Ruby events.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[How Ripper parses variables]]></title>
@@ -5061,100 +5168,6 @@ Then, use the <code>style_module</code> in the partial:</p>
 <p>Hopefully these will work well for you!</p>
 
 <p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[How I Use Sprockets]]></title>
-    <link href="http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets/"/>
-    <updated>2016-05-19T08:44:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2016/05/19/how-i-use-sprockets</id>
-    <content type="html"><![CDATA[<p>When reviewing issues for <code>react-rails</code>, I see many questions about how to gather JavaScript dependencies with Sprockets. Here is how I use Sprockets to manage JavaScript dependencies.</p>
-
-<!-- more -->
-
-
-<p>I&rsquo;m looking for a few things in a JavaScript bundler:</p>
-
-<ul>
-<li>Stability: I don&rsquo;t want any changes to my dependencies unless I explicitly make them.</li>
-<li>Clarity: I want to be able to quickly tell what dependencies I have (library and version).</li>
-<li>Insulation: I don&rsquo;t want to rely on external services during development, deployment or runtime (except for downloading <em>new</em> dependencies, of course)</li>
-<li>Feature-completeness: I want to concatenate and minify my assets and serve them with cache headers</li>
-</ul>
-
-
-<h2>Using Sprockets</h2>
-
-<p>To <strong>add a new dependency</strong>:</p>
-
-<ol>
-<li>Find a non-minified, browser-ready version of your dependency</li>
-<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> (for example, <code>app/assets/javascripts/moment-v2.13.0.js</code>)</li>
-<li>Require it in <code>application.js</code> with <code>//= require ./vendor/moment-v2.13.0</code></li>
-<li>Access the global variable as needed in your app (eg <code>moment</code>)</li>
-</ol>
-
-
-<p>To <strong>update</strong> a dependency:</p>
-
-<ol>
-<li>Find a non-minified, browser-ready version of the updated dependency</li>
-<li>Add it to <code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code> and remove the <em>old</em> version from that directory</li>
-<li>Update the <code>//= require</code> directive with the new version number</li>
-<li>Check the dependency&rsquo;s changelog and update your app as needed. (Search your project for the global variable to find usages, eg <code>moment</code>.)</li>
-</ol>
-
-
-<p>To <strong>remove</strong> a dependency:</p>
-
-<ol>
-<li>Remove its file (<code>app/assets/javascripts/vendor/{library-name}-v{version-number}.js</code>)</li>
-<li>Remove the <code>//= require</code> directive</li>
-<li>Search your project for the global variable and remove all usages</li>
-</ol>
-
-
-<h2>Finding a browser-ready file</h2>
-
-<p>This got its own page: <a href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/">Finding a browser-ready file</a>.</p>
-
-<h2>Adding the file to <code>vendor/</code></h2>
-
-<p>Use an <strong>unminified</strong> version of the library. It will help in debugging development and viewing diffs when you update the dependency. Have no fear, Sprockets will minify it for you for production.</p>
-
-<p>Include the <strong>version number</strong> in the file name. This will give you more confidence in updating the library, since you&rsquo;ll know what version you&rsquo;re coming from.</p>
-
-<h2>Integrating with Sprockets</h2>
-
-<p>The <code>//= require ./vendor/{library}-v{version}</code> directive is your friend. Like an entry in <code>package.json</code>, it tells the reader what dependency you have.</p>
-
-<p>Now, your library will be accessible by its global name, such as <code>React</code>, <code>d3</code> or <code>Immutable</code>.</p>
-
-<p>Consuming a library via global variable is not ideal. But it <em>does</em> help you remember that, at the end of the day, the browser is one giant, mutable namespace, so you must be a good citizen! At least global variables can be grepped like any other dependency.</p>
-
-<p>Consider isolating your dependency. For example, you could wrap <code>Pusher</code> in an application-specific event emitter. This way, when you update Pusher, you only have to check one file for its usages. (Some libraries are poor candidates for isolation. My app will never be isolated from React!)</p>
-
-<h2>Caveats</h2>
-
-<p>There are some things Sprockets doesn&rsquo;t provide for me, which I wish it did:</p>
-
-<ul>
-<li>Named imports: I wish there was a good alternative to global namespacing with Sprockets, but not yet. (It&rsquo;s not a deal breaker &ndash; it doesn&rsquo;t hurt to be familiar with this constraint because it&rsquo;s the reality of the browser, anyways.)</li>
-<li>Tree shaking: It wish I could only transmit the parts of Underscore.js I actually used!</li>
-</ul>
-
-
-<p>Perhaps I should read up on Sprockets and submit a patch 😎</p>
-
-<p>Also, there&rsquo;s one case where copy-pasting isn&rsquo;t a great solution. Some libraries (like React.js) have <em>separate</em> &ldquo;development&rdquo; and &ldquo;production&rdquo; builds. The production build has fewer runtime checks than the development build, making it smaller and faster. There are a few solutions to this problem:</p>
-
-<ul>
-<li>Use a gem which provides the proper file for each environment (like <code>react-rails</code>)</li>
-<li>Add environment-specific folders to the asset pipeline (like <code>react-rails</code> does, I can write more on this if need be)</li>
-<li>Use the development build in productiosn (weigh the costs first: what&rsquo;s the difference in behavior, performance and file size?)</li>
-</ul>
-
 ]]></content>
   </entry>
   

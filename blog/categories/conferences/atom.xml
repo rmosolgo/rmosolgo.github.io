@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Conferences | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/conferences/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-05-21T14:41:21-04:00</updated>
+  <updated>2018-06-14T16:09:29-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,113 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Trip Report: Balkan Ruby 2018]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018/"/>
+    <updated>2018-06-14T15:02:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/06/14/trip-report-balkan-ruby-2018</id>
+    <content type="html"><![CDATA[<p>This May, I had the opportunity to attend <a href="https://balkanruby.com/">Balkan Ruby</a> and present on my work with <a href="https://github.com/rmosolgo/graphql-ruby">graphql-ruby</a>.</p>
+
+<!-- more -->
+
+
+<p>Here are a few thoughts about the trip.</p>
+
+<h2>The Conference</h2>
+
+<p>Balkan Ruby was a big hit. Personally, some of my favorites were:</p>
+
+<ul>
+<li>Zach Holman&rsquo;s opening talk about datetimes and timezones (which became a <a href="https://zachholman.com/talk/utc-is-enough-for-everyone-right">blog post</a> and inspired a <a href="https://github.com/rmosolgo/graphql-ruby/pull/1566">GraphQL-Ruby ISO8601 scalar type</a>)</li>
+<li>Sameer Deshmukh&rsquo;s presentation about various <a href="https://github.com/sciruby">SciRuby</a> projects</li>
+<li>Marko Bogdanović&rsquo;s talk about <a href="https://rubybench.org/">RubyBench</a>, which was a really cool project and made me want something like it for GraphQL-Ruby.</li>
+</ul>
+
+
+<p>One of my favorite parts of the conference was the code challenges set up by <a href="">Receipt Bank</a>, one of the sponsors.</p>
+
+<p><img src="/images/balkan_ruby_2018/challenge.png" width="500"></p>
+
+<p>Every few hours, a new, wacky challenge would go live. Although I didn&rsquo;t do well on them, I enjoyed working with a few new friends on different solutions, and seeing the creative things that other attendees submitted!</p>
+
+<h2>The City</h2>
+
+<p>Sofia was <strong>great</strong>. A beautiful city with interesting architecture, tons of trees and tasty food.</p>
+
+<p>The Nevski Cathedral was built in the early 1900s to celebrate Russia&rsquo;s liberation of Bulgaria from the Ottomans:</p>
+
+<p><img src="/images/balkan_ruby_2018/nevski.png" width="500"></p>
+
+<p>Inside, a mural of Abraham and Isaac:</p>
+
+<p><img src="/images/balkan_ruby_2018/abraham.png" width="500"></p>
+
+<p>And St. Cyril and St. Methodius, creators of the Cyrillic alphabet, who are quite popular around here:</p>
+
+<p><img src="/images/balkan_ruby_2018/saints.png" width="500"></p>
+
+<p>I really enjoyed the different cathedrals. There&rsquo;s something cool about the different instructive artwork and &ldquo;sacred&rdquo; feeling of a beautiful building with incense burning. I wonder if modern American churches could do more to engage all of our senses.</p>
+
+<p>Also, a bit of Soviet history found in a nearby park:</p>
+
+<p><img src="/images/balkan_ruby_2018/soviet.png" width="500"></p>
+
+<p>And here, some recently excavated Roman ruins, and the one remaining Turkish mosque downtown:</p>
+
+<p><img src="/images/balkan_ruby_2018/ruins.png" width="500"></p>
+
+<p>The mosque was right beside ruins of an old bathhouse. Apparently that&rsquo;s why Sofia was founded here &ndash; there were hot springs on the road between Rome and Constantinople, so the Romans set up camp (and called it Serdica).</p>
+
+<p>And a fairly typical meal during my time there, a <em>shopska</em> salad (veggies with cheese, oil, and vinegar):</p>
+
+<p><img src="/images/balkan_ruby_2018/food.png" width="500"></p>
+
+<p>I can&rsquo;t say enough good things about the local dairy products. The cheese was soft and fresh and the yogurt was tart and refreshing.</p>
+
+<h2>The Organizers</h2>
+
+<p>My favorite part about programming conferences is meeting the smart, caring folks who make them possible, and Balkan Ruby was no exception.</p>
+
+<p>The two main organizers, <a href="https://twitter.com/gsamokovarov">Genadi</a> and <a href="https://twitter.com/vestimir">Vestimir</a> were fantastic hosts (and experienced, since they got their start with Euruko a few years back). Besides that, I really enjoyed meeting the volunteers and learning a bit about life in Sofia.</p>
+
+<p>One thing that stood out to me was the tradition behind the local liquor, rakia. It turns out that many families make it themselves, despite a law against owning stills. I&rsquo;ve been reading that peach wine was the traditional alcoholic drink for the earliest European arrivals to my area, so I decided to give it a shot this summer!</p>
+
+<p>A big bonus was when Vestimir played trail guide for our hike up the nearby mountain, Mt. Vitosha. It turned out to be a gray day, but we had a blast anyways.</p>
+
+<p>Some pictures of the trail:</p>
+
+<p><img src="/images/balkan_ruby_2018/trail1.png" width="500"></p>
+
+<p><img src="/images/balkan_ruby_2018/trail2.png" width="500"></p>
+
+<p><img src="/images/balkan_ruby_2018/trail3.png" width="500"></p>
+
+<p>Beautiful! But you could say were were <em>a bit</em> underdressed XD</p>
+
+<p>At the summit, we were happy to find a lodge where some food was served.</p>
+
+<p><img src="/images/balkan_ruby_2018/hut.png" width="500"></p>
+
+<p>Some traditional bean soup, bread, <a href="https://en.wikipedia.org/wiki/Ljutenica">lyutenitsa</a>, cheese tea, and rakia never tasted so good.</p>
+
+<p><img src="/images/balkan_ruby_2018/snack.png" width="500"></p>
+
+<p>Enjoying a rest:</p>
+
+<p><img src="/images/balkan_ruby_2018/group.png" width="500"></p>
+
+<p>(Left-to-right: Andreas, Nynne, Sameer, Me and Vestimir)</p>
+
+<p>And, pleasantly, we caught a nice view of Sofia on the way back down:</p>
+
+<p><img src="/images/balkan_ruby_2018/overlook.png" width="500"></p>
+
+<h2>Closing Thoughts</h2>
+
+<p>Balkan Ruby was a big hit on all fronts: great people, great city, great technical content. Especially as a dairy lover, I&rsquo;ll take the next chance I get to go back! And I loved making some new friends, who I hope to see at future Ruby events.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Trip Report: RubyConf Colombia 2016]]></title>
