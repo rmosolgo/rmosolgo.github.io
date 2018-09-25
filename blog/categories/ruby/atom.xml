@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/ruby/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-06-14T16:14:17-04:00</updated>
+  <updated>2018-09-25T11:02:11-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,304 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Trampolining]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/09/23/trampolining/"/>
+    <updated>2018-09-23T21:04:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/09/23/trampolining</id>
+    <content type="html"><![CDATA[<p>As part of my work on <a href="https://github.com/rmosolgo/graphql-ruby/pull/1394">improving GraphQL-Ruby&rsquo;s runtime performance</a>, I&rsquo;ve been reading <a href="http://www.eopl3.com/"><em>Essentials of Programming Languages</em></a>. Here, I try to apply their lesson about &ldquo;trampolining&rdquo;.</p>
+
+<!-- more -->
+
+
+<p><strong>TL;DR:</strong> I applied a thing I read in a textbook and it:</p>
+
+<ul>
+<li>reduced the stack trace size by 80%</li>
+<li>reduced the live object count by 15%</li>
+<li>kept the same runtime speed</li>
+</ul>
+
+
+<p>You can see the diff and benchmark results here: <a href="https://github.com/rmosolgo/graphql-ruby/compare/1b306fad...eef73b1">https://github.com/rmosolgo/graphql-ruby/compare/1b306fad...eef73b1</a></p>
+
+<h2>The Problem</h2>
+
+<p>It&rsquo;s a bit funny, but it&rsquo;s not <em>totally clear</em> to me what the book is trying to get at here. In the book, they talk about <em>control context</em> or <em>continuations</em> in a way that I would talk about &ldquo;stack frames&rdquo;. I think the problem is this: when you implement a programming language as an interpreter, you end up with recursive method calls, and that recursion builds up a big stack in the host language. This is bad because it hogs memory.</p>
+
+<p>I can definitely <em>imagine</em> that this is a problem in Ruby, although I haven&rsquo;t measured it. GraphQL-Ruby uses recursion to execute GraphQL queries, and I can <em>imagine</em> that those recursive backtrace frames hog memory for a couple reasons:</p>
+
+<ul>
+<li>The control frames themselves (managed by YARV or something) take up memory in their own right</li>
+<li>The control frames each have a lexical scope (<code>binding</code>), which, since it&rsquo;s still on the stack, can&rsquo;t be GCed. So, Ruby holds on to a lot of objects which <em>could</em> be garbaged collected if the library was written better.</li>
+</ul>
+
+
+<p>Besides that, the long backtrace adds a lot of noise when debugging.</p>
+
+<h2>Trampolining</h2>
+
+<p>In the book, they say, &ldquo;move your recursive calls to tail position, then, assuming your language has tail-call optimization, you won&rsquo;t have this problem.&rdquo; Well, my language <em>doesn&rsquo;t</em> have tail-call optimization, so I <em>do</em> have this problem! (Ok, it&rsquo;s an <a href="https://ruby-doc.org/core-2.4.0/RubyVM/InstructionSequence.html#method-c-compile_option-3D">option</a>.)</p>
+
+<p>Luckily for me, they describe a technique for solving the problem <em>without</em> tail-call optimization. It&rsquo;s called <em>trampolining</em>, and it works roughly like this:</p>
+
+<blockquote><p>When a method <em>would</em> make a recursive call, instead, return a <code>Bounce</code>. Then, the top-level method, which previously received the <code>FinalValue</code> of the interpreter&rsquo;s work, should be extended to accept <em>either</em> a <code>FinalValue</code> or a <code>Bounce</code>. In the case of a <code>FinalValue</code>, it returns the value as previously. In the case of a <code>Bounce</code>, it re-enters the interpreter using the &ldquo;bounced&rdquo; value.</p></blockquote>
+
+<p>Using this technique, a previously-recursive method now <em>returns</em>, giving the caller some information about how to take the next step.</p>
+
+<p>Let&rsquo;s give it a try.</p>
+
+<h2>The Setup</h2>
+
+<p>I want to test impact in two ways: memory consumption and backtrace size. I want to measure these values <em>during</em> GraphQL execution, so what better way to do it but build a GraphQL schema!</p>
+
+<p>You can see the <a href="https://github.com/rmosolgo/graphql-ruby/compare/1b306fad...eef73b1#diff-7a29575d7b0f8a35812f9323ee46febe">whole benchmark</a>, but in short, we&rsquo;ll run a deeply-nested query, and at the deepest point, measure the <em>backtrace size</em> and the number of live objects in the heap:</p>
+
+<pre><code class="ruby">{
+  nestedMetric {
+    nestedMetric {
+      nestedMetric {
+        # ... more nesting ...
+        nestedMetric {
+          backtraceSize
+          objectCount
+        }
+      }
+    }
+  }
+}
+</code></pre>
+
+<p>Where the fields are implemented by:</p>
+
+<pre><code class="ruby">def backtrace_size
+  caller.size
+end
+
+def object_count
+  # Make a GC pass
+  GC.start
+  # Count how many objects are alive in the heap,
+  # subtracting the number of live objects before we started
+  GC.stat[:heap_live_slots] - self.class.object_count_baseline
+end
+</code></pre>
+
+<p>We&rsquo;ll use these measurements to assess the impact of the refactor.</p>
+
+<h2>The Pledge: Recursive calls</h2>
+
+<p>To begin with, the interpreter is implemented as a set of recursive methods. The methods do things like:</p>
+
+<ul>
+<li>Given an object and a set of selections, resolve the selected fields on that object</li>
+<li>Given a value and a type, prepare the value for a GraphQL response according to the type</li>
+</ul>
+
+
+<p>These methods are <em>recursive</em> in the case of fields that return GraphQL objects. The first method resolves a field and calls the second method; then the second method, in order to prepare an object as a GraphQL response, calls back to the first method, to resolve selections on that object. For example, execution might work like this:</p>
+
+<ul>
+<li>Resolve selections on the root object
+
+<ul>
+<li>One of the selections returned a User
+
+<ul>
+<li>Resolve selections on the User
+
+<ul>
+<li>One of the selections returns a Repository
+
+<ul>
+<li>Resolve selections on the Repository
+
+<ul>
+<li>&hellip;</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Do you see how the same procedure is being applied over and over, in a nested way? That&rsquo;s implemented with recursive calls in GraphQL-Ruby.</p>
+
+<p>We can run our test to see how the Ruby execution context looks in this case:</p>
+
+<pre><code class="ruby"># $ ruby test.rb
+1b306fad3b6b35dd06248028883cd8a3ec4bdefd
+{"backtraceSize"=&gt;282, "objectCount"=&gt;812}
+</code></pre>
+
+<p>This is the baseline for backtrace size and object count, which we&rsquo;re using to measure <em>memory overhead</em> in GraphQL execution. (This describes behavior at <a href="https://github.com/rmosolgo/graphql-ruby/commit/2401afc4a19f2e5616e1e155f953ec403bf4896c">this commit</a>.)</p>
+
+<h2>The Turn: Moving Recursive Calls into Tail Position</h2>
+
+<p>As a requirement for the final refactor, we have to do some code reorganization. In the current code, the recursive calls require some setup and teardown around them. For example, we track the GraphQL &ldquo;path&rdquo;, which is the list of fields that describe where we are in the response. Here&rsquo;s a field with its &ldquo;path&rdquo;:</p>
+
+<pre><code class="ruby">{
+  a {
+    b {
+      c # The path of this field ["a", "b", "c"]
+    }
+  }
+}
+</code></pre>
+
+<p>In the code, it looks something like this:</p>
+
+<pre><code class="ruby"># Append to the path for the duration of the nested call
+@path.push(field_name)
+# Continue executing, with the new path in context
+execute_recursively(...)
+# Remove the entry from `path`, since we're done here
+@path.pop
+</code></pre>
+
+<p>The problem is, if I want to refactor <code>execute_recursively</code> to become a <code>Bounce</code>, it won&rsquo;t do me any good, because the value of <code>execute_recursively</code> <em>isn&rsquo;t returned</em> from the method. It&rsquo;s not the last call in the method, so its value isn&rsquo;t returned. Instead, the value of <code>@path.pop</code> is returned. (It&rsquo;s not used for anything.)</p>
+
+<p>This is to say: <code>@path.pop</code> is in <em>tail position</em>, the last call in the method. But I want <code>execute_recursively</code> to be in tail position.</p>
+
+<h3>A Hack Won&rsquo;t Work</h3>
+
+<p>The easiest way to &ldquo;fix&rdquo; that would be to refactor the method to return the value of <code>execute_recursively</code>:</p>
+
+<pre><code class="ruby"># Append to the path for the duration of the nested call
+@path.push(field_name)
+# Continue executing
+return_value = execute_recursively(...)
+# Remove the entry from `path`, since we're done here
+@path.pop
+# Manually return the execution value
+return_value
+</code></pre>
+
+<p>The problem is, when <code>execute_recursively</code> is refactored to be a <code>Bounce</code>:</p>
+
+<pre><code class="ruby"># Append to the path for the duration of the nested call
+@path.push(field_name)
+# Continue executing
+bounce = prepare_bounce(...)
+# Remove the entry from `path`, since we're done here
+@path.pop
+# Manually return the execution value
+bounce
+</code></pre>
+
+<p>By the time the <code>bounce</code> is actually executed, <code>path</code> <em>won&rsquo;t have</em> the changes I need in it. The value is pushed <em>and popped</em> before the bounce is actually called.</p>
+
+<h3>Pass the Path as Input</h3>
+
+<p>The solution is to remove the need for <code>@path.pop</code>. This can be done by creating a <em>new path</em> and passing it as input.</p>
+
+<pre><code class="ruby"># Create a new path for nested execution
+new_path = path + [field_name]
+# Pass it as an input
+execute_recursively(new_path, ...)
+</code></pre>
+
+<p>Now, <code>execute_recursively</code> is in tail position!</p>
+
+<p>(The actual refactor is here: <a href="https://github.com/rmosolgo/graphql-ruby/commit/ef6e94283ecf280b14fe5417a4ee6896a06ebe69">https://github.com/rmosolgo/graphql-ruby/commit/ef6e94283ecf280b14fe5417a4ee6896a06ebe69</a>)</p>
+
+<h2>The Prestige: Make it Bounce</h2>
+
+<p>Now, we want to replace recursive calls with a <em>bounce</em>, where a bounce is an object with enough information to continue execution at a later point in time.</p>
+
+<p>Since my recursive interpreter is implemented with a bunch of stateless methods (they&rsquo;re stateless since the refactor above), I can create a Bounce class that will continue by calling the same method:</p>
+
+<pre><code class="ruby">class Bounce
+  # Take the inputs required to call the next method
+  def initialize(object, method, *arguments)
+    @object = object
+    @method = method
+    @arguments = arguments
+  end
+
+  # Continue by calling the method with the given inputs
+  def continue
+    @object.send(@method, *@arguments)
+  end
+end
+</code></pre>
+
+<p>Then, I replace the tail-position recursive calls with bounces:</p>
+
+<pre><code class="diff">- execute_recursively(...)
++ Bounce.new(self, :execute_recursively, ...)
+</code></pre>
+
+<p>Instead of <em>growing</em> the backtrace by calling another method, we&rsquo;ll be <em>shrinking</em> the backtrace by returning from the current method with a Bounce.</p>
+
+<p>You can see the refactor here: <a href="https://github.com/rmosolgo/graphql-ruby/commit/b8e51573652b736d67235080e8b450d6fc9cc92e">https://github.com/rmosolgo/graphql-ruby/commit/b8e51573652b736d67235080e8b450d6fc9cc92e</a></p>
+
+<h3>How&rsquo;d it work?</h3>
+
+<p>Let&rsquo;s run the test:</p>
+
+<pre><code class="ruby"># $ ruby test.rb
+b8e51573652b736d67235080e8b450d6fc9cc92e
+{"backtraceSize"=&gt;55, "objectCount"=&gt;686}
+</code></pre>
+
+<p>It&rsquo;s a success! The <code>backtraceSize</code> decreased from 282 to 55. The <code>objectCount</code> decreased from <code>812</code> to <code>686</code>.</p>
+
+<h3>Implementation Considerations</h3>
+
+<p><strong>&ldquo;Trampolining&rdquo;</strong> is the process of taking each bounce and continuing it. In my first implementation, <code>def trampoline</code> looked like this:</p>
+
+<pre><code class="ruby"># Follow all the bounces until there aren't any left
+def trampoline(bounce)
+  case bounce
+  when Bounce
+    trampoline(bounce.continue)
+  when Array
+    bounce.each { |b| trampoline(b) }
+  else
+    # not a bounce, do nothing
+  end
+end
+</code></pre>
+
+<p>My test indicated no improvement in memory overhead, so I frustratedly called it quits. While brushing my teeth before bed, it hit me! I had unwittingly <em>re-introduced</em> recursive method calls. So, I hurried downstairs and reimplemented <code>def trampoline</code> to use a <code>while</code> loop and a buffer of bounces, an approach which didn&rsquo;t grow the Ruby execution context. Then the test result was much better.</p>
+
+<p>Another consideration is the <em>overhead of Bounces</em> themselves. My first implementation creates a bounce before resolving each field. For very large responses, this will add a lot of overhead, especially when the field is a simple leaf value. This should be improved somehow.</p>
+
+<h2>What about Speed?</h2>
+
+<p>It turns out that visitors to the website don&rsquo;t care about backtrace size or Ruby heap size, they just care about waiting for webpages to load. Lucky for me, my benchmark includes some runtime measurements, and the results were basically the same:</p>
+
+<pre><code class="text"># before
+Calculating -------------------------------------
+                         92.144  (±10.9%) i/s -    456.000  in   5.022617s
+# after
+Calculating -------------------------------------
+                        113.529  (± 7.9%) i/s -    567.000  in   5.031847s
+</code></pre>
+
+<p>The runtime performance was very similar, almost within the margin of error. However, the consideration of Bounce overhead described above could cause <em>worse</em> performance in some cases.</p>
+
+<h2>What&rsquo;s next?</h2>
+
+<p>This code isn&rsquo;t <em>quite</em> ready for GraphQL-Ruby, but I think it&rsquo;s promising for a few reasons:</p>
+
+<ul>
+<li>The reduction of memory overhead and backtrace noise could pay off for very large, nested queries</li>
+<li>I might be able to leverage bounces to give the caller more control over how GraphQL queries are executed. For example, at GitHub, we use GraphQL queries when rendering HTML pages. With some work, maybe we could alternate between bouncing GraphQL and rendering HTML, so we&rsquo;d get a better progressive rendering experience on the front end.</li>
+</ul>
+
+
+<p>However, one serious issue still needs to be addressed: what about the <code>Bounce</code>&rsquo;s <em>own</em> overhead? Allocating a new object for <em>every field execution</em> is already a performance issue in GraphQL-Ruby, and I&rsquo;m trying hard to remove it. So the implementation will need to be more subtle in that regard.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Trip Report: Balkan Ruby 2018]]></title>
@@ -1156,214 +1454,6 @@ end                                           # 8
 <p>GraphQL-Ruby is three years old now, and I&rsquo;ve learned a LOT during that time! I&rsquo;m really thankful for the opportunity to focus on <em>developer productivity</em> in the last few months, learning how I&rsquo;ve prevented it and working on ways to improve it. I hope to keep working on topics like this &ndash; how to make GraphQL more productive for Ruby developers &ndash; in the next year, especially, so if you have feedback on this new API, please <a href="https://github.com/rmosolgo/graphql-ruby/issues/new">open an issue</a> to share it!</p>
 
 <p>I&rsquo;m excited to see how this new API changes the way people think about GraphQL in Ruby, and I hope it will foster more creativity and stability.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Ruby Type Checking Roundup]]></title>
-    <link href="http://rmosolgo.github.io/blog/2017/10/06/ruby-type-checking-roundup/"/>
-    <updated>2017-10-06T09:00:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2017/10/06/ruby-type-checking-roundup</id>
-    <content type="html"><![CDATA[<p>This fall, several people presented their work on Ruby type checkers. So let&rsquo;s take a look: what&rsquo;s the big deal, and what have they been up to?</p>
-
-<!-- more -->
-
-
-<h2>Why Type Check?</h2>
-
-<p>Part of Ruby&rsquo;s appeal is to be <em>free</em> of the cruft of its predecessors. So why is there so much interest in <em>adding</em> types to Ruby?</p>
-
-<ul>
-<li>Large, sprawling projects are becoming more common. At Ruby&rsquo;s inception, there were no 10-year-old Rails apps which people struggled to maintain, only greenfield Ruby scripts for toy projects.</li>
-<li>Programmers have experienced excellent type systems in other languages, and want those benefits in Ruby.</li>
-<li><em>Optional</em>, gradual type systems have been introduced to Python and JavaScript and they&rsquo;re big successes.</li>
-</ul>
-
-
-<p>What are the benefits?</p>
-
-<ul>
-<li><strong>Correctness</strong>: Type checking, like testing, is a way to be confident that your codebase is functioning properly. Employing a type checker can help you find bugs during development and prevent those bugs from going to production.</li>
-<li><strong>Confidence</strong>: Since an incorrect program won&rsquo;t pass type checking, developers can refactor with more confidence. Common errors such as typos and argument errors can be caught by the type checker.</li>
-<li><strong>Design</strong>: The type system gives you a way to think about the program. Specifically, types document and define the <em>boundaries</em> between parts of code, like methods, classes and modules.</li>
-</ul>
-
-
-<p>To experience a great type system in a Ruby-like language, I recommend <a href="https://crystal-lang.org/">Crystal</a>.</p>
-
-<h2>Jeff Foster, StrangeLoop 2017</h2>
-
-<p><a href="http://www.cs.umd.edu/~jfoster/">Jeff Foster</a> is a professor at the <a href="http://www.umd.edu/">University of Maryland, College Park</a> and works in the <a href="http://www.cs.umd.edu/projects/PL/">programming languages group</a>. Along with his students, he&rsquo;s been exploring Ruby type checkers for <strong>nine years</strong>! This year, he gave a presentation at StrangeLoop, <a href="https://www.youtube.com/watch?v=buY54I7mEjA">Type Checking Ruby</a>.</p>
-
-<p>He described his various avenues of research over the years, and how they influenced one another, leading to a final question:</p>
-
-<pre><code class="ruby">class Talk &lt; ActiveRecord::Base
-  belongs_to :owner, class_name: "User"
-
-  def owner?(other_user)
-    # QUESTION
-    # How to know the type of `#owner` method at this point?
-    owner == other_user
-  end
-end
-</code></pre>
-
-<p>His early work revolved around <em>static</em> type checking: annotations in the source code were given to a type checker, which used those annotations to assert that the Ruby code was correct.</p>
-
-<p>This approach had a fundamental limitation: how can dynamically-created methods (like <code>Talk#owner</code> above) be statically annotated?</p>
-
-<p>This drove him and his team to develop <a href="https://github.com/plum-umd/rdl">RDL</a>, a <em>dynamic</em> type checker. In RDL, types are declared using <em>methods</em> instead of annotations, for example:</p>
-
-<pre><code class="ruby">type '(Integer, Integer) -&gt; Integer'
-def multiply(x, y)
-  x * y
-end
-</code></pre>
-
-<p>By using methods, it handles metaprogramming in a straightforward way. It hooks into Rails' <code>.belongs_to</code> and adds annotations for the generated methods, for example:</p>
-
-<pre><code class="ruby"># Rails' belongs_to method
-def belongs_to(name, options = {})
-  # ...
-  # define a reader method, like `Talk#owner` above
-  type "() -&gt; #{class_name}"
-  define_method(name) do
-    # ...
-  end
-end
-</code></pre>
-
-<p>(In reality, RDL uses <a href="https://github.com/plum-umd/rdl#preconditions-and-postconditions">conditions</a>, not monkey-patching, to achieve this.)</p>
-
-<p>In this approach, type information is <em>gathered while the program runs</em>, but the typecheck is deferred until the method is called. At that point, RDL checks the source code (static information) using the runtime data (dynamic information). For this reason, RDL is called &ldquo;Just-in-Time Static Type Checking.&rdquo;</p>
-
-<p>You can learn more about RDL in several places:</p>
-
-<ul>
-<li>RDL on GitHub: <a href="https://github.com/plum-umd/rdl">https://github.com/plum-umd/rdl</a></li>
-<li>StrangeLoop 2017 talk: <a href="https://www.youtube.com/watch?v=buY54I7mEjA">https://www.youtube.com/watch?v=buY54I7mEjA</a></li>
-<li>Academic papers from the folks behind RDL: <a href="https://github.com/plum-umd/rdl#bibliography">https://github.com/plum-umd/rdl#bibliography</a></li>
-</ul>
-
-
-<p>Personally, I can&rsquo;t wait to take RDL for a try. At the conference, Jeff mentioned that <em>type inference</em> was on his radar. That would take RDL to the next level!</p>
-
-<p>Not to read into it too far, but it looks like <a href="https://github.com/plum-umd/rdl/issues/40#issuecomment-329135921">Stripe is exploring RDL</a> 😎.</p>
-
-<h2>Soutaro Matsumoto, RubyKaigi 2017</h2>
-
-<p>Soutaro Matsumoto also has significant academic experience with type checking Ruby, and this year, he presented some of his work at RubyKaigi in <a href="https://youtu.be/JExXdUux024">Type Checking Ruby Programs with Annotations</a>.</p>
-
-<p>He begins with an overview of type checking Ruby, and surveys the previous work in type inference. He also points out how requirements should be relaxed for Ruby:</p>
-
-<ul>
-<li><strong><del>Correctness</del> -> Forget correctness</strong> (Allow a mix of typed and untyped code, so that developers can work quickly when they don&rsquo;t want or need types.)</li>
-<li><strong><del>Static</del> -> Defer type checking to runtime</strong> (He mentions RDL in this context)</li>
-<li><strong><del>No annotations</del> -> Let programmers write types</strong> (<em>Completely</em> inferring types is not possible, so accept some hints from the developers.)</li>
-</ul>
-
-
-<p>Then, he introduces his recent project, <a href="https://github.com/soutaro/steep">Steep</a>.</p>
-
-<p>Steep&rsquo;s approach is familiar, but new to Ruby. It has three steps:</p>
-
-<ul>
-<li>Write a <code>.rbi</code> file which describes the types in your program, using a special type language, for example:</li>
-</ul>
-
-
-<pre><code class="ruby">class Talk {
-  def owner: (User) -&gt; _Boolean
-}
-</code></pre>
-
-<ul>
-<li>Add annotations to your Ruby code to connect it to your types:</li>
-</ul>
-
-
-<pre><code class="ruby">class Talk &lt; ActiveRecord::Base
-  belongs_to :owner, class_name: "User"
-  # @dynamic owner
-end
-</code></pre>
-
-<p>  Some connections between Ruby source and the <code>.rbi</code> files can be made automatically; others require explicit annotations.</p>
-
-<ul>
-<li><p>Run the type checker:</p>
-
-<pre><code>$ steep check app/models/talk.rb
-</code></pre></li>
-</ul>
-
-
-<p>It reminds me a bit of the <code>.h</code>/<code>.c</code> files in a C project.</p>
-
-<p>Soutaro is also presenting his work at <a href="http://rubyconf.org/program#session-233">this winter&rsquo;s RubyConf</a>.</p>
-
-<h2>Valentin Fondaratov, RubyKaigi 2017</h2>
-
-<p>Valentin works at JetBrains (creators of <a href="https://www.jetbrains.com/ruby/">RubyMine</a>) and presented his work on type-checking based on <em>runtime</em> data. His presentation, <a href="https://www.youtube.com/watch?v=JS6m2gke0Ic">Automated Type Contracts Generation for Ruby</a>, was really fascinating and offered a promising glimpse of what a Ruby type ecosystem could be.</p>
-
-<p>Valentin started by covering RubyMine&rsquo;s current type checking system:</p>
-
-<ul>
-<li>RubyMine tries to resolve identifiers (eg, method names, constant names) to their implementations</li>
-<li>But this is hard: given <code>obj.execute</code>, what method does it call?</li>
-<li>Developers can provide hints with YARD documentation</li>
-<li>RubyMine uses this to support autocomplete, error prediction, and rename refactorings</li>
-</ul>
-
-
-<p>He also pointed out that even code coverage is not enough: 100% code coverage does <em>not</em> guarantee that all <em>possible</em> codepaths were run. For example, any composition of <code>if</code> branches require a cross-product of codepaths, not only that each line is executed once. Besides that, code coverage does <em>not</em> analyze the coverage of your dependencies' code (ie, RubyGems).</p>
-
-<p>So, Valentin suggests getting <em>more</em> from our unit tests: what if we <em>observed</em> the running program, and kept notes about what values were passed around and how they were used? In this arrangement, that <em>runtime</em> data could be accumulated, then used for type checking.</p>
-
-<p>Impressively, he introduced the implementation of this, first using a <a href="ruby-doc.org/core-2.4.0/TracePoint.html">TracePoint</a>, then digging into the Ruby VM to get even more granular data.</p>
-
-<p>However, the gathered data can be very complicated. For example, how can we understand the input type of <code>String#split</code>?</p>
-
-<pre><code class="ruby"># A lot of type checking data generated at runtime:
-# call                                # Input type
-"1,2,,3,4,,".split(",")               # (String, nil)
-# =&gt; ["1", "2", "", "3", "4"]
-"1,2,,3,4,,".split(",", 4)            # (String, Integer)
-# =&gt; ["1", "2", "", "3,4,,"]
-"1,2,,3,4,,".split(",", -4)           # (String, Integer)
-# =&gt; ["1", "2", "", "3", "4", "", ""]
-"1,2,,3,4,,".split(/\d/)              # (Regexp, nil)
-# =&gt; ["", ",", ",,", ",", ",,"]
-# ...
-</code></pre>
-
-<p>Valentin showed how a classic technique, finite automata, can be used to reduce this information to a useful data structure.</p>
-
-<p>Then, this runtime data can be used to <em>generate</em> type annotations (as YARD docs).</p>
-
-<p>Finally, he imagines a type ecosystem for Ruby:</p>
-
-<ul>
-<li>Users contribute their (anonymized) runtime information for their RubyGem depenedencies</li>
-<li>This data is pooled into a shared database, merged by RubyGem &amp; version</li>
-<li>Users can draw type data <em>from</em> the shared database</li>
-</ul>
-
-
-<p>Personally, I think this is a great future to pursue:</p>
-
-<ul>
-<li>Developers can <em>gain</em> type checking without any annotations</li>
-<li>Annotations can become very robust because resources are shared</li>
-<li><em>Real</em> 100% coverage is possible via community collaboration</li>
-</ul>
-
-
-<p>You can see the project on GitHub: <a href="https://github.com/JetBrains/ruby-type-inference">https://github.com/JetBrains/ruby-type-inference</a></p>
-
-<h2>Summary</h2>
-
-<p>There&rsquo;s a lot of technically-savvy and academically-informed work on type checking Ruby! Many of the techniques preserve Ruby&rsquo;s productivity and dynamism while improving the developer experience and confidence. What makes them unique is their use of <em>runtime</em> data, to observe the program in action, then make assertions about the source code.</p>
 ]]></content>
   </entry>
   

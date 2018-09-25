@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-06-14T16:14:17-04:00</updated>
+  <updated>2018-09-25T11:02:11-04:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,412 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Trampolining]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/09/23/trampolining/"/>
+    <updated>2018-09-23T21:04:00-04:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/09/23/trampolining</id>
+    <content type="html"><![CDATA[<p>As part of my work on <a href="https://github.com/rmosolgo/graphql-ruby/pull/1394">improving GraphQL-Ruby&rsquo;s runtime performance</a>, I&rsquo;ve been reading <a href="http://www.eopl3.com/"><em>Essentials of Programming Languages</em></a>. Here, I try to apply their lesson about &ldquo;trampolining&rdquo;.</p>
+
+<!-- more -->
+
+
+<p><strong>TL;DR:</strong> I applied a thing I read in a textbook and it:</p>
+
+<ul>
+<li>reduced the stack trace size by 80%</li>
+<li>reduced the live object count by 15%</li>
+<li>kept the same runtime speed</li>
+</ul>
+
+
+<p>You can see the diff and benchmark results here: <a href="https://github.com/rmosolgo/graphql-ruby/compare/1b306fad...eef73b1">https://github.com/rmosolgo/graphql-ruby/compare/1b306fad&#8230;eef73b1</a></p>
+
+<h2>The Problem</h2>
+
+<p>It&rsquo;s a bit funny, but it&rsquo;s not <em>totally clear</em> to me what the book is trying to get at here. In the book, they talk about <em>control context</em> or <em>continuations</em> in a way that I would talk about &ldquo;stack frames&rdquo;. I think the problem is this: when you implement a programming language as an interpreter, you end up with recursive method calls, and that recursion builds up a big stack in the host language. This is bad because it hogs memory.</p>
+
+<p>I can definitely <em>imagine</em> that this is a problem in Ruby, although I haven&rsquo;t measured it. GraphQL-Ruby uses recursion to execute GraphQL queries, and I can <em>imagine</em> that those recursive backtrace frames hog memory for a couple reasons:</p>
+
+<ul>
+<li>The control frames themselves (managed by YARV or something) take up memory in their own right</li>
+<li>The control frames each have a lexical scope (<code>binding</code>), which, since it&rsquo;s still on the stack, can&rsquo;t be GCed. So, Ruby holds on to a lot of objects which <em>could</em> be garbaged collected if the library was written better.</li>
+</ul>
+
+
+<p>Besides that, the long backtrace adds a lot of noise when debugging.</p>
+
+<h2>Trampolining</h2>
+
+<p>In the book, they say, &ldquo;move your recursive calls to tail position, then, assuming your language has tail-call optimization, you won&rsquo;t have this problem.&rdquo; Well, my language <em>doesn&rsquo;t</em> have tail-call optimization, so I <em>do</em> have this problem! (Ok, it&rsquo;s an <a href="https://ruby-doc.org/core-2.4.0/RubyVM/InstructionSequence.html#method-c-compile_option-3D">option</a>.)</p>
+
+<p>Luckily for me, they describe a technique for solving the problem <em>without</em> tail-call optimization. It&rsquo;s called <em>trampolining</em>, and it works roughly like this:</p>
+
+<blockquote><p>When a method <em>would</em> make a recursive call, instead, return a <code>Bounce</code>. Then, the top-level method, which previously received the <code>FinalValue</code> of the interpreter&rsquo;s work, should be extended to accept <em>either</em> a <code>FinalValue</code> or a <code>Bounce</code>. In the case of a <code>FinalValue</code>, it returns the value as previously. In the case of a <code>Bounce</code>, it re-enters the interpreter using the &ldquo;bounced&rdquo; value.</p></blockquote>
+
+<p>Using this technique, a previously-recursive method now <em>returns</em>, giving the caller some information about how to take the next step.</p>
+
+<p>Let&rsquo;s give it a try.</p>
+
+<h2>The Setup</h2>
+
+<p>I want to test impact in two ways: memory consumption and backtrace size. I want to measure these values <em>during</em> GraphQL execution, so what better way to do it but build a GraphQL schema!</p>
+
+<p>You can see the <a href="https://github.com/rmosolgo/graphql-ruby/compare/1b306fad...eef73b1#diff-7a29575d7b0f8a35812f9323ee46febe">whole benchmark</a>, but in short, we&rsquo;ll run a deeply-nested query, and at the deepest point, measure the <em>backtrace size</em> and the number of live objects in the heap:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">nestedMetric</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">nestedMetric</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">nestedMetric</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1"># ... more nesting ...</span>
+</span><span class='line'>        <span class="n">nestedMetric</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">backtraceSize</span>
+</span><span class='line'>          <span class="n">objectCount</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Where the fields are implemented by:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">backtrace_size</span>
+</span><span class='line'>  <span class="nb">caller</span><span class="o">.</span><span class="n">size</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">object_count</span>
+</span><span class='line'>  <span class="c1"># Make a GC pass</span>
+</span><span class='line'>  <span class="no">GC</span><span class="o">.</span><span class="n">start</span>
+</span><span class='line'>  <span class="c1"># Count how many objects are alive in the heap,</span>
+</span><span class='line'>  <span class="c1"># subtracting the number of live objects before we started</span>
+</span><span class='line'>  <span class="no">GC</span><span class="o">.</span><span class="n">stat</span><span class="o">[</span><span class="ss">:heap_live_slots</span><span class="o">]</span> <span class="o">-</span> <span class="nb">self</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">object_count_baseline</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We&rsquo;ll use these measurements to assess the impact of the refactor.</p>
+
+<h2>The Pledge: Recursive calls</h2>
+
+<p>To begin with, the interpreter is implemented as a set of recursive methods. The methods do things like:</p>
+
+<ul>
+<li>Given an object and a set of selections, resolve the selected fields on that object</li>
+<li>Given a value and a type, prepare the value for a GraphQL response according to the type</li>
+</ul>
+
+
+<p>These methods are <em>recursive</em> in the case of fields that return GraphQL objects. The first method resolves a field and calls the second method; then the second method, in order to prepare an object as a GraphQL response, calls back to the first method, to resolve selections on that object. For example, execution might work like this:</p>
+
+<ul>
+<li>Resolve selections on the root object
+
+<ul>
+<li>One of the selections returned a User
+
+<ul>
+<li>Resolve selections on the User
+
+<ul>
+<li>One of the selections returns a Repository
+
+<ul>
+<li>Resolve selections on the Repository
+
+<ul>
+<li>&hellip;</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+<p>Do you see how the same procedure is being applied over and over, in a nested way? That&rsquo;s implemented with recursive calls in GraphQL-Ruby.</p>
+
+<p>We can run our test to see how the Ruby execution context looks in this case:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># $ ruby test.rb</span>
+</span><span class='line'><span class="mi">1</span><span class="n">b306fad3b6b35dd06248028883cd8a3ec4bdefd</span>
+</span><span class='line'><span class="p">{</span><span class="s2">&quot;backtraceSize&quot;</span><span class="o">=&gt;</span><span class="mi">282</span><span class="p">,</span> <span class="s2">&quot;objectCount&quot;</span><span class="o">=&gt;</span><span class="mi">812</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is the baseline for backtrace size and object count, which we&rsquo;re using to measure <em>memory overhead</em> in GraphQL execution. (This describes behavior at <a href="https://github.com/rmosolgo/graphql-ruby/commit/2401afc4a19f2e5616e1e155f953ec403bf4896c">this commit</a>.)</p>
+
+<h2>The Turn: Moving Recursive Calls into Tail Position</h2>
+
+<p>As a requirement for the final refactor, we have to do some code reorganization. In the current code, the recursive calls require some setup and teardown around them. For example, we track the GraphQL &ldquo;path&rdquo;, which is the list of fields that describe where we are in the response. Here&rsquo;s a field with its &ldquo;path&rdquo;:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">a</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">b</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">c</span> <span class="c1"># The path of this field [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>In the code, it looks something like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Append to the path for the duration of the nested call</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Continue executing, with the new path in context</span>
+</span><span class='line'><span class="n">execute_recursively</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Remove the entry from `path`, since we&#39;re done here</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">pop</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is, if I want to refactor <code>execute_recursively</code> to become a <code>Bounce</code>, it won&rsquo;t do me any good, because the value of <code>execute_recursively</code> <em>isn&rsquo;t returned</em> from the method. It&rsquo;s not the last call in the method, so its value isn&rsquo;t returned. Instead, the value of <code>@path.pop</code> is returned. (It&rsquo;s not used for anything.)</p>
+
+<p>This is to say: <code>@path.pop</code> is in <em>tail position</em>, the last call in the method. But I want <code>execute_recursively</code> to be in tail position.</p>
+
+<h3>A Hack Won&rsquo;t Work</h3>
+
+<p>The easiest way to &ldquo;fix&rdquo; that would be to refactor the method to return the value of <code>execute_recursively</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Append to the path for the duration of the nested call</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Continue executing</span>
+</span><span class='line'><span class="n">return_value</span> <span class="o">=</span> <span class="n">execute_recursively</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Remove the entry from `path`, since we&#39;re done here</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">pop</span>
+</span><span class='line'><span class="c1"># Manually return the execution value</span>
+</span><span class='line'><span class="n">return_value</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The problem is, when <code>execute_recursively</code> is refactored to be a <code>Bounce</code>:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Append to the path for the duration of the nested call</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">field_name</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Continue executing</span>
+</span><span class='line'><span class="n">bounce</span> <span class="o">=</span> <span class="n">prepare_bounce</span><span class="p">(</span><span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span><span class='line'><span class="c1"># Remove the entry from `path`, since we&#39;re done here</span>
+</span><span class='line'><span class="vi">@path</span><span class="o">.</span><span class="n">pop</span>
+</span><span class='line'><span class="c1"># Manually return the execution value</span>
+</span><span class='line'><span class="n">bounce</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>By the time the <code>bounce</code> is actually executed, <code>path</code> <em>won&rsquo;t have</em> the changes I need in it. The value is pushed <em>and popped</em> before the bounce is actually called.</p>
+
+<h3>Pass the Path as Input</h3>
+
+<p>The solution is to remove the need for <code>@path.pop</code>. This can be done by creating a <em>new path</em> and passing it as input.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Create a new path for nested execution</span>
+</span><span class='line'><span class="n">new_path</span> <span class="o">=</span> <span class="n">path</span> <span class="o">+</span> <span class="o">[</span><span class="n">field_name</span><span class="o">]</span>
+</span><span class='line'><span class="c1"># Pass it as an input</span>
+</span><span class='line'><span class="n">execute_recursively</span><span class="p">(</span><span class="n">new_path</span><span class="p">,</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Now, <code>execute_recursively</code> is in tail position!</p>
+
+<p>(The actual refactor is here: <a href="https://github.com/rmosolgo/graphql-ruby/commit/ef6e94283ecf280b14fe5417a4ee6896a06ebe69">https://github.com/rmosolgo/graphql-ruby/commit/ef6e94283ecf280b14fe5417a4ee6896a06ebe69</a>)</p>
+
+<h2>The Prestige: Make it Bounce</h2>
+
+<p>Now, we want to replace recursive calls with a <em>bounce</em>, where a bounce is an object with enough information to continue execution at a later point in time.</p>
+
+<p>Since my recursive interpreter is implemented with a bunch of stateless methods (they&rsquo;re stateless since the refactor above), I can create a Bounce class that will continue by calling the same method:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Bounce</span>
+</span><span class='line'>  <span class="c1"># Take the inputs required to call the next method</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">object</span><span class="p">,</span> <span class="nb">method</span><span class="p">,</span> <span class="o">*</span><span class="n">arguments</span><span class="p">)</span>
+</span><span class='line'>    <span class="vi">@object</span> <span class="o">=</span> <span class="n">object</span>
+</span><span class='line'>    <span class="vi">@method</span> <span class="o">=</span> <span class="nb">method</span>
+</span><span class='line'>    <span class="vi">@arguments</span> <span class="o">=</span> <span class="n">arguments</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Continue by calling the method with the given inputs</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">continue</span>
+</span><span class='line'>    <span class="vi">@object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="vi">@method</span><span class="p">,</span> <span class="o">*</span><span class="vi">@arguments</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Then, I replace the tail-position recursive calls with bounces:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='diff'><span class='line'><span class="gd">- execute_recursively(...)</span>
+</span><span class='line'><span class="gi">+ Bounce.new(self, :execute_recursively, ...)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Instead of <em>growing</em> the backtrace by calling another method, we&rsquo;ll be <em>shrinking</em> the backtrace by returning from the current method with a Bounce.</p>
+
+<p>You can see the refactor here: <a href="https://github.com/rmosolgo/graphql-ruby/commit/b8e51573652b736d67235080e8b450d6fc9cc92e">https://github.com/rmosolgo/graphql-ruby/commit/b8e51573652b736d67235080e8b450d6fc9cc92e</a></p>
+
+<h3>How&rsquo;d it work?</h3>
+
+<p>Let&rsquo;s run the test:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># $ ruby test.rb</span>
+</span><span class='line'><span class="n">b8e51573652b736d67235080e8b450d6fc9cc92e</span>
+</span><span class='line'><span class="p">{</span><span class="s2">&quot;backtraceSize&quot;</span><span class="o">=&gt;</span><span class="mi">55</span><span class="p">,</span> <span class="s2">&quot;objectCount&quot;</span><span class="o">=&gt;</span><span class="mi">686</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>It&rsquo;s a success! The <code>backtraceSize</code> decreased from 282 to 55. The <code>objectCount</code> decreased from <code>812</code> to <code>686</code>.</p>
+
+<h3>Implementation Considerations</h3>
+
+<p><strong>&ldquo;Trampolining&rdquo;</strong> is the process of taking each bounce and continuing it. In my first implementation, <code>def trampoline</code> looked like this:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="c1"># Follow all the bounces until there aren&#39;t any left</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">trampoline</span><span class="p">(</span><span class="n">bounce</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">case</span> <span class="n">bounce</span>
+</span><span class='line'>  <span class="k">when</span> <span class="no">Bounce</span>
+</span><span class='line'>    <span class="n">trampoline</span><span class="p">(</span><span class="n">bounce</span><span class="o">.</span><span class="n">continue</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">when</span> <span class="nb">Array</span>
+</span><span class='line'>    <span class="n">bounce</span><span class="o">.</span><span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">b</span><span class="o">|</span> <span class="n">trampoline</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">else</span>
+</span><span class='line'>    <span class="c1"># not a bounce, do nothing</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>My test indicated no improvement in memory overhead, so I frustratedly called it quits. While brushing my teeth before bed, it hit me! I had unwittingly <em>re-introduced</em> recursive method calls. So, I hurried downstairs and reimplemented <code>def trampoline</code> to use a <code>while</code> loop and a buffer of bounces, an approach which didn&rsquo;t grow the Ruby execution context. Then the test result was much better.</p>
+
+<p>Another consideration is the <em>overhead of Bounces</em> themselves. My first implementation creates a bounce before resolving each field. For very large responses, this will add a lot of overhead, especially when the field is a simple leaf value. This should be improved somehow.</p>
+
+<h2>What about Speed?</h2>
+
+<p>It turns out that visitors to the website don&rsquo;t care about backtrace size or Ruby heap size, they just care about waiting for webpages to load. Lucky for me, my benchmark includes some runtime measurements, and the results were basically the same:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='text'><span class='line'># before
+</span><span class='line'>Calculating -------------------------------------
+</span><span class='line'>                         92.144  (±10.9%) i/s -    456.000  in   5.022617s
+</span><span class='line'># after
+</span><span class='line'>Calculating -------------------------------------
+</span><span class='line'>                        113.529  (± 7.9%) i/s -    567.000  in   5.031847s
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The runtime performance was very similar, almost within the margin of error. However, the consideration of Bounce overhead described above could cause <em>worse</em> performance in some cases.</p>
+
+<h2>What&rsquo;s next?</h2>
+
+<p>This code isn&rsquo;t <em>quite</em> ready for GraphQL-Ruby, but I think it&rsquo;s promising for a few reasons:</p>
+
+<ul>
+<li>The reduction of memory overhead and backtrace noise could pay off for very large, nested queries</li>
+<li>I might be able to leverage bounces to give the caller more control over how GraphQL queries are executed. For example, at GitHub, we use GraphQL queries when rendering HTML pages. With some work, maybe we could alternate between bouncing GraphQL and rendering HTML, so we&rsquo;d get a better progressive rendering experience on the front end.</li>
+</ul>
+
+
+<p>However, one serious issue still needs to be addressed: what about the <code>Bounce</code>&rsquo;s <em>own</em> overhead? Allocating a new object for <em>every field execution</em> is already a performance issue in GraphQL-Ruby, and I&rsquo;m trying hard to remove it. So the implementation will need to be more subtle in that regard.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Trip Report: Balkan Ruby 2018]]></title>
@@ -5096,80 +5502,6 @@ Then, use the <code>style_module</code> in the partial:</p>
 <p>The only remaining question I have is, how bad is warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize. Is JIT warm-up a real issue?</p>
 
 <p>&ldquo;Optimizing Ruby&rdquo; was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can&rsquo;t use JRuby+Truffle until it runs all of Ruby on Rails, which isn&rsquo;t the case <em>yet</em>. I&rsquo;m eager to see how this project matures!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Finding a Browser-Ready File for Sprockets]]></title>
-    <link href="http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets/"/>
-    <updated>2016-05-19T22:00:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2016/05/19/finding-a-browser-ready-file-for-sprockets</id>
-    <content type="html"><![CDATA[<p>I like using Sprockets, but sometimes it&rsquo;s hard to find a file to include in the asset pipeline. Here are some methods I use to find browser-ready JavaScript files.</p>
-
-<!-- more -->
-
-
-<p>There are a few good options for getting browser-ready files for JavaScript libraries:</p>
-
-<ul>
-<li>Download a file from the project&rsquo;s website</li>
-<li>Download a file from the project&rsquo;s source code repository</li>
-<li>Download a file from a CDN (npmcdn is great for cases where files are only &ldquo;compiled&rdquo; for releases)</li>
-<li>Build the file yourself, following the project&rsquo;s documentation</li>
-</ul>
-
-
-<p><strong>Don&rsquo;t</strong> get a minified version. Sprockets will minify it for us later. In the meantime, the unminified version will help us during development.</p>
-
-<h3>From a Website</h3>
-
-<p>This is the good ol&#8217; way of getting JavaScript files. Because we still use browsers, you can still download these files.</p>
-
-<p>Here are some examples:</p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_d3.png" width="300"></p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_react.png" width="500"></p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/website_download_moment.png" width="300"></p>
-
-<h3>From the Repo</h3>
-
-<p>Many projects maintain a browser build in the project&rsquo;s source. You may have to poke around a bit, but likely places are the project&rsquo;s root folder, the <code>dist/</code> folder, or the <code>build/</code> folder.</p>
-
-<p>As you explore the repo, remember to examine a stable ref, such as a release or a stable branch.</p>
-
-<p>Here are some examples:</p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_c3.png" width="300"></p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_immutable.png" width="300"></p>
-
-<p><img src="http://rmosolgo.github.io/images/sprockets/repo_download_three.png" width="300"></p>
-
-<h3>From a CDN</h3>
-
-<p><a href="https://cdnjs.com/libraries">CDNJS</a> hosts browser-ready files for many libraries.</p>
-
-<p>Sometimes, an author only compiles browser-ready files for releases to NPM. You can get these files from <a href="https://npmcdn.com/">npmcdn</a>.</p>
-
-<p>Since npmcdn is serving NodeJS projects, employ a similar technique to searching the project repo for a file:</p>
-
-<ul>
-<li>Check the &ldquo;main&rdquo; file</li>
-<li>Check the &ldquo;dist&rdquo; or &ldquo;build&rdquo; directories</li>
-</ul>
-
-
-<h3>Build it from Source</h3>
-
-<p>If a pre-built, browser-ready file is not available, you may have to build it yourself! The project&rsquo;s readme will contain instructions to do so. If it doesn&rsquo;t &hellip; you may want to reconsider adding this dependency! (Even if it&rsquo;s well-maintained, it&rsquo;s not a good match for this asset bundling approach.)</p>
-
-<h2>Summary</h2>
-
-<p>Hopefully these will work well for you!</p>
-
-<p>You may have to learn a bit of RequireJS, jspm, Grunt, Browserify, Gulp, Webpack or Rollup along the way. (Ok, probably not Rollup, sadly.) But at least you don&rsquo;t have to use them day-in and day-out!</p>
 ]]></content>
   </entry>
   
