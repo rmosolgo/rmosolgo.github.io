@@ -4,7 +4,7 @@
   <title><![CDATA[Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2018-09-25T11:02:11-04:00</updated>
+  <updated>2019-01-29T09:15:56-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -12,6 +12,281 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[A New Runtime in GraphQL-Ruby 1.9]]></title>
+    <link href="http://rmosolgo.github.io/blog/2019/01/29/a-new-runtime-in-graphql-ruby-1-dot-9/"/>
+    <updated>2019-01-29T07:22:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2019/01/29/a-new-runtime-in-graphql-ruby-1-dot-9</id>
+    <content type="html"><![CDATA[<p>GraphQL-Ruby 1.9.0 introduces a new runtime called <code>GraphQL::Execution::Interpreter</code>. It offers better performance and some new features.</p>
+
+<!-- more -->
+
+
+<p>In <a href="https://github.com/rmosolgo/graphql-ruby/issues/861#issuecomment-458533219">isolated benchmarks</a>, the new runtime is about 50% faster. We saw about a 10% speedup in GitHub when we migrated.</p>
+
+<p>You can opt in by adding to your schema:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">MySchema</span> <span class="o">&lt;</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Schema</span>
+</span><span class='line'>  <span class="c1"># To use the new runtime</span>
+</span><span class='line'>  <span class="n">use</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Execution</span><span class="o">::</span><span class="no">Interpreter</span>
+</span><span class='line'>  <span class="c1"># To skip preprocessing (you can use the interpreter without adding this)</span>
+</span><span class='line'>  <span class="n">use</span> <span class="ss">GraphQL</span><span class="p">:</span><span class="ss">:Analysis</span><span class="o">::</span><span class="no">AST</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>But why rewrite?</p>
+
+<h2>Problem 1: per-field context objects</h2>
+
+<p>Previously, each field evaluated by GraphQL-Ruby got its own instance of <code>GraphQL::Query::Context::FieldResolutionContext</code>. This was introduced so that fields using <code>graphql-batch</code>-style Promises could reliably access context values (like <code>ctx.path</code>) <em>after</em> returning from the resolver (ie, when the promise was synced.)</p>
+
+<p>The problem was, the bigger the response, the more <code>ctx</code> objects would be created &ndash; and most of the time (for example, plain scalar fields), they were never <em>used</em> by application code. So, we allocated, initialized, then GCed these objects for nothing!</p>
+
+<p>In fact, it wasn&rsquo;t for <em>nothing</em>. As time passed, I started using those context objects inside execution code. For example, null propagation was implemented by climbing <em>up</em> the tree of context objects. So you couldn&rsquo;t just <em>stop</em> creating them &ndash; the runtime depended on them.</p>
+
+<h3>Solution: one mutable context</h3>
+
+<p>To remove this performance issue, I went <em>back</em> to creating a single <code>Query::Context</code> object and passing it to resolvers. If you&rsquo;re using the new class-based API, you might have noticed that <code>self.context</code> is a <code>Query::Context</code>, not a <code>Query::Context::FieldResolutionContext</code>. I did it this way to pave the way for removing this bottleneck.</p>
+
+<p>But what about access to runtime information?</p>
+
+<h3>Solution: explicit requests for runtime info</h3>
+
+<p>For fields that <em>want</em> runtime info (like <code>path</code> or <code>ast_node</code>), they can opt into it with <code>extras: [...]</code>, for example:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">field</span> <span class="ss">:items</span><span class="p">,</span> <span class="o">.</span><span class="n">.</span><span class="o">.</span><span class="n">,</span> <span class="ss">extras</span><span class="p">:</span> <span class="o">[</span><span class="ss">:path</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>By adding that configuration, the requested value will be injected into the resolver:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="ss">path</span><span class="p">:)</span>
+</span><span class='line'>  <span class="c1"># ...</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>path</code> will be a frozen Array describing the current point in the GraphQL response.</p>
+
+<h3>Solution: reimplementing the runtime</h3>
+
+<p>Finally, since <code>FieldResolutionContext</code>s aren&rsquo;t necessary for user code, we can rewrite execution to <em>not</em> create or use them anymore. Under the hood, <code>GraphQL::Execution::Interpreter</code> doesn&rsquo;t create those <code>ctx</code> objects. Instead, null propagation is implemented manually and all necessary values are passed from method to method.</p>
+
+<h2>Problem 2: inefficient preprocessing</h2>
+
+<p>Years ago, someone requested the feature of <em>rejecting a query before running it</em>. They wanted to analyze the incoming query, and if it was too big or too complicated, reject it.</p>
+
+<p>How could this be implemented? You could provide user access to the AST, but that would leave some difficult processing to user code, for example, merging fragments on interfaces.</p>
+
+<p>So, I added <code>GraphQL::InternalRepresentation</code> as a normalized, pre-processed query structure. Before running a query, the AST was transformed into a tree of <code>irep_node</code>s. Users could analyze that structure and reject queries if desired.</p>
+
+<p>In execution code, why throw away the result of that preprocessing? The runtime also used <code>irep_node</code>s to save re-calculating fragment merging.</p>
+
+<p>In fact, even <em>static validation</em> used the <code>irep_node</code> tree. At some point, rather than re-implement fragment merging, I decided to hook into that rewritten tree to implement <code>FragmentsWillMerge</code>. After all, why throw away that work?</p>
+
+<p>(As it turns out, someone should fire the GraphQL-Ruby maintainer. These layers of code were <em>not</em> well-isolated!!)</p>
+
+<h3>Problem 2.1: Preparing the <code>irep_node</code>s was slow and often a waste</h3>
+
+<p>Since the <code>irep_node</code> tree was built for <em>analysis</em>, it generated branches for <em>every</em> possible combination of interfaces, objects, and unions. This meant that, even for a query returning very simple data, the pre-processing step might be <em>very</em> complex.</p>
+
+<p>To make matters worse, the complexity of this preprocessing would grow as the schema grew. The more implementers an interface has, the longer it takes to calculate the possible branches in a fragment.</p>
+
+<h3>Problem 2.2: Runtime features were implemented during preprocessing</h3>
+
+<p>Not only was the work complex, but it also couldn&rsquo;t be cached. This is because, while building the <code>irep_node</code> tree, <code>@skip</code> and <code>@include</code> would be evaluated with the current query variables. If nodes were skipped, they were left out of the <code>irep_node</code> tree.</p>
+
+<p>This means that, for the <em>same</em> query in your code base, you <em>couldn&rsquo;t</em> reuse the <code>irep_node</code> tree, since the values for those query variables might be different from one execution to the next. Boo, hiss!</p>
+
+<h3>Problem 2.3: A wacky preprocessing step is hard to understand</h3>
+
+<p>I want to empower people to use GraphQL-Ruby in creative ways, but throwing a wacky, custom data structure in the mix doesn&rsquo;t make it easy. I think an easier execution model will encourage people to learn how it works and build cool new stuff!</p>
+
+<h3>Solution: No preprocessing</h3>
+
+<p>The new runtime evaluates the AST directly. Runtime features (<code>@skip</code> and <code>@include</code>, for example) are implemented at, well, <em>runtime</em>!</p>
+
+<h3>Solution: AST Analyzers</h3>
+
+<p>Since you can&rsquo;t use the <code>irep_node</code> tree for analysis anymore, the library includes a new module, <code>GraphQL::Analysis::AST</code>, for preprocessing queries. Shout out to <a href="https://github.com/xuorig">@xuorig</a> for this module!</p>
+
+<h3>Solution: Moving ahead-of-time checks to runtime</h3>
+
+<p>For GitHub, we moved a lot of analyzer behavior to runtime. We did this because it&rsquo;s easier to maintain and requires less GraphQL-specific knowledge to understand and modify. Although the client experience is <em>slightly</em> different, it&rsquo;s still good.</p>
+
+<p>For example, we had an analyzer to check that pagination parameters (eg <code>first</code> and <code>last</code>) were valid. We moved this to runtime, adding it to our connection tooling.</p>
+
+<h3>Solution: <code>GraphQL::Execution::Lookahead</code></h3>
+
+<p><code>irep_node</code>s <em>were</em> useful for looking ahead in a query to see what fields would be selected next. (Honestly, they weren&rsquo;t <em>that good</em>, but they were the only thing we had, beside using the AST directly).</p>
+
+<p>To support that use, we now have <code>extras: [:lookahead]</code> which will inject an instance of <code>GraphQL::Execution::Lookahead</code>, with an API <em>explicitly for</em> checking fields later in the query.</p>
+
+<h2>Other considerations</h2>
+
+<h3>Resolve procs are out</h3>
+
+<p>As part of the change with removing <code>FieldResolutionContext</code>, the new runtime doesn&rsquo;t support proc-style resolvers <code>-&gt;(obj, args, ctx) {...}</code>. Besides <code>ctx</code>, the <code>args</code> objects (<code>GraphQL::Query::Arguments</code>) are not created by the interpreter either. Instead, the interpreter uses plain hashes.</p>
+
+<p>Instead of procs, methods on Object type classes should be used.</p>
+
+<p>This means that proc-based features are also not supported. Field instrumenters and middlewares won&rsquo;t be called; a new feature called field extensions should be used instead.</p>
+
+<h3><code>.to_graphql</code> is <em>almost</em> out</h3>
+
+<p>When the class-based schema API was added to GraphQL-Ruby, there was a little problem. The class-based API was great for developers, but the execution API expected legacy-style objects. The bridge was crossed via a compatibility layer: each type class had a <code>def self.to_graphql</code> method which returned a legacy-style object based on that class. Internally, the class and legacy object were cached together.</p>
+
+<p>The interpreter <em>doesn&rsquo;t</em> use those legacy objects, only classes. So, any type extensions that you&rsquo;ve built will have to be supported on those <em>classes</em>.</p>
+
+<p>The catch is, I&rsquo;m not <em>100% sure</em> that uses of legacy objects have all been migrated. In GitHub, we transitioned by delegating methods from the legacy objects to their source classes, and I haven&rsquo;t removed those delegations yet. So, there might still be uses of legacy objects 😅.</p>
+
+<p>In a future version, I want to remove the use of those objects <em>completely</em>!</p>
+
+<h1>Conclusion</h1>
+
+<p>I hope this post has clarified some of the goals and approaches toward adding the new runtime. I&rsquo;m already building new features for it, like custom directives and better subscription support. If you have a question or concern, please <a href="https://github.com/rmosolgo/graphql-ruby/issues/new">open an issue</a> to discuss!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Notes on Small is Beautiful]]></title>
+    <link href="http://rmosolgo.github.io/blog/2018/11/16/notes-on-small-is-beautiful/"/>
+    <updated>2018-11-16T10:10:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2018/11/16/notes-on-small-is-beautiful</id>
+    <content type="html"><![CDATA[<p>I just finished reading <a href="https://en.wikipedia.org/wiki/Small_Is_Beautiful">E.F. Schumacher&rsquo;s <em>Small Is Beautiful: A Study of Economics As If People Mattered</em></a>, so I thought I&rsquo;d jot down a few impressions before I forgot them.</p>
+
+<!-- more -->
+
+
+<h2>Background</h2>
+
+<p><a href="https://en.wikipedia.org/wiki/E._F._Schumacher">Schumacher</a> was a post-WWII British economist. He advised the British National Coal Board (the nationalized coal company) and rebuilding of postwar Germany.</p>
+
+<p>The book was published in 1973, the same year as the <a href="https://en.wikipedia.org/wiki/1973_oil_crisis">oil crisis</a>, which raised some questions about our dependence on imported petroleum.</p>
+
+<h2>Greed and Capitalism</h2>
+
+<p>Schumacher returns again and again to a <a href="https://en.wikiquote.org/wiki/John_Maynard_Keynes#Economic_Possibilities_for_our_Grandchildren_(1930">quote from John Maynard Keynes</a>):</p>
+
+<blockquote><p>For at least another hundred years we must pretend to ourselves and to everyone that fair is foul and foul is fair; for foul is useful and fair is not. Avarice and usury and precaution must be our gods for a little longer still.</p></blockquote>
+
+<p>In context, Keynes is claiming that eventually, people will recognize will give up a love of money because they find that it doesn&rsquo;t satisfy. But first, a capitalist order must create material abundance.</p>
+
+<p>For Schumacher, this triggers a series of conclusions:</p>
+
+<ul>
+<li>Capitalism is predicated on greed.</li>
+<li>Greed may &ldquo;benefit&rdquo; the greedy, but it doesn&rsquo;t benefit other individuals or communities.</li>
+<li>Since capitalism is built on greed, we shouldn&rsquo;t expect a rising tide to lift all boats. On the contrary, we can expect &ldquo;winners&rdquo; to build boat lifts to raise their own boats.</li>
+<li>As a society, when we set our sights on accumulating wealth (for example, by celebrating the rich), we <em>promote</em> greed among ourselves. We shouldn&rsquo;t expect this to ever lead to the renunciation of material wealth.</li>
+<li>Since the system is predicated on having <em>more</em>, we should never expect to have <em>enough</em>, and consequently, we shouldn&rsquo;t expect this order to bring any kind of peace.</li>
+</ul>
+
+
+<p>As a modern person, I ask myself, are we arriving at Keynes&rsquo;s expected conclusion? He wrote:</p>
+
+<blockquote><p>When the accumulation of wealth is no longer of high social importance, there will be great changes in the code of morals.</p></blockquote>
+
+<p>I wonder when that &ldquo;When&hellip;&rdquo; is/was expected to arrive.</p>
+
+<h2>Human and Inhuman, Freedom and Order</h2>
+
+<p>Schumacher&rsquo;s understanding of social malaise and environmental destruction boils down to a claim about organizational structure, something like: when an enterprise becomes so big that <em>ownership</em> becomes isolated from <em>execution</em>, it becomes inhuman (in the sense that decision-making can&rsquo;t be made with human-to-human perspective), and as a result, workers are reduced to cogs, natural resources are reduced to consumable inputs, and and the like.</p>
+
+<p>Schumacher assumes (observes?) that when humans make decisions regarding their neighbors and hometowns, they are more likely to consider the non-economic factors of their decisions. For example, a non-economic factor might be a beautiful landscape, a creatively engaging endeavor, or caring for something (or someone) who can&rsquo;t care for itself. For a profit-oriented calculation at headquarters, these factors might be weighed less heavily.</p>
+
+<p>To simplify one of Schumacher&rsquo;s maxims to address this issue, he suggests that <em>nothing should be centralized if it can be decentralized</em>. He acknowledges that some order is required in order for our larger societal goals to be accomplished, but also, he warns that <em>too much</em> order stunts many non-quantifiable joys in life. So, by decentralizing, you can engage human entrepreneurial spirit in a way that is healthy for the localities it impacts.</p>
+
+<h2>Intermediate Technology</h2>
+
+<p>A large section of the book (&ldquo;The Third World&rdquo;) addresses development in poor countries. Schumacher criticizes the dominant mode of development, namely, the installation of capital-intensive heavy industries in large cities. He cites several problems:</p>
+
+<ul>
+<li>The purchase of capital (eg, a factory) requires the poor country to take on debt from the rich country, leading to a kind of economic bondage</li>
+<li>High-tech industries require a highly-educated workforce, which is often not available locally, so foreign workers (from rich countries) are employed instead of local people. Since Schumacher considers work (at its best) to be an edifying and satisfying experience, this deprives local people of an important benefit of the development.</li>
+<li>High-tech, city-oriented development leads to a two-fold economy, where a metropolitan elite exists in a different sphere than their rural compatriots.</li>
+<li>High-tech products can&rsquo;t be purchased locally, so they must be exported. This doesn&rsquo;t strengthen the local economy (eg, it doesn&rsquo;t foster more local businesses). Similarly, high-tech industries may require very refined inputs which are not available locally, so instead of using local inputs, the enterprise will depend on imports from elsewhere.</li>
+</ul>
+
+
+<p>Schumacher espouses a different approach, &ldquo;intermediate technology&rdquo;. In this approach, <em>gradual improvements</em> in technology are applied to slowly raise the level of economic activity in a community. For example, if human labor is readily available, a more low-capital, labor-intensive solution might be preferred to a high-capital, low-labor solution. For example, consumer goods might be made by hand instead of by machine, since that will employ more local people and can adapt to a greater variety of inputs. Additionally, <em>several</em> enterprises should be fostered, and they should target local markets, so that newly-employed people can participate in commerce with one another.</p>
+
+<p>I have left out specific examples; the book is full of them.</p>
+
+<p>You can see how this hangs on Schumacher&rsquo;s conviction that work can be good for people. In &ldquo;Buddhist Economics&rdquo;, he highlights some possible benefits of employment, for example:</p>
+
+<ul>
+<li>It challenges our ego by reminding us that we work together to accomplish things</li>
+<li>It fosters social connections by bringing us into necessary contact with one another</li>
+<li>It benefits individuals by developing their skill and wisdom</li>
+<li>Finally, it produces the things a community needs to survive</li>
+</ul>
+
+
+<p>All these goods focus on the <em>people</em> involved in the enterprise, not the capital or products. Capital should be used in service to the <em>people</em>, not people in service to capital.</p>
+
+<h2>Metaphysical Underpinnings for Economics</h2>
+
+<p>In &ldquo;The Greatest Resource - Education&rdquo;, Schumacher points out the any economic theory rests on a &ldquo;meta-economics&rdquo;, that is, a set of assumptions about what <em>things are</em> and what <em>they mean</em>. He describes it as</p>
+
+<blockquote><p>ideas that would make the world, and [our] own lives, intelligible to [us]; when a thing is intelligible, you have a sense of participation; when a thing is unintelligible, you have a sense of estrangement.</p></blockquote>
+
+<p>Importantly, these things are absorbed and transmitted without our active recognition of it. Our minds are &ldquo;furnished&rdquo; by our communities without our awareness (much less our permission!).</p>
+
+<p>When it comes to our own &ldquo;meta-economics&rdquo;, outlines several of our assumptions about the world:</p>
+
+<ul>
+<li>The universe is &ldquo;the outcome of accidental collocations of atoms&rdquo; (he quotes Bertand Russell)</li>
+<li>The &ldquo;higher manifestations of life &hellip; are nothing but &hellip; a superstructure erected to disguise and promote economic interest&rdquo;, an application of reductionism to the human experience</li>
+<li>&ldquo;[R]elativism, denying all absolutes, dissolving all norms and standards, leading to the total undermining of the idea of truth in pragmatism&hellip;&rdquo; I think this means, rejecting historical understandings of &ldquo;right&rdquo; and replacing them with &ldquo;might is right&rdquo;.</li>
+<li>The notion that &ldquo;valid knowledge can be attained only through the natural sciences and hence that no knowledge is genuine unless it is based on generally observable facts.&rdquo; This may be contrasted with the claim that knowledge may be gained through qualitative means, like experience over time or intuitive exploration.</li>
+</ul>
+
+
+<p>For Schumacher, since these ideas give rise to our economics, they can also be understood as the source of our social ills. Since they&rsquo;re responsible for our sense of powerlessness, our quickness to consume and destroy the earth, and our dissatisfaction with these things, we can&rsquo;t expect <em>more</em> of the same to remedy those ills.</p>
+
+<p>Schumacher also prescribes a suite of assumptions which he think will give rise to the kind of economics he espouses:</p>
+
+<ul>
+<li>The universe has a hierarchical structure (he says, &ldquo;Levels of Being&rdquo; or &ldquo;Grades of Significance&rdquo;) and it is &ldquo;[our] task &ndash; or simply, if you like, [our] happiness &ndash; to attain a higher degree of realization of [our] potentialities, a higher level of being or &lsquo;grade of significance&rsquo; than that which comes to [us] &lsquo;naturally&rsquo;.&rdquo;</li>
+<li>Many important tasks in life require the <em>reconciliation of opposites</em>, and these tasks are not impossible. (&ldquo;How can one reconcile the demands of freedom and discipline in education? Countless mothers and teachers, in fact, do it, but no one can write down a solution.&rdquo;) These tasks (&ldquo;divergent&rdquo;) are contrasted with &ldquo;convergent&rdquo; tasks, such as solving equations or taking measurements, which require finding a solution without clear problem space.</li>
+<li>There are virtues and vices. Virtues, which benefit individuals and communities, should be pursued oneself and encouraged in others, while vices, which injure individuals and communities, should be challenged within oneself and discouraged in others.</li>
+</ul>
+
+
+<p>Schumacher points to examples of these assumptions in several philosophical traditions outside post-Enlightenment Western thought.</p>
+
+<p>(This post sat as a draft for a long time. I filled in the last part after returning the book.)</p>
+
+<h2>A Theory of Large Organizations</h2>
+
+<p>At the end of the book, Schumacher provides a <em>positive</em> theory of large organizations. Since I&rsquo;ve returned the book, I&rsquo;ll write the maxim that really stuck with me: anything that <em>can</em> be decentralized <em>should</em> be decentralized.</p>
+
+<p>Toward the end of engaging peoples&#8217; entrepreneurial spirit, underlings should be given as much autonomy and authority as possible. Besides doing better work, the boots-on-the-ground folks can make more appropriate consideration of local context.</p>
+
+<p>Schumacher also imagined a really interesting relationship between government and big business. He pointed out that the current arrangement of taxation creates some bizarre incentives: since only profit is taxed, companies work to hide profit from the government. It&rsquo;s impractical that the governemnt <em>builds</em> the infrastructure for businesses to thrive, then puts itself in the position of a bandit, trying to recapture (via taxation) its fair share of the gain.</p>
+
+<p>What if, instead, big companies had the local government as a 50% shareholder? Shumacher proposes that the government party would be observer-only, except in circumstances when the local common good would require some representation. But, the government party would be entitled to 50% of the profit <em>instead</em> of taxing the business. In an arrangement like that, the business is incentivized to grow its profits, and the government doesn&rsquo;t have to fight to recapture its investment in business infrastructure.</p>
+
+<p>I don&rsquo;t have any experience in that kind of large-scale thinking, but I found it an interesting scenario to imagine.</p>
+
+<h2>Schumacher&rsquo;s Foundation</h2>
+
+<p>Interestingly, Schumacher clearly builds his vision on a Christian understanding of humans and work. He sees humans as reflecting their creator&rsquo;s nature: creative, social, loving, and capable. At its best, work is not a necessary evil, but instead, it&rsquo;s a <em>good</em> part of culture where people can engage those attributes. That perspective orients his thoughts towards goals other than &ldquo;putting food on the table&rdquo; (although sustenance <em>is</em> a goal), for example, engendering pride in one&rsquo;s work, connections between neighbors, and the development and exercise of human skill.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Trampolining]]></title>
@@ -5290,218 +5565,6 @@ Then, use the <code>style_module</code> in the partial:</p>
 
 
 <p>This allows you to parameterize the class names in your partials.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Trip Report: RubyConf Colombia 2016]]></title>
-    <link href="http://rmosolgo.github.io/blog/2016/09/04/trip-report-rubyconf-colombia-2016/"/>
-    <updated>2016-09-04T22:13:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2016/09/04/trip-report-rubyconf-colombia-2016</id>
-    <content type="html"><![CDATA[<p>I just got back from <a href="http://rubyconf.co">RubyConf Colombia</a>. The content was great, the community was great, and the venue was great!</p>
-
-<!-- more -->
-
-
-<h2>The Content</h2>
-
-<p>This was a single-track conference, but there were no dud talks! I prefer code-driven talks, and for that reason, these were a few of my favorites:</p>
-
-<ul>
-<li><a href="https://twitter.com/davidpelaez">David Pelaez</a> demoed some functional concepts in Ruby, including <code>Right</code> and <code>Left</code> (?? name) and <code>None</code> objects.</li>
-<li><a href="https://twitter.com/orendon">Oscar Rendon</a> described an approach to combining business rules which allows you to simplify conditional branching and reuse code more effectively.</li>
-<li><a href="https://twitter.com/apotonick">Nick Sutterer</a> shared some insights into busting up &ldquo;god objects&rdquo; into more specialized, context-specific units of code.</li>
-<li><a href="https://twitter.com/sarcilav">Sebastian Arcila-Valensuela</a> and <a href="https://twitter.com/febuiles">Frederico Builes</a> gave my favorite non-code talk. They told a funny story of making tradeoffs while working on a tough problem: building a human-friendly path from a disjoint set of points.</li>
-</ul>
-
-
-<p>I presented <a href="http://rmosolgo.github.io/talks">&ldquo;Data Fetching with GraphQL and ActionCable&rdquo;</a> while I was there, and I was happy with how it went.</p>
-
-<h2>The Community</h2>
-
-<p>My favorite part of this event was getting to know the local Ruby community. In fact, I should say &ldquo;software development community&rdquo;, as many attendees were not full-time Ruby developers.</p>
-
-<p>Many things were familiar to me: these folks are building interesting projects (like <a href="https://www.wesura.com/">Wesura</a>, peer-to-peer insurance, and <a href="https://vlip.co/">Vlip</a>, a mobile payment platform). They&rsquo;re excited about doing great work and learning new things. Also, there&rsquo;s a big focus on training and education: many attendees were students at local universities or participants in web dev bootcamps.</p>
-
-<p>Other things were different. I saw many more female attendees at this conference than others. I know that this was a goal for the organizers, bravo to them for succeeding! Also, the community is relatively new. RubyConf Colombia is the only Ruby conference in Spanish-speaking Latin America (the other is in Brazil), and it requires <strong>a lot</strong> of work to plan and execute, because there isn&rsquo;t so much momentum in place. For example, there&rsquo;s not a culture of companies sending their employees to conferences, so many attendees paid out of pocket.</p>
-
-<p>I also realized something I take for granted: as a native English speaker, basically <em>all</em> technical information is available in my mother tongue, no matter where in the world it came from. What a blessing! It makes me think how valuable the translation service must have been for some native Spanish speakers. Of course, it was hugely valuable to me too &ndash; I would have been lost without it during the Spanish-language talks!</p>
-
-<h2>The Venue</h2>
-
-<p><a href="http://www.elteatrico.co/">El Teatrico</a> was a great spot for this event. We were close to max capacity, and that gave the conference a very intimate feeling. During breaks, you couldn&rsquo;t help but start a conversation with your neighbor.</p>
-
-<p>Besides that, the translation was <em>amazing</em>! There were two guys taking turns, and they did a great job keeping up with the talks and translating technical vocabulary. I felt like I understood almost 100% of the Spanish-language talks.</p>
-
-<p>I really enjoyed Medellin, too. It checked all the boxes for me: great environment, great people and great food!</p>
-
-<h2>Photos</h2>
-
-<p><img src="http://rmosolgo.github.io/images/rubyconf_co_2016/organizers.jpg" width="300"></p>
-
-<p>(via <a href="https://twitter.com/gigo6000/status/772228777367724032">@gigo6000 on Twitter</a>)</p>
-
-<p><img src="http://rmosolgo.github.io/images/rubyconf_co_2016/talk_1.jpg" width="300">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/el_teatrico_2.jpg" width="300">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/el_teatrico_1.jpg" width="200">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/medellin_1.jpg" width="200">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/medellin_2.jpg" width="200">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/landscape_1.jpg" width="200">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/medellin_3.jpg" width="200">
-<img src="http://rmosolgo.github.io/images/rubyconf_co_2016/aguardiente.jpg" width="200"></p>
-
-<h2>In Summary</h2>
-
-<p>This was a wonderful trip! I loved making some new friends and visiting this fantastic city. I really appreciate the work of the organizers, and that their primary goal is really to benefit their community. I&rsquo;m excited to see what next year holds for them!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Summer Reading: Specializing Ruby]]></title>
-    <link href="http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby/"/>
-    <updated>2016-08-06T11:10:00-04:00</updated>
-    <id>http://rmosolgo.github.io/blog/2016/08/06/summer-reading-specializing-ruby</id>
-    <content type="html"><![CDATA[<p><a href="http://chrisseaton.com/phd/"><em>Specialising Dynamic Techniques for Implementing the Ruby Programming Language</em></a> (&ldquo;Specializing Ruby&rdquo;) is approachable and enjoyable (despite being a PhD thesis 😝).</p>
-
-<!-- more -->
-
-
-<p><em>Specializing Ruby</em> describes <a href="https://twitter.com/ChrisGSeaton">Chris Seaton</a>&rsquo;s work on <a href="http://chrisseaton.com/rubytruffle/">JRuby+Truffle</a>. It seems to be aimed at an unfamiliar audience, so it&rsquo;s loaded with background information and careful explanations. Those were a big benefit to me! I&rsquo;ll describe a few things that I enjoyed the most:</p>
-
-<ul>
-<li>Introduction to Truffle and Graal</li>
-<li>Optimizing Metaprogramming with Dispatch Chains</li>
-<li>Zero-Overhead Debugging</li>
-<li>Interpreting Native Extensions</li>
-</ul>
-
-
-<h2>Introduction to Truffle and Graal</h2>
-
-<p>Seaton&rsquo;s work is built on top of two existing Java projects: <strong>Truffle</strong> and <strong>Graal</strong> (pronunciation: 😖❓).</p>
-
-<p>Truffle is a <em>language implementation framework</em> for <em>self-optimizing AST interpreters</em>. This means:</p>
-
-<ul>
-<li>Truffle is for <em>implementing languages</em>. People have used Truffle to implement many languages, including Ruby, C, and Python.</li>
-<li>Truffle languages are <em>AST interpreters</em>. A Truffle language parses its source code into a tree of nodes (the <em>abstract syntax tree</em>, AST), which represents the program. Then, it executes the program by traversing the tree, taking actions at each node.</li>
-<li>Truffle languages can <em>self-optimize</em>. Nodes can observe their execution and replace themselves with optimized versions of themselves.</li>
-</ul>
-
-
-<p>Graal is a <em>dynamic compiler</em> for the JVM, written in Java. A few points about Graal:</p>
-
-<ul>
-<li>It&rsquo;s a just-in-time compiler, so it improves a program&rsquo;s performance while the program runs.</li>
-<li>Graal is written in Java, which means it can expose its own APIs to other Java programs (like Truffle).</li>
-<li>Graal includes a powerful system for <em>de-optimizing</em>. This is especially important for Ruby, since Ruby&rsquo;s metaprogramming constructs allow programs to define new behavior for themselves while running.</li>
-</ul>
-
-
-<p>Truffle has a &ldquo;Graal backend,&rdquo; which supports close cooperation between the two. Together, they make a great team for language implementation: Truffle provides a simple approach to language design and Graal offers a means to optimize all the way to machine code.</p>
-
-<h2>Optimizing Metaprogramming with Dispatch Chains</h2>
-
-<p>This is a novel optimization technique for Ruby, described in section 5.</p>
-
-<p>Since Ruby is dynamic, method lookups must happen at runtime. In CRuby, call sites have <em>caches</em> which store the result of method lookups and may short-circuit the lookup next time the call happens.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
-</span><span class='line'><span class="c1">#          ^- here&#39;s the call site</span>
-</span><span class='line'><span class="c1">#             the _actual_ method definition to use</span>
-</span><span class='line'><span class="c1">#             depends on `some_object`&#39;s class, which is unknown</span>
-</span><span class='line'><span class="c1">#             until the program is actually running</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>One such cache is a <em>polymorphic inline cache</em>, which is roughly a map of <code>Class =&gt; method</code> pairs. When CRuby starts the call, it checks the cache for the current receiver&rsquo;s class. On a cache hit, it uses the cached method definition. On a cache miss, it looks up a definition and adds it to the cache.</p>
-
-<p>The cache might look like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># Cache:</span>
-</span><span class='line'><span class="c1">#   - SomeObject =&gt; SomeObject#some_method</span>
-</span><span class='line'><span class="c1">#   - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In some cases, CRuby declares bankruptcy. Dynamic method calls (<code>.send</code>) are not cached!</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
-</span><span class='line'><span class="c1">#          ^- who knows what method to call!?!?</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>JRuby+Truffle&rsquo;s solution to this challenge is <em>dispatch chains.</em> Each call site (including <code>.send</code>) gets a dispatch chain, which is a like two-layer cache. First, it stores the <em>name</em> of the method. Then, it stores the <em>class</em> of the receiver. For a &ldquo;static&rdquo; method call, it looks like this:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">some_method</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
-</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
-</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>And for a dynamic method call, it caches <em>each</em> method name:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">some_object</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">method_name</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
-</span><span class='line'><span class="c1"># - &quot;some_method&quot; =&gt;</span>
-</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_method</span>
-</span><span class='line'><span class="c1">#    - SomeOtherObject =&gt; SomeOtherObject#method_missing</span>
-</span><span class='line'><span class="c1"># - &quot;some_other_method&quot; =&gt;</span>
-</span><span class='line'><span class="c1">#    - SomeObject =&gt; SomeObject#some_other_method</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>In this respect, JRuby+Truffle treats <em>every</em> method call like a <code>.send(...)</code>. This cache is implemented with Truffle nodes, so it&rsquo;s optimized as much as the rest of the program.</p>
-
-<p>I wonder if this kind of method cache could be implemented for CRuby!</p>
-
-<h2>Zero-Overhead Debugging</h2>
-
-<p>Debugging in JRuby+Truffle (described in section 6) is a tour de force for the Truffle-Graal combo. Other Rubies incur big performance penalties for debugging. Some require a special &ldquo;debug&rdquo; flag. But Seaton implements zero-overhead, always-available debugging by applying Truffle concepts in a new way.</p>
-
-<p>Debugging hooks (such as the beginning of a new line) are added as &ldquo;transparent&rdquo; Truffle AST nodes, analogous to CRuby&rsquo;s <code>trace</code> instruction. By default, they don&rsquo;t do anything &ndash; they just call through to their child nodes. Since they&rsquo;re &ldquo;just&rdquo; Truffle nodes, they&rsquo;re optimized like the rest of the program (and since they&rsquo;re transparent, they&rsquo;re optimized away completely). When those nodes are targeted for debugging, they&rsquo;re de-optimized, updated with the appropriate debug code, and the program continues running (and self-optimizing). When the debugger is detached, the node de-optimizes again, replaces itself with transparent nodes again, and the program resumes.</p>
-
-<p>This chapter included a good description of Graal&rsquo;s <code>Assumption</code> concept. Assumptions are attached to optimized code. As long as <code>isValid()</code> is true, optimized code is executed. However, when an assumption is marked as invalid, Graal transfers execution back to the interpreter. Debugging takes advantage of this construct: debug nodes are transparent under the assumption that no debugger is attached to them. But when a developer attaches a debugger, then that assumption is invalidated and Graal de-optimizes and starts interpreting with the new debug nodes. Removing a debugger does the same thing: it invalidates an assumption, automatically de-optimizing the compiled code.</p>
-
-<h2>Interpreting Native Extensions</h2>
-
-<p>Truffle: if it&rsquo;s not solving your problems, you&rsquo;re not using enough of it!</p>
-
-<p>Throughout the paper, Seaton points out the &ldquo;real-world&rdquo; challenge of any new Ruby implementation: it simply <em>must</em> support <em>all</em> existing code, including C extensions! If you require developers to rewrite code for a new implementation, they probably won&rsquo;t bother with it.</p>
-
-<p>He also points out that CRuby&rsquo;s C API is an implementer&rsquo;s nightmare (my words, not his). It&rsquo;s tightly coupled to CRuby&rsquo;s implementation it provides direct access to CRuby&rsquo;s memory (eg, string pointers).</p>
-
-<p>Truffle&rsquo;s design offers a solution to this problem. Truffle languages implement common interfaces for AST nodes and objects, meaning that they can be <em>shared</em> between languages! With this technique, JRuby+Truffle can implement Ruby&rsquo;s C API by interpreting C with Truffle. Since it&rsquo;s &ldquo;just Truffle&rdquo;, C and Ruby ASTs can be seamlessly merged. They are even optimized together, just like a pure-Ruby program.</p>
-
-<p>Seaton describes some particular techniques for adapting the pre-existing TruffleC project to the Ruby C API. In typical fashion, JRuby+Truffle outpaces CRuby &ndash; even for C extensions!</p>
-
-<h2>Conclusion</h2>
-
-<p>The only remaining question I have is, how bad is warm-up cost in practice? All of JRuby+Truffle&rsquo;s benchmarks are at &ldquo;peak performance&rdquo;, but the system is &ldquo;cold&rdquo; at start-up, and many triggers in the program can cause the system to de-optimize. Is JIT warm-up a real issue?</p>
-
-<p>&ldquo;Optimizing Ruby&rdquo; was a great read. Although I found the subject matter quite challenging, the writing style and occasional illustrations helped me keep up. Practically speaking, I can&rsquo;t use JRuby+Truffle until it runs all of Ruby on Rails, which isn&rsquo;t the case <em>yet</em>. I&rsquo;m eager to see how this project matures!</p>
 ]]></content>
   </entry>
   
