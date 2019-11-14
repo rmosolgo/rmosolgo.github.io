@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Rubocop | Robert Mosolgo]]></title>
   <link href="http://rmosolgo.github.io/blog/categories/rubocop/atom.xml" rel="self"/>
   <link href="http://rmosolgo.github.io/"/>
-  <updated>2019-11-14T11:01:42-05:00</updated>
+  <updated>2019-11-14T11:29:58-05:00</updated>
   <id>http://rmosolgo.github.io/</id>
   <author>
     <name><![CDATA[Robert Mosolgo]]></name>
@@ -26,18 +26,19 @@
 <p>I&rsquo;ve developed a real affection for Rubocop over the last couple of years. (Sorry to my old coworkers and friends at Planning Center, who put up with my complaining about it back then!) What I&rsquo;ve come to appreciate is:</p>
 
 <ul>
-<li>No fights about style. If it passes the linter, it&rsquo;s ok to ship.</li>
-<li>Using Rubocop to enforce usage conventions. For example, we have a cop to make sure that some risky methods aren&rsquo;t used in the codebase.</li>
-<li>Using Rubocop to upgrade old code to be compliant. For example, we realized we were sometimes using <code>Promise.all(...) do</code> instead of <code>Promise.all(...).then do</code>. The old code didn&rsquo;t work at all. We added a Cop with an <code>autocorrect</code> implementation, so we could upgrade any mistakes automatically!</li>
+<li><strong>No fights about style.</strong> If it passes the linter, it&rsquo;s ok to ship.</li>
+<li><strong>Enforcing usage coventions.</strong> For example, we have a cop to make sure that some risky methods aren&rsquo;t used in the codebase.</li>
+<li><strong>Upgrading old code.</strong> For example, we realized we were sometimes using <code>Promise.all(...) do</code> instead of <code>Promise.all(...).then do</code>. The old code didn&rsquo;t work at all. We added a Cop with an <code>autocorrect</code> implementation, so we could upgrade any mistakes automatically!</li>
 </ul>
 
 
 <h2>The Refactor: Returning Promises</h2>
 
-<p>We have some GraphQL/GraphQL-Batch code for making authorization checks. They look basically like this:</p>
+<p>We have some GraphQL/GraphQL-Batch code for making authorization checks. It looks like this:</p>
 
 <pre><code class="ruby">class Types::Repository
-  def authorized?(repository, ctx)
+  # This is GraphQL-Ruby's authorization API
+  def self.authorized?(repository, ctx)
     # Load some data which is required for the check:
     batch_load(repository, :owner).then do |owner|
       # Call the authorization code:
@@ -110,7 +111,7 @@ Authorization.can_see?(...) &amp;&amp; Authorization.can_see?(...)
 
 <ul>
 <li>A linting rule will fail the build if invalid code is added to the project, addressing the first goal</li>
-<li>A well-implemented <code>def autocorrect</code> will fix existing violations</li>
+<li>A well-implemented <code>def autocorrect</code> will fix existing violations, addressing the second goal</li>
 </ul>
 
 
@@ -122,11 +123,11 @@ Authorization.can_see?(...) &amp;&amp; Authorization.can_see?(...)
 class AsyncCanSeeWhenPossible &lt; Rubocop::Cop
   MSG = &lt;&lt;-ERR
 When `.can_see?` is the last call inside an authorization method, use
-`.async_can_see?` instead so that the underlying calls can be batched.
+`.async_can_see?` instead so that the underlying data access can be batched.
 ERR
 
   # If the given node is a call to `:can_see?`, it's yielded
-  def_node_matcher :can_see_call, "$(send s(:const, {nil (:cbase)}, :Authorization) :can_see? ...)"
+  def_node_matcher :can_see_call, "$(send s(:const, {nil (cbase)}, :Authorization) :can_see? ...)"
 
   # Look for nested promises -- treat the body of a nested promise just like the method body.
   # (That is, the implicit return of the block is like the implicit return of the method)
@@ -204,13 +205,13 @@ ERR
 end
 </code></pre>
 
-<p>With this cop, <code>rubocop -a</code> will upgrade the easy cases in existing code, then I&rsquo;ll track down the harder ones by hand!</p>
+<p>With this cop, <code>rubocop -a</code> will upgrade the easy cases in existing code, then I&rsquo;ll track down the harder ones by hand.</p>
 
 <p>I think the implementation could be improved by:</p>
 
 <ul>
-<li>Also checking explicit <code>return</code>s. It wasn&rsquo;t important for me because there weren&rsquo;t any in this code base. <code>next</code> Could probably be treated the same way, since it exists <code>then</code> blocks.</li>
-<li>Flagging <em>any</em> use of <code>.can_see?</code>, not only the easy ones. I expect that some usages are inevitable, but better to require a <code>rubocop:disable</code> in that case to mark that it&rsquo;s not best-practice.</li>
+<li><strong>Also checking explicit <code>return</code>s.</strong> It wasn&rsquo;t important for me because there weren&rsquo;t any in this code base. <code>next</code> Could probably be treated the same way, since it exists <code>then</code> blocks.</li>
+<li><strong>Flagging <em>any</em> use of <code>.can_see?</code>,</strong> not only the easy ones. I expect that some usages are inevitable, but better to require a <code>rubocop:disable</code> in that case to mark that it&rsquo;s not best-practice.</li>
 </ul>
 
 
