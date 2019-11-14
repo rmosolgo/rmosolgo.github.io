@@ -14,17 +14,18 @@ Some notes on a refactor implemented with a Cop.
 
 I've developed a real affection for Rubocop over the last couple of years. (Sorry to my old coworkers and friends at Planning Center, who put up with my complaining about it back then!) What I've come to appreciate is:
 
-- No fights about style. If it passes the linter, it's ok to ship.
-- Using Rubocop to enforce usage conventions. For example, we have a cop to make sure that some risky methods aren't used in the codebase.
-- Using Rubocop to upgrade old code to be compliant. For example, we realized we were sometimes using `Promise.all(...) do` instead of `Promise.all(...).then do`. The old code didn't work at all. We added a Cop with an `autocorrect` implementation, so we could upgrade any mistakes automatically!
+- __No fights about style.__ If it passes the linter, it's ok to ship.
+- __Enforcing usage coventions.__ For example, we have a cop to make sure that some risky methods aren't used in the codebase.
+- __Upgrading old code.__ For example, we realized we were sometimes using `Promise.all(...) do` instead of `Promise.all(...).then do`. The old code didn't work at all. We added a Cop with an `autocorrect` implementation, so we could upgrade any mistakes automatically!
 
 ## The Refactor: Returning Promises
 
-We have some GraphQL/GraphQL-Batch code for making authorization checks. They look basically like this:
+We have some GraphQL/GraphQL-Batch code for making authorization checks. It looks like this:
 
 ```ruby
 class Types::Repository
-  def authorized?(repository, ctx)
+  # This is GraphQL-Ruby's authorization API
+  def self.authorized?(repository, ctx)
     # Load some data which is required for the check:
     batch_load(repository, :owner).then do |owner|
       # Call the authorization code:
@@ -93,7 +94,7 @@ I knew I wanted two things:
 Rubocop will do both of these things:
 
 - A linting rule will fail the build if invalid code is added to the project, addressing the first goal
-- A well-implemented `def autocorrect` will fix existing violations
+- A well-implemented `def autocorrect` will fix existing violations, addressing the second goal
 
 But it all depends on implementing the check well: can I find implicit returns? Fortunately, I only need to find them _well enough_: it doesn't have to find _every possible_ Ruby implicit return; it only has to find the ones actually used in the codebase!
 
@@ -104,11 +105,11 @@ By an approach of trial and error, here's what I ended up with:
 class AsyncCanSeeWhenPossible < Rubocop::Cop
   MSG = <<-ERR
 When `.can_see?` is the last call inside an authorization method, use
-`.async_can_see?` instead so that the underlying calls can be batched.
+`.async_can_see?` instead so that the underlying data access can be batched.
 ERR
 
   # If the given node is a call to `:can_see?`, it's yielded
-  def_node_matcher :can_see_call, "$(send s(:const, {nil (:cbase)}, :Authorization) :can_see? ...)"
+  def_node_matcher :can_see_call, "$(send s(:const, {nil (cbase)}, :Authorization) :can_see? ...)"
 
   # Look for nested promises -- treat the body of a nested promise just like the method body.
   # (That is, the implicit return of the block is like the implicit return of the method)
@@ -186,11 +187,11 @@ ERR
 end
 ```
 
-With this cop, `rubocop -a` will upgrade the easy cases in existing code, then I'll track down the harder ones by hand!
+With this cop, `rubocop -a` will upgrade the easy cases in existing code, then I'll track down the harder ones by hand.
 
 I think the implementation could be improved by:
 
-- Also checking explicit `return`s. It wasn't important for me because there weren't any in this code base. `next` Could probably be treated the same way, since it exists `then` blocks.
-- Flagging _any_ use of `.can_see?`, not only the easy ones. I expect that some usages are inevitable, but better to require a `rubocop:disable` in that case to mark that it's not best-practice.
+- __Also checking explicit `return`s.__ It wasn't important for me because there weren't any in this code base. `next` Could probably be treated the same way, since it exists `then` blocks.
+- __Flagging _any_ use of `.can_see?`,__ not only the easy ones. I expect that some usages are inevitable, but better to require a `rubocop:disable` in that case to mark that it's not best-practice.
 
 (Full disclosure: we haven't shipped this refactor yet. But I enjoyed the work on it so far, so I thought I'd write up what I learned!)
