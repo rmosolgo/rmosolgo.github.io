@@ -343,10 +343,6 @@
         <lastmod>2017-10-05T12:25:02-04:00</lastmod>
     </url>
     <url>
-        <loc>http://rmosolgo.github.io/blog/2017/03/07/persisted-graphql-queries-with-ruby/</loc>
-        <lastmod>2017-10-05T12:25:02-04:00</lastmod>
-    </url>
-    <url>
         <loc>http://rmosolgo.github.io/blog/2017/03/08/optimizing-graphql-ruby/</loc>
         <lastmod>2017-10-05T12:25:02-04:00</lastmod>
     </url>
@@ -415,12 +411,18 @@
         <lastmod>2019-09-02T11:29:26-04:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://rmosolgo.github.io/blog/2019/11/14/finding-implicit-returns-with-rubocop/
+        </loc>
+        <lastmod>2019-11-14T11:01:16-05:00</lastmod>
+    </url>
+    <url>
         <loc>http://rmosolgo.github.io/</loc>
-        <lastmod>2019-09-02T11:29:26-04:00</lastmod>
+        <lastmod>2019-11-14T11:01:16-05:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/talks/</loc>
-        <lastmod>2019-09-02T11:29:26-04:00</lastmod>
+        <lastmod>2019-11-14T11:01:16-05:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/about/</loc>
@@ -428,7 +430,7 @@
     </url>
     <url>
         <loc>http://rmosolgo.github.io/blog/archives/</loc>
-        <lastmod>2019-09-02T11:29:26-04:00</lastmod>
+        <lastmod>2019-11-14T11:01:16-05:00</lastmod>
     </url>
     <url>
         <loc>http://rmosolgo.github.io/robots.txt</loc>

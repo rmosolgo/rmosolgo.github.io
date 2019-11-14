@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Rubocop | Robert Mosolgo]]></title>
+  <link href="http://rmosolgo.github.io/blog/categories/rubocop/atom.xml" rel="self"/>
+  <link href="http://rmosolgo.github.io/"/>
+  <updated>2019-11-14T11:01:42-05:00</updated>
+  <id>http://rmosolgo.github.io/</id>
+  <author>
+    <name><![CDATA[Robert Mosolgo]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Finding implicit returns with Rubocop]]></title>
+    <link href="http://rmosolgo.github.io/blog/2019/11/14/finding-implicit-returns-with-rubocop/"/>
+    <updated>2019-11-14T09:57:00-05:00</updated>
+    <id>http://rmosolgo.github.io/blog/2019/11/14/finding-implicit-returns-with-rubocop</id>
+    <content type="html"><![CDATA[<p>Some notes on a refactor implemented with a Cop.</p>
+
+<!-- more -->
+
+
+<p>I&rsquo;ve developed a real affection for Rubocop over the last couple of years. (Sorry to my old coworkers and friends at Planning Center, who put up with my complaining about it back then!) What I&rsquo;ve come to appreciate is:</p>
+
+<ul>
+<li>No fights about style. If it passes the linter, it&rsquo;s ok to ship.</li>
+<li>Using Rubocop to enforce usage conventions. For example, we have a cop to make sure that some risky methods aren&rsquo;t used in the codebase.</li>
+<li>Using Rubocop to upgrade old code to be compliant. For example, we realized we were sometimes using <code>Promise.all(...) do</code> instead of <code>Promise.all(...).then do</code>. The old code didn&rsquo;t work at all. We added a Cop with an <code>autocorrect</code> implementation, so we could upgrade any mistakes automatically!</li>
+</ul>
+
+
+<h2>The Refactor: Returning Promises</h2>
+
+<p>We have some GraphQL/GraphQL-Batch code for making authorization checks. They look basically like this:</p>
+
+<pre><code class="ruby">class Types::Repository
+  def authorized?(repository, ctx)
+    # Load some data which is required for the check:
+    batch_load(repository, :owner).then do |owner|
+      # Call the authorization code:
+      Authorization.can_see?(ctx[:viewer], repository, owner)
+    end
+  end
+end
+</code></pre>
+
+<p>The <code>authorized?</code> check returns a <code>Promise</code> (for GraphQL-Batch), and inside that promise, <code>.can_see?</code> returns <code>true</code> or <code>false</code> (synchronously).</p>
+
+<p>However, to improve data access, we wanted to implement a new authorization code path:</p>
+
+<pre><code class="ruby"># Returns Promise&lt;true|false&gt;
+Authorization.async_can_see?(viewer, repo, owner)
+</code></pre>
+
+<p>This new code path would improve the database access under the hood to use our batch loading system.</p>
+
+<p>After implementing the codepath, how could we update the ~1000 call sites to use the new method?</p>
+
+<h2>The Problem: Boolean Logic</h2>
+
+<p>The easiest solution would be find-and-replace, but that doesn&rsquo;t quite work because of boolean logic with Promises. Some of our authorization checks combined two checks like this:</p>
+
+<pre><code class="ruby"># Require both checks to pass:
+Authorization.can_see?(...) &amp;&amp; Authorization.can_see?(...)
+</code></pre>
+
+<p>If we updated that to <code>async_can_see?</code>, that code would break. It would break because <code>async_can_see?</code> <em>always</em> returns a <code>Promise</code>, which is truthy. That is:</p>
+
+<pre><code class="ruby">promise_1 &amp;&amp; promise_2
+</code></pre>
+
+<p>That code <em>always</em> returns true, even if one of the promises <em>would</em> resolve to <code>false</code>. (The Ruby <code>Promise</code> object is truthy, and we don&rsquo;t have access to the returned value until we call <code>promise.sync</code>.)</p>
+
+<p>So, we have to figure out <em>which code paths</em> can be automatically upgraded.</p>
+
+<h2>The Solution, In Theory</h2>
+
+<p>Roughly, the answer is:</p>
+
+<blockquote><p>If an authorization <em>returns the value</em> of <code>.can_see?</code>, then we can replace that call with <code>.async_can_see?</code>.</p></blockquote>
+
+<p>This is true because GraphQL-Ruby is happy to receive <code>Promise&lt;true|false&gt;</code> &ndash; it will use its batching system to resolve it as late as possible.</p>
+
+<p>So, how can we find cases when <code>.can_see?</code> is used as a return value? There are roughly two possibilities:</p>
+
+<ul>
+<li>explicit <code>return</code>s, which we don&rsquo;t use often</li>
+<li>implicit returns, which are the last expressions of any branches in the method body.</li>
+</ul>
+
+
+<p>This post covers that <em>second case</em>, implicit returns. We want to find implicit returns which are <em>just</em> calls to <code>.can_see?</code>, and automatically upgrade them. (Some calls will be left over, we&rsquo;ll upgrade those by hand.)</p>
+
+<p>We assume that any code which is <em>more complicated</em> than <em>just</em> a call to <code>.can_see?</code> can&rsquo;t be migrated, because it might depend on the synchronous return of <code>true|false</code>. We&rsquo;ll revisit those by hand.</p>
+
+<h2>The Implementation: A Cop</h2>
+
+<p>I knew I wanted two things:</p>
+
+<ul>
+<li>For new code, require <code>async_can_see?</code> whenever possible</li>
+<li>For existing code, upgrade to <code>async_can_see?</code> whenever it&rsquo;s possible</li>
+</ul>
+
+
+<p>Rubocop will do both of these things:</p>
+
+<ul>
+<li>A linting rule will fail the build if invalid code is added to the project, addressing the first goal</li>
+<li>A well-implemented <code>def autocorrect</code> will fix existing violations</li>
+</ul>
+
+
+<p>But it all depends on implementing the check well: can I find implicit returns? Fortunately, I only need to find them <em>well enough</em>: it doesn&rsquo;t have to find <em>every possible</em> Ruby implicit return; it only has to find the ones actually used in the codebase!</p>
+
+<p>By an approach of trial and error, here&rsquo;s what I ended up with:</p>
+
+<pre><code class="ruby"># frozen_string_literal: true
+class AsyncCanSeeWhenPossible &lt; Rubocop::Cop
+  MSG = &lt;&lt;-ERR
+When `.can_see?` is the last call inside an authorization method, use
+`.async_can_see?` instead so that the underlying calls can be batched.
+ERR
+
+  # If the given node is a call to `:can_see?`, it's yielded
+  def_node_matcher :can_see_call, "$(send s(:const, {nil (:cbase)}, :Authorization) :can_see? ...)"
+
+  # Look for nested promises -- treat the body of a nested promise just like the method body.
+  # (That is, the implicit return of the block is like the implicit return of the method)
+  def_node_matcher :then_block, "(block (send _ :then) _ $({begin send block if case} ...))"
+
+  # Check for `def self.authorized?` and call the cop on that method
+  def on_defs(node)
+    _self, method_name, *_args, method_body = *node
+    if method_name == :authorized?
+      check_implicit_return(method_body)
+    end
+  end
+
+  # Replace `.can_see?` with `.async_can_see?`
+  def autocorrect(node)
+    lambda do |corrector|
+      _receiver, method_name, *rest = *node
+      corrector.replace(node.location.selector, "async_can_see?")
+    end
+  end
+
+  private
+
+  # Continue traversing `node` until you get to the last expression.
+  # If that expression is a call to `.can_see?`, then add an offense.
+  def check_implicit_return(node)
+    case node.type
+    when :begin
+      # This node is a series of expressions.
+      # The last one is the implicit return.
+      *_prev_exps, last_expression = *node
+      check_implicit_return(last_expression)
+    when :block
+      # It's a method call that receives a block.
+      # If it's a then-block, check its body for implicit returns.
+      then_block(node) do |block_body|
+        check_implicit_return(block_body)
+      end
+    when :if
+      # Check each branch of an `if ...` expression, because
+      # each branch may be an implicit return
+      # (elsif is part of the `else_exp`)
+      _check, if_exp, else_exp = *node
+      check_implicit_return(if_exp)
+      # This can be null if there is no else expression
+      if else_exp
+        check_implicit_return(else_exp)
+      end
+    when :case
+      # Check each branch of the case statement, since each one
+      # could be an implicit return.
+      _subject, *when_exps, else_exp = *node
+      when_exps.each do |when_exp|
+        *_when_conditions, condition_body = *when_exp
+        check_implicit_return(condition_body)
+      end
+      # There may or may not be an `else` branch.
+      if else_exp
+        check_implicit_return(else_exp)
+      end
+    when :send
+      # This is a method call -- if it's a plain call to `.can_see?`, flag it.
+      can_see_call(node) do |bad_call|
+        add_offense(bad_call, location: :selector)
+      end
+    else
+      # We've reached an implicit return which is not:
+      #
+      # - An expression containing other implicit returns
+      # - An expression calling `.can_see?`, which we know to upgrade
+      #
+      # So, ignore this implicit return.
+    end
+  end
+end
+</code></pre>
+
+<p>With this cop, <code>rubocop -a</code> will upgrade the easy cases in existing code, then I&rsquo;ll track down the harder ones by hand!</p>
+
+<p>I think the implementation could be improved by:</p>
+
+<ul>
+<li>Also checking explicit <code>return</code>s. It wasn&rsquo;t important for me because there weren&rsquo;t any in this code base. <code>next</code> Could probably be treated the same way, since it exists <code>then</code> blocks.</li>
+<li>Flagging <em>any</em> use of <code>.can_see?</code>, not only the easy ones. I expect that some usages are inevitable, but better to require a <code>rubocop:disable</code> in that case to mark that it&rsquo;s not best-practice.</li>
+</ul>
+
+
+<p>(Full disclosure: we haven&rsquo;t shipped this refactor yet. But I enjoyed the work on it so far, so I thought I&rsquo;d write up what I learned!)</p>
+]]></content>
+  </entry>
+  
+</feed>
