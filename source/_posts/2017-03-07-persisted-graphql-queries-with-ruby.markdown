@@ -3,6 +3,7 @@ layout: post
 title: "Persisted GraphQL Queries with Ruby"
 date: 2017-03-07 7:55
 comments: true
+published: false
 categories:
 - Ruby
 - GraphQL
