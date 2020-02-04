@@ -1,0 +1,31 @@
+---
+layout: post
+title: "Books I Read in 2019"
+date: 2020-02-04 14:19
+comments: true
+categories:
+- Books
+---
+
+I thought I'd try to remember what I read last year.
+
+<!-- more -->
+
+In roughly chronological order:
+
+- __*Albemarle, Jefferson's County, 1727-1976*, John Hammond Moore__
+- __*Perelandra*, C.S. Lewis__
+- __*Modern Technology and the Human Future: A Christian Perspective*, Craig Gay__
+- __*Grass Productivity*, Andre Voisin__
+- __*American Farmstead Cheese*, Paul Kindstedt__
+- __*A River Runs Through It*, Norman Maclean__
+- __*The Art and Science of Grazing*, Sarah Flack__
+- __*The New Organic Grower*, Elliot Coleman__
+- __*Out of the Silent Planet*, C.S. Lewis__
+- __*That Hideous Strength*, C.S. Lewis__
+- __*The Abolition of Man*, C.S. Lewis__
+- __*Small-Scale Dairy*, Gianaclis Caldwell__
+- __*Jayber Crow*, Wendell Berry__
+- __*La Fromagerie a la Ferme*, Patrick Anglade__
+- __*Sex, Freedom, Economy, and Community*, Wendell Berry__
+- __*How (Not) to Be Secular*, James Smith__
