@@ -58,7 +58,7 @@ The milk is now ready to become delicious yogurt, but it's too hot for yogurt cu
 Now, add the starter culture to the pot of milk. I've done it two ways:
 
 - __Add a [packet of thermophilic starter](https://cheesemaking.com/products/thermophilic-starter-culture-for-cheese-making)__. This is easy and reliable. I buy the starter at Fifth Season Gardening downtown. The downside is, it's more expensive than...
-- __Or, add 1 cup of yogurt per gallon of milk__ (this is Fankauser's ratio from the recipe above). You can use yogurt from your own previous batch, or use store-bought: find plain yogurt labeled with "active cultures" and a "use-by" date in the far future (so it's fresh). When adding yogurt this way, first mix equal parts yogurt and warmed milk (from the pot) in a bow, and stir until the consistency is even. Then, pour this mixture back into the pot and stir. (This is Fankhauser's technique. I assume it's to ensure that the culture is evenly distributed.)
+- __Or, add 1 cup of yogurt per gallon of milk__ (this is Fankauser's ratio from the recipe above). You can use yogurt from your own previous batch, or use store-bought: find plain yogurt labeled with "active cultures" and a "use-by" date in the far future (so it's fresh). When adding yogurt this way, first mix equal parts yogurt and warmed milk (from the pot) in a bowl, and stir until the consistency is even. Then, pour this mixture back into the pot and stir. (This is Fankhauser's technique. I assume it's to ensure that the culture is evenly distributed.)
 
 ## Bottle it
 
