@@ -1,5 +1,7 @@
 # 2020 books
 
+In roughly chronological order:
+
 - *Secrets of the Blue Ridge*, Phil James
 - *Cheese and Culture*, Paul Kindstedt
 - *Hannah Coulter*, Wendell Berry
@@ -10,9 +12,13 @@
 - *A Philosophy of Software Design*, John Ousterhout
 - *Beyond Capitalism*, Plough Quarterly Summer 2019
 - *Resilient Farm and Homestead*, Ben Falk
-
-In progress:
-
-- *Debt: The First 5000 Years*
-- *The Holistic Orchard*
-
+- *The House on Half-Bald Hill*, Helena Sorenson
+- *Debt: The First 5000 Years*, David Graeme
+- *Solidarity*, Plough Quarterly Summer 2020
+- *The Fellowship of the Ring*, JRR Tolkien
+- *School For Life*, Plough Quarterly Winter 2019
+- *The Two Towers*, JRR Tolkien
+- *What Makes Humans Sacred?*, Plough Quarterly Fall 2016
+- *The Return of the King*, JRR Tolkien
+- *What Are Families For?*, Plough Quarterly Fall 2020
+- *The Gospel in a Pluralist Society*, Lesslie Newbiggin
