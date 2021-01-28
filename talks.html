@@ -1,0 +1,79 @@
+---
+layout: page
+title: "Talks"
+comments: true
+sharing: true
+footer: true
+talks:
+  - title: "Getting down to Business with GraphQL"
+    given_at: "Ancient City Ruby, October 2019"
+    tagline: "Discussing production challenges with GraphQL at scale"
+    synopsis: "... and some of the things we're trying at GitHub."
+    image_name: talks_getting_down_to_business_with_graphql.png
+    slides_url: /assets/getting_down_to_business_with_graphql.pdf
+  - title: "GraphQL... Ruby?"
+    given_at: "Balkan Ruby, May 2018"
+    tagline: "A look back at graphql-ruby's design process."
+    synopsis: "Reflecting on lessons learns and discussion solutions for future releases."
+    image_name: talks_balkan_ruby.png
+    slides_url: /assets/graphql_ruby_balkan_ruby_2018.pdf
+  - title: "GraphQL at GitHub"
+    given_at: "GraphQL-Ruby Hackday, August 25 2017"
+    tagline: "A tour of GitHub's GraphQL ecosystem"
+    synopsis: "Investigate the problems and solutions for GitHub's use of GraphQL, and next steps for improving the system"
+    image_name: talks_graphql_at_github.png
+    slides_url: /assets/graphql_at_github.pdf
+  - title: "Solving GraphQL's Challenges"
+    given_at: "Ruby Nation, June 16, 2017"
+    tagline: "A survey of challenges in GraphQL on Rails."
+    synopsis: "Including the solutions to those problems as provided by the graphql gem and how we addressed these issues in GitHub's GraphQL API."
+    image_name: talks_solving_graphqls_challenges.png
+    slides_url: /assets/solving_graphqls_challenges.pdf
+    video_url: https://www.youtube.com/watch?v=hCvczSqpdYs
+  - title: "Data Fetching with GraphQL and ActionCable"
+    given_at: "RubyConf Colombia, September 2, 2016"
+    tagline: "An introduction to GraphQL and an application in Rails"
+    synopsis: "GraphQL is a tool for simplifying client-server communication. Transporting data over ActionCable brings new possibilities for live updates and incremental data loading."
+    image_name: talks_graphql_action_cable.png
+    slides_url: /assets/graphql_action_cable.pdf
+    video_url: https://www.youtube.com/watch?v=9UG_xqc_Dvw
+  - title: "Testing Your Code"
+    given_at: "Full Stack North County, October 8, 2015"
+    tagline: "Testing will make you happy!"
+    synopsis: "Meet the basic ideas of unit testing. A good test suite makes your life easier: you write less bugs and you can modify code more confidently. Testing pain also reveals design flaws, so testing-as-you-go is a good approach!"
+    image_name: talks_testing.png
+    slides_url: http://slides.com/robertmosolgo/testing-your-code
+  - title: "Flux: React Goes Big"
+    given_at: "Full Stack North County, March 12, 2015"
+    tagline: "Flux as a macrocosm of React's one-way data flow."
+    synopsis: "One thing I love about React.js is how its one-way data flow provides simplicity and clarity to components. Flux has the same advantage: it brings one-way data flow to your application architecture. I describe key concepts in Flux in terms of analogous concepts in React."
+    image_name: talks_flux.png
+    slides_url: http://slides.com/robertmosolgo/flux
+  - title: "Ruby"
+    given_at: "Full Stack North County, November 13, 2014"
+    tagline: "A conceptual introduction to the Ruby language."
+    synopsis: "Ruby is fun and powerful because it puts you in charge. You can inspect and modify your program at runtime. Also, we explore mruby (a Ruby implementation with a small footprint) and how we can connect C code and Ruby code."
+    image_name: talks_ruby.png
+    slides_url: http://slides.com/robertmosolgo/ruby
+---
+
+<div class='talks-page'>
+  {% for talk in page.talks %}
+    <div class='talk'>
+      <div class='talk-image'>
+        <a href="{{ talk.slides_url }}" target="_blank">
+          <img src='/assets/images/{{ talk.image_name }}' />
+        </a>
+      </div>
+      <div class='talk-description'>
+        <h2 class='talk-title'>{{ talk.title }}</h2>
+        <p class='talk-given-at'>{{ talk.given_at }}</p>
+        <p><strong>{{ talk.tagline }}</strong> {{ talk.synopsis }}</p>
+        <p><a href="{{ talk.slides_url }}" target="_blank">slides &rarr;</a></p>
+        {% if talk.video_url %}
+          <p><a href="{{ talk.video_url }}" target="_blank">video &rarr;</a></p>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,76 @@
+---
+layout: default
+single: true
+---
+
+<div>
+<article class="hentry" role="article">
+  {% if page.categories contains 'Batman.js' %}
+  <div class='batmanjs-warning'>
+      To my knowledge, <a href="http://github.com/batmanjs/batman">batman.js</a> is not maintained. For that reason, I don't suggest that you use it for a new project!
+  </div>
+  {% endif %}
+
+  {% unless page.no_header %}
+    <header>
+      {% if index %}
+        <h1 class="entry-title"><a href="{{ root_url }}{{ post.url }}">{% if site.titlecase %}{{ post.title | titlecase }}{% else %}{{ post.title }}{% endif %}</a></h1>
+      {% else %}
+        <h1 class="entry-title">{% if site.titlecase %}{{ page.title | titlecase }}{% else %}{{ page.title }}{% endif %}</h1>
+      {% endif %}
+      {% unless page.meta == false %}
+        <p class="meta">
+          {% include date.html %}{{ time }}
+        </p>
+      {% endunless %}
+    </header>
+  {% endunless %}
+  {% if index %}
+    <div class="entry-content">{{ content | excerpt }}</div>
+    {% capture excerpted %}{{ content | has_excerpt }}{% endcapture %}
+    {% if excerpted == 'true' %}
+      <footer>
+        <a rel="full-article" href="{{ root_url }}{{ post.url }}">{{ site.excerpt_link }}</a>
+      </footer>
+    {% endif %}
+  {% else %}
+  <div class="entry-content">{{ content }}</div>
+  {% endif %}
+
+  <footer>
+    <p class="meta" style="color: #999999;">
+      {% if post.author %}
+        {% assign author = post.author %}
+      {% elsif page.author %}
+        {% assign author = page.author %}
+      {% else %}
+        {% assign author = site.author %}
+      {% endif %}
+      {% if author %}<span class="byline author vcard">Posted by <span class="fn">{{ author }}</span></span>{% endif %}
+
+      {% include date.html %}{% if updated %}{{ updated }}{% else %}{{ time }}{% endif %}
+      {% capture category %}{% if post %}{{ post.categories | category_links | size }}{% else %}{{ page.categories | category_links | size }}{% endif %}{% endcapture %}
+      {% unless category == '0' %}
+      in
+      <span class="categories">
+        {% for category in page.categories %}
+          <a href="/blog/categories#{{ category }}">{{ category }}</a>{% if forloop.last == false %},{% endif %}
+        {% endfor %}
+      </span>
+      {% endunless %}
+    </p>
+    <div class="other-posts">
+      {% if page.previous.url %}
+        <div class="prev-post">
+          <a href="{{page.previous.url}}" title="Previous Post: {{page.previous.title}}">&laquo; {{page.previous.title}}</a>
+        </div>
+      {% endif %}
+      {% if page.next.url %}
+        <div class="next-post">
+          <a href="{{page.next.url}}" title="Next Post: {{page.next.title}}">{{page.next.title}} &raquo;</a>
+        </div>
+      {% endif %}
+    </p>
+  </footer>
+</article>
+</div>

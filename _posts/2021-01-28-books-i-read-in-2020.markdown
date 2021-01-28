@@ -1,0 +1,35 @@
+---
+layout: post
+title: "Books I Read in 2020"
+date: 2021-01-28 10:52
+comments: true
+categories:
+- Books
+---
+
+2020 turned out to be a great year for books, especially those couple of weeks in late February/early March where everyone in the house had a fever, wet cough, and even some pink eye....
+
+<!-- more -->
+
+In roughly chronological order:
+
+- *Secrets of the Blue Ridge*, Phil James
+- *Cheese and Culture*, Paul Kindstedt
+- *Hannah Coulter*, Wendell Berry
+- *In Search of a City*, Plough Quarterly Winter 2020
+- *Tree and Leaf*, JRR Tolkien
+- *Beowulf*, translated by Seamus Heaney
+- *Monacan Millenium*, Jeffrey Hantley
+- *A Philosophy of Software Design*, John Ousterhout
+- *Beyond Capitalism*, Plough Quarterly Summer 2019
+- *Resilient Farm and Homestead*, Ben Falk
+- *The House on Half-Bald Hill*, Helena Sorenson
+- *Debt: The First 5000 Years*, David Graeme
+- *Solidarity*, Plough Quarterly Summer 2020
+- *The Fellowship of the Ring*, JRR Tolkien
+- *School For Life*, Plough Quarterly Winter 2019
+- *The Two Towers*, JRR Tolkien
+- *What Makes Humans Sacred?*, Plough Quarterly Fall 2016
+- *The Return of the King*, JRR Tolkien
+- *What Are Families For?*, Plough Quarterly Fall 2020
+- *The Gospel in a Pluralist Society*, Lesslie Newbiggin

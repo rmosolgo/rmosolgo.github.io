@@ -1,0 +1,34 @@
+---
+layout: post
+title: "Books I Read in 2019"
+date: 2020-02-04 14:19
+comments: true
+categories:
+- Books
+---
+
+I thought I'd try to remember what I read last year.
+
+<!-- more -->
+
+In roughly chronological order:
+
+- *That Distant Land*, Wendell Berry
+- *The Good Shepherd and the Child*, Sofia Cavaletti et al
+- *Albemarle, Jefferson's County, 1727-1976*, John Hammond Moore
+- *Perelandra*, C.S. Lewis
+- *Modern Technology and the Human Future: A Christian Perspective*, Craig Gay
+- *Grass Productivity*, Andre Voisin
+- *American Farmstead Cheese*, Paul Kindstedt
+- *A River Runs Through It*, Norman Maclean
+- *The Art and Science of Grazing*, Sarah Flack
+- *The New Organic Grower*, Elliot Coleman
+- *Out of the Silent Planet*, C.S. Lewis
+- *That Hideous Strength*, C.S. Lewis
+- *The Abolition of Man*, C.S. Lewis
+- *Small-Scale Dairy*, Gianaclis Caldwell
+- *Man's Search for Meaning*, Viktor Frankl
+- *Jayber Crow*, Wendell Berry
+- *La Fromagerie a la Ferme*, Patrick Anglade
+- *Sex, Freedom, Economy, and Community*, Wendell Berry
+- *How (Not) to Be Secular*, James Smith

@@ -1,0 +1,164 @@
+---
+---
+@import "assets/github-jekyll";
+
+body, html {
+  width: 100%;
+  padding: 0px;
+  margin: 0px;
+  background-color: white;
+  font-family: Helvetica, Arial, sans-serif;
+  line-height: 1.5rem;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+#wrapper {
+  max-width: 800px;
+  margin: 0px auto;
+  background-color: white;
+  padding: 20px;
+}
+
+.site-title {
+  text-align: center;
+}
+
+.main-navigation {
+  padding-bottom: 5px;
+  border-bottom: 1px solid black;
+  list-style: none;
+  display: flex;
+  li {
+    flex: 1;
+  }
+}
+
+.mobile-nav {
+  display: none;
+}
+
+a {
+  $link-color: #676FF3;
+  $visited-link-color: #6468b1;
+  text-decoration: none;
+  color: $link-color;
+  &:visited {
+    color: $visited-link-color;
+  }
+  &:hover {
+    text-decoration: underline;
+  }
+
+}
+
+.archive-post {
+  h1 {
+    margin-bottom: 5px;
+  }
+  .archive-post-date {
+    float: right;
+  }
+}
+
+.index-post {
+  margin-bottom: 25px;
+  header {
+    margin-top: 12px;
+    h1 {
+      margin: 0px 0px 8px 0px;
+    }
+    p {
+      margin: 6px 0px 0px 0px;
+    }
+  }
+}
+
+figure.code {
+  margin: 0px;
+}
+
+.highlight {
+  pre {
+    width: 100%;
+  }
+  .code {
+    pre {
+      border-top-left-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
+  }
+}
+
+blockquote {
+  $blockquote-color: #999999;
+  margin: 4px 0px;
+  padding: 0px 20px;
+  border-left-style: solid;
+  border-left-width: 1px;
+  border-left-color: $blockquote-color;
+  color: $blockquote-color;
+  font-style: italic;
+}
+
+.batmanjs-warning {
+  background: #FFEABD;
+  text-align: center;
+  padding: 10px;
+  font-size: 20px;
+  font-style: italic;
+  font-weigth: bold;
+}
+
+.talks-page {
+  .talk {
+    margin-bottom: 20px;
+    display: flex;
+  }
+  .talk-image {
+    img {
+      max-width: 300px;
+      margin-right: 20px;
+      border: 1px solid black;
+    }
+  }
+}
+
+.other-posts {
+  display: flex;
+  justify-content: space-between;
+
+  .next-post {
+    flex: 1;
+    text-align: right;
+  }
+
+  .prev-post {
+    flex: 1;
+  }
+}
+
+th, td {
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.pagination {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.blog-categories {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: left;
+  .category-link {
+    margin: 0px 10px 0px 10px;
+  }
+}
