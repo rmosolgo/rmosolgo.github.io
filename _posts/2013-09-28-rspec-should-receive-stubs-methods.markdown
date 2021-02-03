@@ -2,7 +2,6 @@
 layout: post
 title: "Rspec should_receive stubs methods"
 date: 2013-09-28 20:59
-comments: true
 categories:
   - Ruby
   - Rspec
@@ -56,7 +55,3 @@ won't pass:
     end
   end
 ```
-
-
-
-

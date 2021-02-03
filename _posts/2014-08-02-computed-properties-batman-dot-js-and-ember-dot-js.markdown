@@ -2,7 +2,6 @@
 layout: post
 title: "Computed Properties: Batman.js and Ember.js"
 date: 2014-08-02 09:38
-comments: true
 categories:
   - Batman.js
   - Ember.js
@@ -185,5 +184,3 @@ __Six of one, half-dozen of the other:__
 
 
 One thing that I found in neither framework was rate-limited properties, a la Knockout. I'd love to have a built-in option for this in batman.js.
-
-

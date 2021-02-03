@@ -2,7 +2,6 @@
 layout: post
 title: "Making Yogurt"
 date: 2015-04-27 07:37
-comments: true
 categories:
   - Food
   - Fermentation

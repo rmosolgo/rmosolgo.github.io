@@ -2,7 +2,6 @@
 layout: post
 title: "Books I Read in 2019"
 date: 2020-02-04 14:19
-comments: true
 categories:
 - Books
 ---

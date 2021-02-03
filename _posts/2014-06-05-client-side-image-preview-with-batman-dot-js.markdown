@@ -2,7 +2,6 @@
 layout: post
 title: "Client-Side Image Preview with Batman.js"
 date: 2014-06-05 07:26
-comments: true
 categories:
   - Batman.js
   - JavaScript

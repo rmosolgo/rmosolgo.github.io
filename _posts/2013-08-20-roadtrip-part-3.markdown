@@ -2,7 +2,6 @@
 layout: post
 title: "Roadtrip part 3"
 date: 2013-08-20 20:28
-comments: true
 categories:
   - Roadtrip
 ---

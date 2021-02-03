@@ -2,7 +2,6 @@
 layout: post
 title: "Debugging: Behavior &amp; Purpose"
 date: 2015-03-01 15:53
-comments: true
 categories:
   - Life
 ---

@@ -2,7 +2,6 @@
 layout: post
 title: "Trip Report: Balkan Ruby 2018"
 date: 2018-06-14 15:02
-comments: true
 categories:
 - Ruby
 - Conferences

@@ -2,7 +2,6 @@
 layout: post
 title: "Build a Blog with Batman.js"
 date: 2014-06-06 08:38
-comments: true
 categories:
   - Batman.js
   - JavaScript
@@ -801,5 +800,3 @@ I hope you have enjoyed this tour of batman.js! For more information:
 - join the [mailing list](https://groups.google.com/forum/#!forum/batmanjs)
 - drop by the IRC channel (#batmanjs)
 - leave a comment here or open an issue on the [github repo](http://github.com/batmanjs/batman)
-
-

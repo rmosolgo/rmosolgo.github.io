@@ -2,7 +2,6 @@
 layout: post
 title: "Render Scope in AngularJS and Batman.js"
 date: 2014-08-10 18:45
-comments: true
 categories:
   - Batman.js
   - Angular.js
@@ -118,6 +117,3 @@ I think Angular's `$scope` is brilliant. I imagine it's performant as well, alth
 I'm in the market to improve the performance of `Batman.View`, but I'm not sure I can take anything from `$scope`. All of batman.js depends on playing by the observability rules. I don't see any way I can get native JS prototypal inheritance to participate in that.
 
 I also like sticking with the "It's just batman.js" in the view layer. If you can write good `@accessor`s, then you've mastered `Batman.View`, too.
-
-
-

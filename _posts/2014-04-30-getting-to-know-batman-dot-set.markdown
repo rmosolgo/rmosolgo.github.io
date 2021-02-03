@@ -2,7 +2,6 @@
 layout: post
 title: "Getting to Know Batman.Set"
 date: 2014-04-30 07:54
-comments: true
 categories:
   - Batman.js
 ---

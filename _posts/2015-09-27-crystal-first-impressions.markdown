@@ -2,7 +2,6 @@
 layout: post
 title: "Crystal First Impressions"
 date: 2015-09-27 21:47
-comments: true
 categories:
  - Programming
  - Crystal

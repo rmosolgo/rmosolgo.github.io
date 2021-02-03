@@ -2,7 +2,6 @@
 layout: post
 title: "Prototyping a GraphQL Schema From Definition With Ruby"
 date: 2017-03-17 15:49
-comments: true
 categories:
 - Ruby
 - GraphQL

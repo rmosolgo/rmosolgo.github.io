@@ -2,7 +2,6 @@
 layout: post
 title: "Watching files during Rails development"
 date: 2017-04-12 14:09
-comments: true
 categories:
 - Ruby
 - Rails

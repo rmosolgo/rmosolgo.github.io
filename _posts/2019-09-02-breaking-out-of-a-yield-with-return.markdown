@@ -2,7 +2,6 @@
 layout: post
 title: "Breaking out of a yield with return"
 date: 2019-09-02 11:28
-comments: true
 categories:
 - Ruby
 ---

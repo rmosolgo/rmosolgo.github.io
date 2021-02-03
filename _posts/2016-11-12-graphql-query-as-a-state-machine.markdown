@@ -2,7 +2,6 @@
 layout: post
 title: "GraphQL Query as a State Machine"
 date: 2016-11-12 13:07
-comments: true
 categories:
 - Ruby
 - GraphQL
@@ -50,7 +49,7 @@ In the diagram above, each state is represented by a box. Between states, transi
 Let's see another regular expression, `/^a(bc|bd)$/`. It matches two strings, `"abc"` and `"abd"`. Here's a naive machine for this expression:
 
 ```
-|                                      +-----+          +-----+  
+|                                      +-----+          +-----+
 |                             . "b" -> | MS2 | - "d" -> | MS3 | - EOS
 | +-------+          +-----+ /         +-----+          +-----+       `-> +-----+
 | | start | - "a" -> | MS1 |                                              | end |

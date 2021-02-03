@@ -2,7 +2,6 @@
 layout: post
 title: "Finding implicit returns with Rubocop"
 date: 2019-11-14 09:57
-comments: true
 categories:
 - Ruby
 - Rubocop

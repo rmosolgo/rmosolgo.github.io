@@ -2,7 +2,6 @@
 layout: post
 title: "Updating GitHub to GraphQL 1.8.0"
 date: 2018-04-09 09:52
-comments: true
 categories:
 - Ruby
 - GraphQL

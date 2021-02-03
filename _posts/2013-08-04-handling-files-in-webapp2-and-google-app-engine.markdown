@@ -2,7 +2,6 @@
 layout: post
 title: "Handling Files in WebApp2 and Google App Engine"
 date: 2013-08-04 19:22
-comments: true
 categories:
   - Google App Engine
   - Python

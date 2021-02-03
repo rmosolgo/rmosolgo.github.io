@@ -2,7 +2,6 @@
 layout: post
 title: "Why a New Schema Definition API?"
 date: 2018-03-25 13:59
-comments: true
 categories:
 - GraphQL
 - Ruby

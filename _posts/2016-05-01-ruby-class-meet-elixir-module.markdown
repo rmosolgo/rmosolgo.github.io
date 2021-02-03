@@ -2,7 +2,6 @@
 layout: post
 title: "Ruby Class, meet Elixir Module"
 date: 2016-05-01 11:10
-comments: true
 categories:
   - Ruby
   - Programming
@@ -24,7 +23,7 @@ Elixir modules also combine data and behavior:
 
 Perhaps we can combine these ideas to gain some functional-style benefits in Ruby!
 
-## Data: Problem   
+## Data: Problem
 
 Ruby's mutable values open the door to errors caused by out-of-sight state changes. Here's a simple example:
 
@@ -121,7 +120,7 @@ counter.count         # => 0
 counter = counter.increment
 counter.count         # => 1
 cause_mayhem(counter)
-counter.count         # => 1 🎊  
+counter.count         # => 1 🎊
 ```
 
 There's no way `cause_mayhem` could alter our counter!
@@ -229,7 +228,7 @@ class BaseballTeam
   def avg_salary
     @aggregates.avg_salary
   end
-end  
+end
 ```
 
 Further defensive techniques could be taken, such as:

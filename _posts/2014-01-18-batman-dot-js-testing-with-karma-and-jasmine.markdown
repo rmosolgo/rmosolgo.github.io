@@ -2,7 +2,6 @@
 layout: post
 title: "Batman.js testing with Karma and Jasmine"
 date: 2014-01-18 14:38
-comments: true
 categories:
   - Batman.js
   - Rails
@@ -136,4 +135,3 @@ describe "Batman.TestCase is loaded", ->
 
 
 Ok, well it ain't perfect but it works. Hope it helps!
-

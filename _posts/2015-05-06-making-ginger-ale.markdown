@@ -2,7 +2,6 @@
 layout: post
 title: "Making Ginger Ale"
 date: 2015-05-06 17:50
-comments: true
 categories:
   - Food
   - Fermentation

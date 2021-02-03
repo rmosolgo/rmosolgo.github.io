@@ -2,7 +2,6 @@
 layout: post
 title: "Summer Reading: Specializing Ruby"
 date: 2016-08-06 11:10
-comments: true
 categories:
 - Ruby
 - Language Implementation
@@ -31,7 +30,7 @@ Truffle is a _language implementation framework_ for _self-optimizing AST interp
 
 Graal is a _dynamic compiler_ for the JVM, written in Java. A few points about Graal:
 
-- It's a just-in-time compiler, so it improves a program's performance while the program runs.   
+- It's a just-in-time compiler, so it improves a program's performance while the program runs.
 - Graal is written in Java, which means it can expose its own APIs to other Java programs (like Truffle).
 - Graal includes a powerful system for _de-optimizing_. This is especially important for Ruby, since Ruby's metaprogramming constructs allow programs to define new behavior for themselves while running.
 

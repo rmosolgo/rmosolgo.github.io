@@ -2,7 +2,6 @@
 layout: post
 title: "Happy Refactoring by Keeping ApplicationController to a Minimum"
 date: 2015-01-17 10:24
-comments: true
 categories:
   - Rails
 ---

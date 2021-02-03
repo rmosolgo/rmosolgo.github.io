@@ -2,7 +2,6 @@
 layout: post
 title: "Property Caching in Batman.js"
 date: 2014-03-31 09:09
-comments: true
 categories:
   - Batman.js
 ---

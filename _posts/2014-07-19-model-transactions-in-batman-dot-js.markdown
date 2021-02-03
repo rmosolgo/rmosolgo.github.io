@@ -2,7 +2,6 @@
 layout: post
 title: "Model Transactions in Batman.js"
 date: 2014-07-19 09:15
-comments: true
 categories:
   - Batman.js
 ---
@@ -104,8 +103,3 @@ transaction.applyChanges()
 ```
 
 You might use this if your save operation is really complicated and you need to control it by hand.
-
-
-
-
-

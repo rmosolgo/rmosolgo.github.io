@@ -2,7 +2,6 @@
 layout: post
 title: "Authorization in GraphQL"
 date: 2015-08-04 10:19
-comments: true
 categories:
   - GraphQL
   - Ruby

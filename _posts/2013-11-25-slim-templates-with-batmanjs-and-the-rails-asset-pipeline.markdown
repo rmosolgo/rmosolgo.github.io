@@ -2,7 +2,6 @@
 layout: post
 title: "Slim Templates with Batman.js and the Rails Asset Pipeline"
 date: 2013-11-25 13:28
-comments: true
 categories:
   - Rails
   - Batman.js

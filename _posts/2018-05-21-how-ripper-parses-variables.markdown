@@ -2,7 +2,6 @@
 layout: post
 title: "How Ripper parses variables"
 date: 2018-05-21 14:11
-comments: true
 categories:
 - Ruby
 - Ripper

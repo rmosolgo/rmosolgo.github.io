@@ -2,7 +2,6 @@
 layout: post
 title: "How I Use Sprockets"
 date: 2016-05-19 08:44
-comments: true
 categories:
 - Ruby
 - Rails

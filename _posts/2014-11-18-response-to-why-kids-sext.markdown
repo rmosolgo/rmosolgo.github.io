@@ -2,7 +2,6 @@
 layout: post
 title: "Response to \"Why Kids Sext\""
 date: 2014-11-18 21:15
-comments: true
 categories:
   - Life
 ---

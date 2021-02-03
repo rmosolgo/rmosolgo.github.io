@@ -2,7 +2,6 @@
 layout: post
 title: "Jasmine-Friendly Batman.js Accessor Stubs"
 date: 2014-05-16 12:53
-comments: true
 categories:
   - Batman.js
 ---

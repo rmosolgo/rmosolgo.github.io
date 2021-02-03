@@ -2,7 +2,6 @@
 layout: post
 title: "Using Gulp.js to build Batman.js apps without Rails"
 date: 2014-03-22 10:39
-comments: true
 categories:
   - Gulp.js
   - Batman.js
@@ -129,4 +128,3 @@ And in the layout:
 ```
 
 Voila! Your app is compiled and HTML will be preloaded!
-

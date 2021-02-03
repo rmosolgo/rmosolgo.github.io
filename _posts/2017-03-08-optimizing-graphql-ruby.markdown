@@ -2,7 +2,6 @@
 layout: post
 title: "Optimizing GraphQL-Ruby"
 date: 2017-03-08 08:02
-comments: true
 categories:
 - GraphQL
 - Ruby

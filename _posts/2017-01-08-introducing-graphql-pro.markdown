@@ -2,7 +2,6 @@
 layout: post
 title: "Introducing GraphQL::Pro"
 date: 2017-01-09 09:47
-comments: true
 categories:
 - Ruby
 - GraphQL

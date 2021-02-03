@@ -2,7 +2,6 @@
 layout: post
 title: "Lessons Learned on Google App Engine"
 date: 2013-11-01 13:00
-comments: true
 categories:
   - Google App Engine
   - Python

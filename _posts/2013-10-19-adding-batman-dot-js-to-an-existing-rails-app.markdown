@@ -2,7 +2,6 @@
 layout: post
 title: "Adding Batman.js to an Existing Rails App"
 date: 2013-10-19 22:08
-comments: true
 categories:
   - Ruby
   - Rails
@@ -98,4 +97,3 @@ _your filename will be your app name:_
 ```
 
 And now I had my own landing page!
-

@@ -2,7 +2,6 @@
 layout: post
 title: "\"Hello World\" with mruby"
 date: 2014-11-15 19:38
-comments: true
 categories:
   - mruby
   - Ruby

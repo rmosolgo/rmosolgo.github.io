@@ -2,7 +2,6 @@
 layout: post
 title: "Integrate Batman.js and Leaflet with a Custom View"
 date: 2014-04-30 23:33
-comments: true
 categories:
   - Batman.js
 ---

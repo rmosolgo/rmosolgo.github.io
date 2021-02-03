@@ -2,7 +2,6 @@
 layout: post
 title: "Trip Report: RubyConf Colombia 2016"
 date: 2016-09-04 22:13
-comments: true
 categories:
 - Ruby
 - Conferences

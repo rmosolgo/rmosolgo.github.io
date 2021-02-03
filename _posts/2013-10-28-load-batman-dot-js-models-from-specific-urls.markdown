@@ -2,7 +2,6 @@
 layout: post
 title: "Load Batman.js Models from Specific Urls"
 date: 2013-10-28 10:19
-comments: true
 categories:
   - Batman.js
   - JavaScript
@@ -49,5 +48,3 @@ If you're reloading an already-loaded model, you can set its (POJO) `url` attrib
 ## For a New Records or Collections?
 
 I'm not sure yet. Check out [Batman.RestStorage#UrlForCollection](https://github.com/batmanjs/batman/blob/master/src/model/storage_adapters/rest_storage.coffee#L109)!
-
-

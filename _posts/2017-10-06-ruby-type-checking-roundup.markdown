@@ -2,7 +2,6 @@
 layout: post
 title: "Ruby Type Checking Roundup"
 date: 2017-10-06 09:00
-comments: true
 categories:
 - Ruby
 - Programming

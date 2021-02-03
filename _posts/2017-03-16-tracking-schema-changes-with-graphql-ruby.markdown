@@ -2,7 +2,6 @@
 layout: post
 title: "Tracking Schema Changes with GraphQL-Ruby"
 date: 2017-03-16 20:16
-comments: true
 categories:
 - Ruby
 - GraphQL

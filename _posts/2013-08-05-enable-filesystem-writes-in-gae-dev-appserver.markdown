@@ -2,7 +2,6 @@
 layout: post
 title: "Enable filesystem writes in GAE dev_appserver"
 date: 2013-08-05 20:43
-comments: true
 categories:
   - Google App Engine
   - Python

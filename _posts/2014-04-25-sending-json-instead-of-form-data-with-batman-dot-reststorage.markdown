@@ -2,7 +2,6 @@
 layout: post
 title: "Sending JSON Instead of Form Data with Batman.RestStorage"
 date: 2014-04-25 13:02
-comments: true
 categories:
   - Batman.js
 ---

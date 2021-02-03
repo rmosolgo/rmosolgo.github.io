@@ -2,7 +2,6 @@
 layout: post
 title: "Parameterized styles with React, Rails and Sprockets"
 date: 2016-10-18 15:05
-comments: true
 categories:
 - Rails
 - React.js
@@ -151,7 +150,7 @@ Apply overrides by "reopening" class names inside the module:
 
 This will _only_ affect `.detail-pane` within the `resources` module.
 
-Alternatively, you can parameterize the mixin. Add a `$`-parameter to the mixin:  
+Alternatively, you can parameterize the mixin. Add a `$`-parameter to the mixin:
 
 ```scss
 // in shared/detail_pane.scss

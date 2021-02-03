@@ -2,7 +2,6 @@
 layout: post
 title: Communion as "Bread from Heaven"
 date: 2015-08-08 08:45
-comments: true
 categories:
   - Christianity
   - Life

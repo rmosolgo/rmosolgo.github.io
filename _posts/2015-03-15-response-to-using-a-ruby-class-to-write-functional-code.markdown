@@ -2,7 +2,6 @@
 layout: post
 title: 'Response to "Using a Ruby Class to Write Functional Code"'
 date: 2015-03-15 14:29
-comments: true
 categories:
   - Programming
   - Ruby

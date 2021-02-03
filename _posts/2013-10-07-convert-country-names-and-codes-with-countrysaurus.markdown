@@ -2,7 +2,6 @@
 layout: post
 title: "Convert country names and codes with Countrysaurus"
 date: 2013-10-07 21:56
-comments: true
 categories:
   - International Relations
   - Data Management
@@ -26,5 +25,3 @@ Finally, I hammered out a little web app with Ruby's [Sinatra](http://www.sinatr
 - Allow you to download your spreadsheet.
 
 It's also [on Github](https://github.com/rmosolgo/country-fixer). [Try it out!](http://countrysaurus.herokuapp.com/)
-
-

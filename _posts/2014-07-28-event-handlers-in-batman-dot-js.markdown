@@ -2,7 +2,6 @@
 layout: post
 title: "Event Handlers in Batman.js"
 date: 2014-07-28 13:23
-comments: true
 categories:
   - Batman.js
 ---
@@ -194,6 +193,3 @@ ItemsController {redirect: function, handleError: function, errorHandler: functi
 ```
 
 Since batman.js looks up the base object, event handlers behave just like normal functions in the place you define them.
-
-
-

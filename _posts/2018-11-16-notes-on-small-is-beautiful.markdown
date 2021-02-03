@@ -2,7 +2,6 @@
 layout: post
 title: "Notes on Small is Beautiful"
 date: 2018-11-16 10:10
-comments: true
 categories:
   - Reading
   - Life

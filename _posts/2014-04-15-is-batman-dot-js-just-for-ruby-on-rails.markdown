@@ -2,7 +2,6 @@
 layout: post
 title: "Is Batman.js Just for Ruby on Rails?"
 date: 2014-04-15 22:39
-comments: true
 categories:
   - Batman.js
 ---

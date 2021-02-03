@@ -2,7 +2,6 @@
 layout: post
 title: "Trampolining"
 date: 2018-09-23 21:04
-comments: true
 categories:
 - Ruby
 - Language Implementation

@@ -2,7 +2,6 @@
 layout: post
 title: "Batman.Model Lifecycle Callbacks"
 date: 2014-03-19 10:52
-comments: true
 categories:
   - Batman.js
 ---

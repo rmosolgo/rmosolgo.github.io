@@ -2,7 +2,6 @@
 layout: post
 title: "How I Make Yogurt"
 date: 2019-03-28 09:25
-comments: true
 categories:
   - Dairy
   - Food

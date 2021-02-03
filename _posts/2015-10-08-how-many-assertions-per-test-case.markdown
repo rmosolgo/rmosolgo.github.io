@@ -2,7 +2,6 @@
 layout: post
 title: "How many assertions per test case?"
 date: 2015-10-08 21:12
-comments: true
 categories:
  - Programming
  - Testing
@@ -52,7 +51,7 @@ describe "an unauthorized request" do
   it "doesn't write to the database" do
     http_response = make_create_request # makes a unauthorized_request
     assert_equal(0, Posts.count)
-  end  
+  end
 end
 ```
 

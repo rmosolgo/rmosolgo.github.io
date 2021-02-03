@@ -2,7 +2,6 @@
 layout: post
 title: "Parallelism in GraphQL-Ruby"
 date: 2017-01-22 10:23
-comments: true
 categories:
 - Ruby
 - GraphQL

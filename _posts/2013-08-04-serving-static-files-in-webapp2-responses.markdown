@@ -2,7 +2,6 @@
 layout: post
 title: "Serving static files in WebApp2 reponses"
 date: 2013-08-04 19:22
-comments: true
 categories:
   - Google App Engine
   - Python

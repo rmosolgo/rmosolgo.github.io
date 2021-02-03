@@ -2,7 +2,6 @@
 layout: post
 title: "Prevent and allowAndFire for asynchronous operations on a Batman.Set"
 date: 2014-04-07 18:12
-comments: true
 categories:
   - Batman.js
 ---

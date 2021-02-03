@@ -2,7 +2,6 @@
 layout: post
 title: "Why (I Think) We're Leaving Batman.js"
 date: 2014-09-07 20:19
-comments: true
 categories:
   - Batman.js
   - React.js

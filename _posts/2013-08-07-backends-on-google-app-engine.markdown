@@ -2,7 +2,6 @@
 layout: post
 title: "Using Command-Line Tools for Backends on Google App Engine"
 date: 2013-08-07 19:17
-comments: true
 categories:
   - Google App Engine
 ---

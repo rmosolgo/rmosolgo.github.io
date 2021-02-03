@@ -2,7 +2,6 @@
 layout: post
 title: "Has Many Through in Batman.js"
 date: 2014-05-30 15:27
-comments: true
 categories:
   - Batman.js
 ---

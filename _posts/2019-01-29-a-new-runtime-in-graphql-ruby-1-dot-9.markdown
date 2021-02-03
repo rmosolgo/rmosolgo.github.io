@@ -2,7 +2,6 @@
 layout: post
 title: "A New Runtime in GraphQL-Ruby 1.9"
 date: 2019-01-29 07:22
-comments: true
 categories:
   - Ruby
   - GraphQL

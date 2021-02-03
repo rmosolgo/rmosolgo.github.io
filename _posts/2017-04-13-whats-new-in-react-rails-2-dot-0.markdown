@@ -2,7 +2,6 @@
 layout: post
 title: "What's new in React-Rails 2.0?"
 date: 2017-04-13 11:59
-comments: true
 categories:
 - Ruby
 - Rails

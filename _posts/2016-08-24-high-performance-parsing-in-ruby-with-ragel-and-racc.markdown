@@ -2,7 +2,6 @@
 layout: post
 title: "High-Performance Parsing in Ruby with Ragel and Racc"
 date: 2016-08-24 09:49
-comments: true
 published: false
 categories:
 - Ruby

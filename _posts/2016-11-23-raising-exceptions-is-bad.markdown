@@ -2,7 +2,6 @@
 layout: post
 title: "Raising Exceptions is Bad"
 date: 2016-11-23 10:34
-comments: true
 categories:
 - Ruby
 - Programming
@@ -74,7 +73,7 @@ Here are some techniques for expressing failures with `return`.
 def do_something
   calculation = SomeCalculation.new # ...
 
-  if calculation.something_went_wrong?  
+  if calculation.something_went_wrong?
     # Let the caller handle this error
     MyCustomError.new("oops!")
   else
@@ -122,7 +121,7 @@ when ConvertSuccess
   # Do something with the new file
 when ConvertFailure
   # Notify the user of the failure
-end   
+end
 ```
 
 - As a last resort, __return `nil`__. Using `nil` as an expression of failure has some downsides:
@@ -147,7 +146,7 @@ when ConvertFailure
   # Notify the user of the failure
 else
   raise("convert_file didn't return a ConvertSuccess or ConvertFailure, it returned: #{conversion.inspect}")
-end   
+end
 ```
 
 Now, if the method ever returns some unexpected value, we'll receive a loud failure. Some people use `fail` in this case, which is also fine. However, the need to disambiguate `raise` and `fail` is a code smell: stop using `raise` for non-emergencies!

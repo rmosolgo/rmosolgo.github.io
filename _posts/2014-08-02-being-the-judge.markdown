@@ -2,7 +2,6 @@
 layout: post
 title: "Being the Judge"
 date: 2014-08-02 22:08
-comments: true
 categories:
   - Life
   - Christianity

@@ -2,7 +2,6 @@
 layout: post
 title: "Dynamic Navigation View with Batman.js"
 date: 2013-11-23 14:50
-comments: true
 categories:
   - Batman.js
 ---
@@ -111,4 +110,3 @@ The big win here was sending strings to `App.routes` with `[]` in the keypath. T
 - Use `MyApp.currentRoute` to get information about the current page.
 - Subclass `Batman.View` to provide site-wide navs (or other views).
 - Meta-program your routes (or other parts of the nav) by using `[]` in your keypaths.
-

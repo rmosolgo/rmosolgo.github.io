@@ -2,7 +2,6 @@
 layout: post
 title: "Roadtrip part 1"
 date: 2013-08-12 16:35
-comments: true
 categories:
   - Roadtrip
 ---

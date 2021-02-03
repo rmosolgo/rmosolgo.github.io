@@ -2,7 +2,6 @@
 layout: post
 title: "Move ActiveRecord Scopes into Separate Files"
 date: 2015-03-12 08:14
-comments: true
 categories:
   - Rails
   - Programming
@@ -120,7 +119,3 @@ __Cons:__
 - If the scope takes arguments, you can't tell right away.
 - It doesn't _actually_ shrink the class's API: it's still a big ol' model.
 - It's not a known Rails practice.
-
-
-
-

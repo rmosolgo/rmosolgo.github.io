@@ -2,7 +2,6 @@
 layout: post
 title: "Finding a Browser-Ready File for Sprockets"
 date: 2016-05-19 22:00
-comments: true
 categories:
 - Sprockets
 - JavaScript

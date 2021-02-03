@@ -2,7 +2,6 @@
 layout: post
 title: "Using GraphQL without Relay"
 date: 2016-03-03 10:01
-comments: true
 categories:
   - GraphQL
   - JavaScript

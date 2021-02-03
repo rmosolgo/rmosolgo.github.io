@@ -2,7 +2,6 @@
 layout: post
 title: "Reload HTML for Batman.Views"
 date: 2014-02-21 08:40
-comments: true
 categories:
   - Batman.js
 ---
@@ -59,7 +58,3 @@ In Chrome:
 - __`$context($0).refreshHTML()`__ to get the view for the node and call `refreshHTML` on it.
 
 Cha-ching!
-
-
-
-

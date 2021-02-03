@@ -2,7 +2,6 @@
 layout: post
 title: "Batman.js and Devise"
 date: 2014-07-21 09:08
-comments: true
 categories:
   - Batman.js
   - Ruby on Rails

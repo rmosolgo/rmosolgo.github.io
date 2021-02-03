@@ -2,7 +2,6 @@
 layout: post
 title: "Tips for Batman.RestStorage and Batman.RailsStorage"
 date: 2014-03-05 13:52
-comments: true
 categories:
   - Batman.js
 ---
@@ -81,4 +80,3 @@ When Rails responds with `422` and a JSON object with `{ "errors" : { ... } }`, 
   <div class='errors'><!-- will be automatically populated --></div>
 </form>
 ```
-

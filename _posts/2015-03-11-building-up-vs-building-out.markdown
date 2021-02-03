@@ -2,7 +2,6 @@
 layout: post
 title: 'Building up vs Building out'
 date: 2015-03-11 13:27
-comments: true
 categories:
   - Programming
 ---
@@ -77,7 +76,3 @@ This way, your existing views stay simple. The new views can be equally simple. 
 ## In Rails
 
 Rather than adding `if`s in controller actions, add a new controller. Maybe it renders the same kind of objects as the existing controller -- that's OK! It's worth it to add the extra controllers & actions to keep the code paths simple.
-
-
-
-

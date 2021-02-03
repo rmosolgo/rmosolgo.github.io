@@ -2,7 +2,6 @@
 layout: post
 title: "Hash#key? vs Hash#[]"
 date: 2016-10-24 10:30
-comments: true
 categories:
 - Ruby
 ---
@@ -126,7 +125,7 @@ rb_hash_has_key(VALUE hash, VALUE key)
         return Qtrue;
     }
     return Qfalse;
-}  
+}
 ```
 
 They're remarkably similar. They _both_:

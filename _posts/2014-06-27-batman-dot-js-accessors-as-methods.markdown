@@ -2,7 +2,6 @@
 layout: post
 title: "Batman.js Accessors as Methods"
 date: 2014-06-27 08:10
-comments: true
 categories:
   - Batman.js
 ---
@@ -92,4 +91,3 @@ You can also use the `withArguments` filter (as of 0.16, [PR](https://github.com
 ```
 
 `withArguments` recognizes that it should use `get` in this case.
-

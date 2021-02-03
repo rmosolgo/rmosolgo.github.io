@@ -2,7 +2,6 @@
 layout: post
 title: "Defining mruby Methods with C"
 date: 2014-11-21 10:25
-comments: true
 categories:
   - mruby
 ---

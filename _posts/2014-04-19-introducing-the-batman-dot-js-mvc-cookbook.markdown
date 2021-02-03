@@ -2,7 +2,6 @@
 layout: post
 title: "Introducing the Batman.js MVC Cookbook"
 date: 2014-04-19 13:47
-comments: true
 categories:
   - Batman.js
 ---
