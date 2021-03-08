@@ -1,8 +1,6 @@
 <header>
   <h1 class="entry-title"><a href="{{ root_url }}{{ post.url }}">{% if site.titlecase %}{{ post.title | titlecase }}{% else %}{{ post.title }}{% endif %}</a></h1>
+  <span class="muted-date">{% include date.html %}{{ time }}</span>
 </header>
 
 <div class="entry-content">{{ post.excerpt }}</div>
-<footer>
-  <a rel="full-article" href="{{ root_url }}{{ post.url }}">Continue →</a>
-</footer>

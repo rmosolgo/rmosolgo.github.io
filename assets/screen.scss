@@ -67,7 +67,7 @@ a {
   header {
     margin-top: 12px;
     h1 {
-      margin: 0px 0px 8px 0px;
+      margin: 0px 0px 5px 0px;
     }
     p {
       margin: 6px 0px 0px 0px;
@@ -108,7 +108,7 @@ blockquote {
   padding: 10px;
   font-size: 20px;
   font-style: italic;
-  font-weigth: bold;
+  font-weight: bold;
 }
 
 .talks-page {
@@ -160,6 +160,14 @@ th, td {
   .category-link {
     margin: 0px 10px 0px 10px;
   }
+}
+
+.muted-date {
+  color: #777777;
+}
+
+.entry-content p {
+  margin: 5px 0px 15px 0px;
 }
 
 /*
