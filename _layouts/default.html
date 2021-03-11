@@ -21,7 +21,7 @@
   <link rel="canonical" href="{{ canonical }}">
   <link href="{{ root_url }}/assets/favicon.png" rel="icon">
   <link href="{{ root_url }}/assets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="{{ site.subscribe_rss }}" rel="alternate" title="{{site.title}}" type="application/atom+xml">
+  <link rel="alternate" type="application/rss+xml"  href="{{ site.url }}/feed.xml" title="{{ site.title }}">
 </head>
 
 <body {% if page.body_id %} id="{{ page.body_id }}" {% endif %} {% if page.sidebar == false  or site.sidebar == false%} class="no-sidebar" {% endif %} {% if page.sidebar == 'collapse' or site.sidebar == 'collapse' %} class="collapse-sidebar sidebar-footer" {% endif %}>
@@ -36,7 +36,15 @@
         {% endif %}
       </hgroup>
     </header>
-    <nav role="navigation">{% include navigation.html %}</nav>
+    <nav role="navigation">
+      <ul class="main-navigation">
+        <li><a href="{{ root_url }}/">Home</a></li>
+        <li><a href="{{ root_url }}/about">About</a></li>
+        <li><a href="{{ root_url }}/blog/archives">Blog</a></li>
+        <li><a href="{{ root_url }}/talks">Talks</a></li>
+        <li><a href="{{ root_url }}/feed.xml">RSS</a></li>
+      </ul>
+    </nav>
     <div id="main">
       <div id="content">
         {{ content | expand_urls: root_url }}

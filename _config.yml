@@ -20,8 +20,7 @@
 
 title: Robert Mosolgo
 email: rdmosolgo@gmail.com
-description: >- # this means to ignore newlines until "baseurl:"
-  Robert Mosolgo's Personal Blog
+description: Robert Mosolgo's Personal Blog
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://rmosolgo.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: rmosolgo
