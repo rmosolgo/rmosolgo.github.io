@@ -15,7 +15,7 @@ title: "About"
 
 ### Jobs
 
-- __Senior Platform Engineer__, GitHub _May 2017-present_
+- __Senior Platform Engineer__, GitHub _May 2017-September 2021_
 - __Ruby/JavaScript Developer__, Planning Center Online _August 2013–May 2017_
 - __Web Developer__, NergySense Inc _January 2013–Present, occasional_
 - __Project Manager, Data Management & Quality__, AidData _August 2011–August 2013_
