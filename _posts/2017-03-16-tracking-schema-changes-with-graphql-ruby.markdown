@@ -82,12 +82,7 @@ Now that your schema definition is versioned along with your code, you can see c
 
 ## Multiple Schema Dumps
 
-If your schema looks different to different users, you can track _multiple_ schema dumps. This is helpful if:
-
-- You're using the `:view` configuration of [`GraphQL::Pro`'s authorization](https://rmosolgo.github.io/graphql-ruby/pro/authorization)
-- You're using `only:`/ `except:` to manually filter your schema
-
-Just provide the `context:` argument to `Schema.to_definition` as if you were running a query. (Also provide `only:`/`except:` if you use them.)
+If your schema looks different to different users, you can track _multiple_ schema dumps. This is helpful if you're using GraphQL-Ruby's "visibility" feature to serve different schemas to different clients. Just provide the `context:` argument to `Schema.to_definition` as if you were running a query. (Also provide `only:`/`except:` if you use them.)
 
 Print with a filter from the Rake task:
 
