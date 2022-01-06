@@ -1,25 +1,3 @@
-2021 Books
+2022 Books
 
-- _Jesus Through Middle Eastern Eyes_, Kenneth Bailey
-- _Small Farmer's Journal, Volume 44, Number 1_
-- _Small Farmer's Journal, Volume 44, Number 2_
-- _Small Farmer's Journal, Volume 41, Number 3_
-- _Farm Mechanics: Farm Machinery and Its Use_, Herbert Shearer
-- _Lilith_, George MacDonald
-- _The Art of Natural Cheesemaking_, David Asher
-- _Power Failure: Christianity in the Culture of Technology_, Albert Borgmann
-- _Radical Brewing_, Randy Mosher
-- _The Patient Ferment of the Early Church_, Alan Kreider
-- _The Violence of Love_, Plough Quarterly #27 Spring 2021
-- _Shadow of the Torturer_, Gene Wolfe
-- _Claw of the Conciliator_, Gene Wolfe
-- _Creatures_, Plough Quarterly #28 Summer 2021
-- _A Timber Framer's Workshop_, Steve Chappell
-- _Moving Heavy Things_, Jan Adkins
-- _Home Economics_, Wendell Berry
-- _Historical Brewing Techniques: The Lost Art of Farmhouse Brewing_, Lars Marius Garshol
-- _Sword of the Lictor_, Gene Wolfe
-- _Water at the Roots_, Philip Britts, ed Jennifer Harries
-- _Beyond Borders_, Plough Quarterly #29 Fall 2021
-- _Citadel of the Autarch_, Gene Wolfe
-- _Peace Like a River_, Leif Enger
+- _The Art of Fermentation_, Sandor Elix Katz
