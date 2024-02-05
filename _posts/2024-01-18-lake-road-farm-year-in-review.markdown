@@ -150,7 +150,7 @@ I learned a lot about hay this year. I used lots of different kinds of hay for d
 - **Alfalfa-mix round bales.** This stuff was amazing. Green, sweet-smelling, and leafy, the cows have been loving it and they're producing as much now as they were when the drought set in.
 
 <div class='img-group'>
-<div class='img-container'><a href='/assets/images/lrf_2023/green-hay.JPG'><img src='/assets/images/lrf_2023/green-hay.JPG' /></a></div>
+<div class='img-container'><a href='/assets/images/lrf_2023/green-hay.jpg'><img src='/assets/images/lrf_2023/green-hay.jpg' /></a></div>
 <div class='img-container'><a href='/assets/images/lrf_2023/winter-hay.jpg'><img src='/assets/images/lrf_2023/winter-hay.jpg' /></a></div>
 </div>
 
