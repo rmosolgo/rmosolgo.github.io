@@ -1,7 +1,6 @@
 class ImageGroup < Liquid::Tag
   def initialize(_tagname, text, _tokens)
     @image_paths = text.split(",").map(&:strip)
-    pp [self.class, @image_paths, text]
     super
   end
   def render(context)
