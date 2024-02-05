@@ -170,6 +170,22 @@ th, td {
   margin: 5px 0px 15px 0px;
 }
 
+.img-group {
+  display: flex;
+  max-width: 100%;
+  justify-content: space-around;
+
+  .img-container {
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+
+    img {
+      max-width: 100%;
+      max-height: 300px;
+    }
+  }
+}
 /*
  * GitHub style for Pygments syntax highlighter, for use with Jekyll
  * Courtesy of GitHub.com
