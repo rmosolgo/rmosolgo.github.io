@@ -171,6 +171,8 @@ It was a relatively quiet year for timber framing, but I did make a simple arbor
 
 <div class='img-group'>
 <div class='img-container'><a href='/assets/images/lrf_2024/joinery.jpg'><img src='/assets/images/lrf_2024/joinery.jpg' /></a></div>
+<div class='img-container'><a href='/assets/images/lrf_2024/arbor-2.jpg'><img src='/assets/images/lrf_2024/arbor-2.jpg' /></a></div>
+<div class='img-container'><a href='/assets/images/lrf_2024/arbor-3.jpg'><img src='/assets/images/lrf_2024/arbor-3.jpg' /></a></div>
 </div>
 
 ### We got a dog
@@ -184,7 +186,7 @@ After deer decimated everything during the drought, we adopted a half-wild hound
 
 ## Looking ahead...
 
-Some thoughts and for 2025:
+Some thoughts and goals for 2025:
 
 - Install swales, small holding ponds, and appropriate overflow earthworks
 - Repair the dam where it's starting to wash out
