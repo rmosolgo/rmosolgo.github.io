@@ -32,15 +32,15 @@ So, why create a new one?
 
 ## Why Perfetto?
 
-I knew I wanted something _visual_. In my own experience, a good graphic can make patterns very easy to spot. At first, I check out Chrome's trace viewer. But it immediately had a notice: "Try the new Perfetto UI!" So, I followed that link and discovered Perfetto.
+I knew I wanted something _visual_. In my own experience, a good graphic can make patterns very easy to spot. At first, I checked out Chrome's trace viewer. But it immediately had a notice: "Try the new Perfetto UI!" So, I followed that link and discovered Perfetto.
 
 At a glance, I was intrigued. There was documentation for [generating traces](https://perfetto.dev/docs/reference/synthetic-track-event) which included:
 
-- "Multi-track" traces for asynchronous or concurrent processes - perfect for Dataloader flows
-- "Flows" for connecting different events and segment. These would be good for connecting fields to the Dataloader sources they call.
+- "Multi-track" traces for asynchronous or concurrent processes - perfect for Dataloader.
+- "Flows" for connecting different events and segments with arrows. These would be good for connecting fields to the Dataloader sources they call.
 - "Counters" for tracking arbitrary metrics during runtime. I used these for rendering high-level values during query execution.
 
-Beyond this, the API for [linking to Perfetto UI](https://perfetto.dev/docs/visualization/deep-linking-to-perfetto-ui) seemed doable, though not easy.
+Beyond this, the API for [opening traces in the Perfetto web UI](https://perfetto.dev/docs/visualization/deep-linking-to-perfetto-ui) seemed doable, though not easy.
 
 ## Prior Art
 
@@ -64,9 +64,9 @@ Then, in Ruby-land, I implemented a [GraphQL trace module](https://graphql-ruby.
 
 The truth is, when I started this project, GraphQL-Ruby's tracing hooks didn't support my use case. I needed better insight into when Ruby fibers started and stopped so that I could terminate segments for GraphQL fields which called out to Dataloader. (When a field calls `dataload(...)`, and the value isn't already in the cache, then the fiber is stopped.)
 
-So, I added some _new_ tracing hooks: `dataloader_fiber_yield`, called when Dataloader causes a fiber to yield, and `dataloader_fiber_resume`, called when a previously-yielded fiber resumes execution. Since this happens when a source is invoked, I passed the source instance to the hook, too.
+So, I added some _new_ tracing hooks: `dataloader_fiber_yield(source)`, called when Dataloader causes a fiber to yield, and `dataloader_fiber_resume(source)`, called when a previously-yielded fiber resumes execution. Since this happens when a source is invoked, I passed the source instance to the hook, too.
 
-Using this new hook, I could store the current fiber's segment (using fiber storage via `Fiber::[]=`), then terminate it during `dataloader_fiber_yield`. I'd keep it around, though -- then create a _duplicate_ of it during `dataloader_fiber_resume`. In this arrangement, a GraphQL field whose execution is paused by waiting for Dataloader is rendered as two segments: one _before_ the `dataload(...)` call and one _after_ it:
+Using this new hook, I could store the active segment for a given fiber (using `Fiber::[]=`), then terminate it during `dataloader_fiber_yield`. I'd keep it around, though -- then create a _duplicate_ of it during `dataloader_fiber_resume`. In this arrangement, a GraphQL field whose execution is paused by waiting for Dataloader is rendered as two segments: one _before_ the `dataload(...)` call and one _after_ it:
 
 <p><img src="/assets/images/perfetto/fiber_stop.png" width="100%" /></p>
 
@@ -75,7 +75,7 @@ Using this new hook, I could store the current fiber's segment (using fiber stor
 
 ## Flows
 
-Perfetto's "flows" link one segment to another with a little arrow. I wanted to use them  to link GraphQL fields to the Dataloader sources that they called. That way, when a Source fetched data, you could readily _see_ which fields had requested data from that Source.
+Perfetto's "flows" link one segment to another with a little arrow. I wanted to use them  to link GraphQL fields to the Dataloader sources that they called. That way, when a source fetched data, you could readily _see_ which fields had requested data from that source.
 
 But the problem is, when a GraphQL field starts, you don't _know_ if it's going to call into Dataloader. I could address this in the new `dataloader_fiber_yield` hook. Before terminating the segment for a GraphQL field, I'd create an arbitrary `flow_id` value for it, then assign it to the segment. Then, since `dataload_fiber_yield` received the source instance as input, I'd cache the new `flow_id` in a hash where the source instance was key.
 
@@ -83,7 +83,7 @@ That way, when Dataloader started running that source, it could fetch out the `f
 
 <p><img src="/assets/images/perfetto/flows.png" width="100%" /></p>
 
-<i>In this example, a field called a Dataloader source, and that source called _another_ source.</i>
+<i>In this example, a field called a Dataloader source, and that source called _another_ source, then each one returned.</i>
 
 ## Counters
 
@@ -97,13 +97,13 @@ As a convenience, Perfetto's schema allows you to "sneak" counter updates into o
 
 ## Metadata
 
-Perfetto supports _anything_ you can throw at it. It has a general-purpose `DebugAnnotation` message for metadata.
+Perfett can render _any_ metadata you throw at it. It has a general-purpose `DebugAnnotation` message for this.
 
 For fields, I made it add the `object`, arguments, and return value:
 
 <p><img src="/assets/images/perfetto/debug_field.png" width="100%" /></p>
 
-For Dataloader sources, it logs all the source's instance variables:
+For Dataloader sources, it logs the `fetch` arguments and all the source's instance variables:
 
 <p><img src="/assets/images/perfetto/debug_source.png" width="100%" /></p>
 
@@ -146,7 +146,7 @@ Another factor in this system is _when_ to store a sample. I haven't measured th
 
 ## Saving Traces
 
-Since a trace is just a protobuf blob, storing it is pretty straightforward. I implemented a Redis backend right out of the gate, but it could also be done through ActiveRecord. (And I also built an in-memory implementation for testing, but it wouldn't work in a multi-process  deployment.)
+Since a trace is "just" a protobuf blob, storing it is pretty straightforward. I implemented a Redis backend right out of the gate, but it could also be done through ActiveRecord. (And I also built an in-memory implementation for testing, but it wouldn't work in a multi-process  deployment.)
 
 Then, I also made a little UI to go with it, so you can see your system's stored traces:
 
