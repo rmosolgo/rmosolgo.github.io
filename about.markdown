@@ -17,6 +17,7 @@ title: "About"
 
 - __Owner__, [Minimum Viable Software](https://minimumviable.software), _2017-present_
   - Developing [GraphQL-Pro](https://graphql.pro) and [Aqualytics](https://aqualyticsreports.com)
+- __Farmer__, tinkerer, milkman, etc, [Lake Road Farm](https://lakeroad.farm), _Sept 2020-present_
 - __Senior Platform Engineer__, GitHub _May 2017-September 2021_
 - __Ruby/JavaScript Developer__, Planning Center Online _August 2013–May 2017_
 - __Web Developer__, NergySense Inc _January 2013–Present, occasional_
