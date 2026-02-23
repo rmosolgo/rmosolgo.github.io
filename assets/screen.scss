@@ -173,18 +173,32 @@ th, td {
 .img-group {
   display: flex;
   max-width: 100%;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 10px;
 
   .img-container {
-    padding: 10px;
     display: flex;
     justify-content: center;
 
     img {
       max-width: 100%;
       max-height: 300px;
+      margin: auto;
     }
   }
+}
+
+.caption {
+  color: #727272;
+  display: block;
+  text-align: center;
+}
+
+.dialog-img {
+  max-width: 85%;
+  max-height: 85%;
+  display: block;
+  margin: auto;
 }
 /*
  * GitHub style for Pygments syntax highlighter, for use with Jekyll

@@ -57,4 +57,53 @@
     </footer>
   </div>
 </body>
+<dialog></dialog>
+<script>
+  var dialog = document.querySelector("dialog")
+  var currentLinkIdx = null
+  dialog.addEventListener("close", function(_ev) {
+    currentLinkIdx = null
+    dialog.innerHTML = ""
+  })
+
+  var links = document.querySelectorAll(".img-container a")
+  links.forEach(function(element, elementIdx) {
+    element.addEventListener("click", function(ev) {
+      ev.preventDefault()
+      showLink(elementIdx)
+    })
+  })
+
+  function showLink(linkIdx) {
+    currentLinkIdx = linkIdx
+    var linkElement = links[linkIdx]
+    var img = new Image
+    img.addEventListener("load", function() {
+      dialog.replaceChildren(img)
+      dialog.showModal()
+    })
+    img.className = "dialog-img"
+    img.src = linkElement.href
+  }
+
+  function showNextLink() {
+    if (currentLinkIdx !== null) {
+      showLink((currentLinkIdx + 1) % links.length)
+    }
+  }
+
+  function showPreviousLink() {
+    if (currentLinkIdx !== null) {
+      showLink(currentLinkIdx - 1)
+    }
+  }
+
+  document.addEventListener("keydown", function(ev) {
+    if (ev.key == "ArrowLeft") {
+      showPreviousLink()
+    } else if (ev.key == "ArrowRight") {
+      showNextLink()
+    }
+  })
+</script>
 </html>
