@@ -41,4 +41,5 @@ title: "About"
 
 ### Education
 
+- __Premier Select Sires__, Completed Artificial Insemination School, _2023_
 - __College of William and Mary__, BA East Asian Studies & Anthropology, _2011_
